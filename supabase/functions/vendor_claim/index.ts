@@ -66,6 +66,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Check if user is admin (REQUIRED for vendor creation)
+    const { data: adminCheck } = await supabaseAdmin
+      .from("admin_users")
+      .select("id")
+      .eq("auth_user_id", user.id)
+      .eq("is_active", true)
+      .single();
+
+    if (!adminCheck) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden - admin access required to create vendors" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Parse request body
     const body: VendorClaimInput = await req.json();
 

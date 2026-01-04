@@ -1,0 +1,15 @@
+# Cloudflare Pages configuration
+# This file is optional - Cloudflare Pages can auto-detect Vite builds
+# For Workers deployment, use this config
+
+name = "dinein-web"
+compatibility_date = "2024-01-01"
+
+[site]
+bucket = "./dist"
+
+# Environment variables (set in Cloudflare dashboard)
+# VITE_SUPABASE_URL
+# VITE_SUPABASE_ANON_KEY
+# GEMINI_API_KEY (if needed client-side, otherwise use edge functions)
+
