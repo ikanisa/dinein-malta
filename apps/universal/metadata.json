@@ -1,0 +1,9 @@
+{
+  "name": "DineIn Universal",
+  "description": "A modern, liquid-glass designed PWA for dining anywhere in the world. Features AI-driven location adaptation, QR ordering, and instant payments.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

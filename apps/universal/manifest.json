@@ -1,0 +1,79 @@
+{
+  "name": "DineIn",
+  "short_name": "DineIn",
+  "description": "Order food and drinks at restaurants and bars. World-class mobile-first PWA that adapts to your location.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "window-controls-overlay"],
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "categories": ["food", "lifestyle", "travel"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+        "screenshots": [],
+        "shortcuts": [
+          {
+            "name": "Browse Venues",
+            "short_name": "Browse",
+            "description": "Explore nearby restaurants and bars",
+            "url": "/explore",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+          },
+          {
+            "name": "My Orders",
+            "short_name": "Orders",
+            "description": "View your current orders",
+            "url": "/profile",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+          },
+          {
+            "name": "Search",
+            "short_name": "Search",
+            "description": "Search for venues",
+            "url": "/explore?search=true",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+          }
+        ],
+        "share_target": {
+          "action": "/share",
+          "method": "GET",
+          "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url"
+          }
+        },
+        "protocol_handlers": [
+          {
+            "protocol": "web+dinein",
+            "url": "/?venue=%s"
+          }
+        ]
+}

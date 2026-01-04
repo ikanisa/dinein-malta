@@ -1,0 +1,801 @@
+/**
+ * Robust Restaurant Scraper for Malta
+ * Scrapes restaurants and bars from Bolt Food and Wolt
+ * Feeds data into Supabase database
+ */
+
+import { createClient } from '@supabase/supabase-js';
+import * as cheerio from 'cheerio';
+import { chromium, Browser, Page } from 'playwright';
+import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Load environment variables from .env file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+config({ path: join(__dirname, '.env') });
+
+// Configuration
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const BOLT_URL = 'https://food.bolt.eu/en/324-valletta/';
+const WOLT_URL = 'https://wolt.com/mt/discovery/restaurants';
+
+interface RestaurantData {
+  name: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  phone?: string;
+  website?: string;
+  description?: string;
+  imageUrl?: string;
+  menu: MenuItemData[];
+  source: 'bolt' | 'wolt';
+  externalId: string; // Unique ID from source site
+}
+
+interface MenuItemData {
+  name: string;
+  description?: string;
+  price: number;
+  category?: string;
+  imageUrl?: string;
+}
+
+// Validate environment variables
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ Error: Missing Supabase credentials!');
+  console.error('');
+  console.error('Please create a .env file in the scripts/ directory with:');
+  console.error('  VITE_SUPABASE_URL=https://elhlcdiosomutugpneoc.supabase.co');
+  console.error('  SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here');
+  console.error('');
+  console.error('Get your service role key from:');
+  console.error('  https://supabase.com/dashboard/project/elhlcdiosomutugpneoc/settings/api');
+  process.exit(1);
+}
+
+// Initialize Supabase client with service role for admin operations
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+/**
+ * Normalize restaurant name for duplicate detection
+ */
+function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Calculate similarity between two names (Levenshtein-like)
+ */
+function nameSimilarity(name1: string, name2: string): number {
+  const norm1 = normalizeName(name1);
+  const norm2 = normalizeName(name2);
+  
+  if (norm1 === norm2) return 1.0;
+  
+  // Check if one contains the other
+  if (norm1.includes(norm2) || norm2.includes(norm1)) {
+    return 0.8;
+  }
+  
+  // Simple word overlap
+  const words1 = norm1.split(' ');
+  const words2 = norm2.split(' ');
+  const overlap = words1.filter(w => words2.includes(w)).length;
+  const totalWords = Math.max(words1.length, words2.length);
+  
+  return overlap / totalWords;
+}
+
+/**
+ * Check if restaurant already exists in database
+ */
+async function findExistingRestaurant(name: string, address?: string): Promise<string | null> {
+  const normalizedName = normalizeName(name);
+  
+  // Search by exact name match
+  const { data: exactMatch } = await supabase
+    .from('vendors')
+    .select('id, name')
+    .ilike('name', `%${normalizedName}%`)
+    .limit(10);
+  
+  if (exactMatch && exactMatch.length > 0) {
+    // Check similarity
+    for (const vendor of exactMatch) {
+      const similarity = nameSimilarity(name, vendor.name);
+      if (similarity > 0.7) {
+        return vendor.id;
+      }
+    }
+  }
+  
+  // If address provided, also check by address
+  if (address) {
+    const { data: addressMatch } = await supabase
+      .from('vendors')
+      .select('id, name, address')
+      .ilike('address', `%${address}%`)
+      .limit(5);
+    
+    if (addressMatch && addressMatch.length > 0) {
+      for (const vendor of addressMatch) {
+        const similarity = nameSimilarity(name, vendor.name);
+        if (similarity > 0.6) {
+          return vendor.id;
+        }
+      }
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Scrape Bolt Food restaurants
+ * Saves each restaurant to Supabase immediately as it's scraped (live saving)
+ */
+async function scrapeBoltFood(browser: Browser): Promise<RestaurantData[]> {
+  console.log('🔍 Scraping Bolt Food...');
+  console.log('💾 Restaurants will be saved to Supabase in real-time as we scrape!\n');
+  const page = await browser.newPage();
+  const restaurants: RestaurantData[] = [];
+  let savedCount = 0;
+  let skippedCount = 0;
+  
+  try {
+    console.log(`   Navigating to: ${BOLT_URL}`);
+    await page.goto(BOLT_URL, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForTimeout(5000); // Wait longer for dynamic content to load
+    
+    // Wait for content to appear
+    try {
+      await page.waitForSelector('body', { timeout: 10000 });
+      console.log('   Page loaded');
+    } catch (e) {
+      console.log('   ⚠️  Page load timeout, continuing anyway...');
+    }
+    
+    // Scroll to load more restaurants (scroll multiple times)
+    console.log('   Scrolling to load content...');
+    await autoScroll(page);
+    await page.waitForTimeout(2000);
+    await autoScroll(page); // Scroll again to load more
+    await page.waitForTimeout(2000);
+    
+    // Get restaurant links - try more comprehensive strategies
+    const restaurantLinks = await page.evaluate(() => {
+      const links: string[] = [];
+      const baseUrl = 'https://food.bolt.eu';
+      const seen = new Set<string>();
+      
+      // Strategy 1: Get ALL links on the page and inspect them
+      const allLinks = document.querySelectorAll('a[href]');
+      console.log(`Found ${allLinks.length} total links on page`);
+      
+      allLinks.forEach((link: any) => {
+        const href = link.href || '';
+        if (!href || href.includes('#') || href.includes('javascript:') || seen.has(href)) {
+          return;
+        }
+        
+        // Check if it's a restaurant/venue link
+        // Bolt Food URLs can be: /en/{city}/{restaurant-slug} or /en/{restaurant-slug}
+        if (href.startsWith(baseUrl) && href !== baseUrl + '/en/324-valletta/') {
+          // Exclude navigation, footer, header links
+          const excludedPaths = ['/partner', '/courier', '/login', '/signup', '/stores', '/home', '/help', '/about', '/terms', '/privacy'];
+          const shouldExclude = excludedPaths.some(path => href.includes(path));
+          
+          if (!shouldExclude && href.split('/').length >= 4) {
+            // Check if link text or nearby elements suggest it's a restaurant
+            const linkText = link.textContent?.toLowerCase() || '';
+            const hasRestaurantKeywords = linkText.length > 0 && linkText.length < 100; // Restaurant names are usually short
+            
+            if (hasRestaurantKeywords || href.split('/').length >= 5) {
+              links.push(href);
+              seen.add(href);
+              console.log(`Found potential restaurant link: ${href}`);
+            }
+          }
+        }
+      });
+      
+      // Strategy 2: Look for any clickable divs or cards that might navigate
+      const clickableCards = document.querySelectorAll('[onclick], [role="button"], [class*="card"], [class*="tile"], [class*="item"]');
+      clickableCards.forEach((card: any) => {
+        // Check for data attributes that might contain URLs
+        const dataHref = card.getAttribute('data-href') || card.getAttribute('data-url') || card.getAttribute('data-link');
+        if (dataHref && dataHref.startsWith(baseUrl) && !seen.has(dataHref)) {
+          links.push(dataHref);
+          seen.add(dataHref);
+        }
+        
+        // Check parent link
+        const parentLink = card.closest('a');
+        if (parentLink && parentLink.href && parentLink.href.startsWith(baseUrl) && !seen.has(parentLink.href)) {
+          const excludedPaths = ['/partner', '/courier', '/login', '/signup', '/stores', '/home'];
+          const shouldExclude = excludedPaths.some(path => parentLink.href.includes(path));
+          if (!shouldExclude && parentLink.href.length > (baseUrl + '/en/324-valletta/').length) {
+            links.push(parentLink.href);
+            seen.add(parentLink.href);
+          }
+        }
+      });
+      
+      console.log(`Total restaurant links found: ${links.length}`);
+      return [...new Set(links)]; // Remove duplicates
+    });
+    
+    console.log(`📋 Found ${restaurantLinks.length} restaurants on Bolt Food`);
+    
+    // Debug: If no links found, save a screenshot to see what's on the page
+    if (restaurantLinks.length === 0) {
+      console.log('⚠️  No restaurant links found. Taking screenshot for debugging...');
+      await page.screenshot({ path: 'bolt-debug.png', fullPage: true });
+      console.log('💡 Screenshot saved to bolt-debug.png - check what\'s on the page');
+      
+      // Also try to get page title and URL to confirm we're on the right page
+      const pageInfo = await page.evaluate(() => ({
+        title: document.title,
+        url: window.location.href,
+        bodyText: document.body.innerText.substring(0, 500)
+      }));
+      console.log('Page info:', pageInfo);
+    }
+    console.log('');
+    
+    // Scrape each restaurant and save immediately to Supabase
+    for (let i = 0; i < restaurantLinks.length; i++) {
+      const link = restaurantLinks[i];
+      try {
+        console.log(`[${i + 1}/${restaurantLinks.length}] Scraping: ${link}`);
+        const restaurant = await scrapeBoltRestaurant(page, link);
+        if (restaurant) {
+          restaurants.push(restaurant);
+          // Save immediately to Supabase (live saving)
+          console.log(`   💾 Saving "${restaurant.name}" to Supabase...`);
+          const savedId = await saveRestaurant(restaurant);
+          if (savedId) {
+            savedCount++;
+            console.log(`   ✅ Saved to Supabase! (ID: ${savedId}, Menu items: ${restaurant.menu.length})`);
+            console.log(`   📊 Progress: ${savedCount} saved, ${skippedCount} skipped\n`);
+          } else {
+            skippedCount++;
+            console.log(`   ⏭️  Skipped (duplicate or error)\n`);
+          }
+        }
+        await page.waitForTimeout(1000); // Rate limiting
+      } catch (error) {
+        console.error(`   ❌ Error scraping ${link}:`, error);
+      }
+    }
+    
+    console.log(`\n✅ Bolt Food scraping complete!`);
+    console.log(`   - Scraped: ${restaurants.length} restaurants`);
+    console.log(`   - Saved to Supabase: ${savedCount}`);
+    console.log(`   - Skipped: ${skippedCount}\n`);
+  } catch (error) {
+    console.error('Error scraping Bolt Food:', error);
+  } finally {
+    await page.close();
+  }
+  
+  return restaurants;
+}
+
+/**
+ * Scrape a single Bolt restaurant page
+ */
+async function scrapeBoltRestaurant(page: Page, url: string): Promise<RestaurantData | null> {
+  try {
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.waitForTimeout(2000);
+    
+    const data = await page.evaluate((pageUrl) => {
+      const restaurant: any = {
+        source: 'bolt',
+        externalId: pageUrl.split('/').pop() || pageUrl,
+        menu: []
+      };
+      
+      // Extract name
+      const nameEl = document.querySelector('h1, [data-testid*="name"], .restaurant-name');
+      restaurant.name = nameEl?.textContent?.trim() || '';
+      
+      // Extract address
+      const addressEl = document.querySelector('[data-testid*="address"], .address, .location');
+      restaurant.address = addressEl?.textContent?.trim();
+      
+      // Extract phone
+      const phoneEl = document.querySelector('[href^="tel:"], [data-testid*="phone"]');
+      restaurant.phone = phoneEl?.getAttribute('href')?.replace('tel:', '') || phoneEl?.textContent?.trim();
+      
+      // Extract image
+      const imageEl = document.querySelector('img[src*="restaurant"], img[src*="venue"], .restaurant-image img');
+      restaurant.imageUrl = imageEl?.getAttribute('src') || imageEl?.getAttribute('data-src');
+      
+      // Extract menu items
+      const menuItems = document.querySelectorAll('[data-testid*="menu-item"], .menu-item, .dish-card');
+      menuItems.forEach((item: any) => {
+        const name = item.querySelector('.dish-name, .item-name, h3, h4')?.textContent?.trim();
+        const priceText = item.querySelector('.price, .dish-price, [data-testid*="price"]')?.textContent?.trim();
+        const description = item.querySelector('.description, .dish-description')?.textContent?.trim();
+        const category = item.closest('[data-category], .category')?.getAttribute('data-category') || 
+                        item.closest('section, .menu-section')?.querySelector('h2, h3')?.textContent?.trim();
+        
+        if (name && priceText) {
+          const price = parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.'));
+          if (!isNaN(price)) {
+            restaurant.menu.push({
+              name,
+              description,
+              price,
+              category: category || 'Mains'
+            });
+          }
+        }
+      });
+      
+      return restaurant;
+    }, url);
+    
+    if (!data.name) {
+      return null;
+    }
+    
+    return data as RestaurantData;
+  } catch (error) {
+    console.error(`Error scraping Bolt restaurant ${url}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Scrape Wolt restaurants
+ * Saves each restaurant to Supabase immediately as it's scraped (live saving)
+ */
+async function scrapeWolt(browser: Browser): Promise<RestaurantData[]> {
+  console.log('🔍 Scraping Wolt...');
+  console.log('💾 Restaurants will be saved to Supabase in real-time as we scrape!\n');
+  const page = await browser.newPage();
+  const restaurants: RestaurantData[] = [];
+  let savedCount = 0;
+  let skippedCount = 0;
+  
+  try {
+    console.log(`   Navigating to: ${WOLT_URL}`);
+    await page.goto(WOLT_URL, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForTimeout(5000); // Wait longer for dynamic content
+    
+    // Wait for content to appear
+    try {
+      await page.waitForSelector('body', { timeout: 10000 });
+      console.log('   Page loaded');
+    } catch (e) {
+      console.log('   ⚠️  Page load timeout, continuing anyway...');
+    }
+    
+    // Scroll to load more (scroll multiple times)
+    console.log('   Scrolling to load content...');
+    await autoScroll(page);
+    await page.waitForTimeout(2000);
+    await autoScroll(page); // Scroll again
+    await page.waitForTimeout(2000);
+    
+    // Get restaurant links - Filter for Malta restaurants only
+    const restaurantLinks = await page.evaluate(() => {
+      const links: string[] = [];
+      const baseUrl = 'https://wolt.com';
+      const seen = new Set<string>();
+      
+      // Strategy 1: Get ALL links and filter for Malta restaurants
+      const allLinks = document.querySelectorAll('a[href]');
+      console.log(`Found ${allLinks.length} total links on Wolt page`);
+      
+      allLinks.forEach((link: any) => {
+        const href = link.href || '';
+        if (!href || href.includes('#') || href.includes('javascript:') || seen.has(href)) {
+          return;
+        }
+        
+        // Wolt restaurant URLs: /en/{country}/{city}/restaurant/{restaurant-slug}
+        // Malta: /en/mlt/ or /mt/ or contains 'malta'
+        if (href.startsWith(baseUrl) 
+            && (href.includes('/restaurant/') || href.includes('/discovery/restaurant/'))
+            && (href.includes('/mt/') || href.includes('/en/mlt/') || href.includes('malta'))
+            && !href.includes('/discovery/restaurants') // Exclude the discovery page itself
+            && !href.includes('/en/discovery/restaurants')) {
+          links.push(href);
+          seen.add(href);
+        }
+      });
+      
+      // Strategy 2: Look for venue cards with data attributes
+      const cards = document.querySelectorAll('[data-venue-id], [data-testid*="venue"], [data-testid*="restaurant"], [class*="venueCard"], [class*="restaurantCard"], [class*="venue"], [class*="restaurant"]');
+      cards.forEach((card: any) => {
+        // Check data attributes
+        const venueId = card.getAttribute('data-venue-id') || card.getAttribute('data-testid');
+        if (venueId) {
+          // Try to construct URL
+          const possibleUrl = `${baseUrl}/en/mlt/restaurant/${venueId}`;
+          if (!seen.has(possibleUrl)) {
+            // Don't add constructed URLs, but log for debugging
+            console.log('Found venue ID:', venueId);
+          }
+        }
+        
+        // Check parent link
+        const parentLink = card.closest('a');
+        if (parentLink && parentLink.href) {
+          const href = parentLink.href;
+          if (href.startsWith(baseUrl) 
+              && (href.includes('/mt/') || href.includes('/en/mlt/') || href.includes('malta'))
+              && (href.includes('/restaurant/') || href.includes('/discovery/restaurant/'))
+              && !seen.has(href)) {
+            links.push(href);
+            seen.add(href);
+          }
+        }
+      });
+      
+      return [...new Set(links)]; // Remove duplicates
+    });
+    
+    // Filter out non-Malta restaurants (extra safety check)
+    const maltaLinks = restaurantLinks.filter(link => 
+      link.includes('/mt/') || link.includes('malta') || link.includes('/en/mlt/')
+    );
+    
+    console.log(`📋 Found ${restaurantLinks.length} total links, ${maltaLinks.length} Malta restaurants on Wolt`);
+    
+    if (maltaLinks.length === 0 && restaurantLinks.length > 0) {
+      console.log('⚠️  Warning: Found restaurants but none are from Malta!');
+      console.log('   The page might be showing wrong location. Check the URL.');
+    }
+    
+    // Use only Malta links
+    const finalLinks = maltaLinks.length > 0 ? maltaLinks : restaurantLinks;
+    console.log('');
+    
+    if (finalLinks.length === 0) {
+      console.log('⚠️  No Malta restaurant links found on Wolt page.');
+      console.log('   The page might be showing restaurants from a different location.');
+      console.log('   Current URL:', await page.url());
+      console.log('   Try checking wolt-debug.png screenshot\n');
+      return restaurants;
+    }
+    
+    // Scrape each restaurant and save immediately to Supabase
+    for (let i = 0; i < finalLinks.length; i++) {
+      const link = finalLinks[i];
+      try {
+        console.log(`[${i + 1}/${finalLinks.length}] Scraping: ${link}`);
+        const restaurant = await scrapeWoltRestaurant(page, link);
+        if (restaurant) {
+          restaurants.push(restaurant);
+          // Save immediately to Supabase (live saving)
+          console.log(`   💾 Saving "${restaurant.name}" to Supabase...`);
+          const savedId = await saveRestaurant(restaurant);
+          if (savedId) {
+            savedCount++;
+            console.log(`   ✅ Saved to Supabase! (ID: ${savedId}, Menu items: ${restaurant.menu.length})`);
+            console.log(`   📊 Progress: ${savedCount} saved, ${skippedCount} skipped\n`);
+          } else {
+            skippedCount++;
+            console.log(`   ⏭️  Skipped (duplicate or error)\n`);
+          }
+        }
+        await page.waitForTimeout(1000);
+      } catch (error) {
+        console.error(`   ❌ Error scraping ${link}:`, error);
+      }
+    }
+    
+    console.log(`\n✅ Wolt scraping complete!`);
+    console.log(`   - Found: ${finalLinks.length} Malta restaurant links`);
+    console.log(`   - Scraped: ${restaurants.length} restaurants`);
+    console.log(`   - Saved to Supabase: ${savedCount}`);
+    console.log(`   - Skipped: ${skippedCount}\n`);
+  } catch (error) {
+    console.error('Error scraping Wolt:', error);
+  } finally {
+    await page.close();
+  }
+  
+  return restaurants;
+}
+
+/**
+ * Scrape a single Wolt restaurant page
+ */
+async function scrapeWoltRestaurant(page: Page, url: string): Promise<RestaurantData | null> {
+  try {
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.waitForTimeout(2000);
+    
+    const data = await page.evaluate((pageUrl) => {
+      const restaurant: any = {
+        source: 'wolt',
+        externalId: pageUrl.split('/').pop() || pageUrl,
+        menu: []
+      };
+      
+      // Extract name
+      const nameEl = document.querySelector('h1[data-test-id="venue-hero-header"], h1');
+      restaurant.name = nameEl?.textContent?.trim() || '';
+      
+      // Extract address
+      const addressEl = document.querySelector('[data-test-id="venue-address"], .venue-address');
+      restaurant.address = addressEl?.textContent?.trim();
+      
+      // Extract phone (might be in a link)
+      const phoneEl = document.querySelector('[href^="tel:"]');
+      restaurant.phone = phoneEl?.getAttribute('href')?.replace('tel:', '');
+      
+      // Extract image
+      const imageEl = document.querySelector('img[alt*="venue"], .venue-image img, [data-test-id="venue-image"] img');
+      restaurant.imageUrl = imageEl?.getAttribute('src') || imageEl?.getAttribute('data-src');
+      
+      // Extract menu items - Wolt has a specific structure
+      const menuSections = document.querySelectorAll('[data-test-id="menu-category"], .menu-category');
+      menuSections.forEach((section: any) => {
+        const category = section.querySelector('h2, h3, [data-test-id="category-name"]')?.textContent?.trim() || 'Mains';
+        const items = section.querySelectorAll('[data-test-id="menu-item"], .menu-item');
+        
+        items.forEach((item: any) => {
+          const name = item.querySelector('[data-test-id="menu-item-name"], .item-name, h3')?.textContent?.trim();
+          const priceText = item.querySelector('[data-test-id="menu-item-price"], .price')?.textContent?.trim();
+          const description = item.querySelector('[data-test-id="menu-item-description"], .description')?.textContent?.trim();
+          
+          if (name && priceText) {
+            const price = parseFloat(priceText.replace(/[^0-9.,]/g, '').replace(',', '.'));
+            if (!isNaN(price)) {
+              restaurant.menu.push({
+                name,
+                description,
+                price,
+                category
+              });
+            }
+          }
+        });
+      });
+      
+      return restaurant;
+    }, url);
+    
+    if (!data.name) {
+      return null;
+    }
+    
+    return data as RestaurantData;
+  } catch (error) {
+    console.error(`Error scraping Wolt restaurant ${url}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Auto-scroll page to load dynamic content
+ */
+async function autoScroll(page: Page) {
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve) => {
+      let totalHeight = 0;
+      const distance = 200; // Scroll faster
+      let lastHeight = 0;
+      let noChangeCount = 0;
+      
+      const timer = setInterval(() => {
+        const scrollHeight = document.body.scrollHeight;
+        window.scrollBy(0, distance);
+        totalHeight += distance;
+
+        // Check if page height changed (new content loaded)
+        if (scrollHeight === lastHeight) {
+          noChangeCount++;
+          // If no change for 5 scrolls, we're probably at the end
+          if (noChangeCount > 5) {
+            clearInterval(timer);
+            resolve();
+          }
+        } else {
+          noChangeCount = 0;
+          lastHeight = scrollHeight;
+        }
+
+        // Safety timeout
+        if (totalHeight > 10000) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 150);
+    });
+  });
+}
+
+/**
+ * Save restaurant to Supabase
+ */
+async function saveRestaurant(restaurant: RestaurantData): Promise<string | null> {
+  try {
+    // Check for duplicates
+    const existingId = await findExistingRestaurant(
+      restaurant.name, 
+      restaurant.address,
+      restaurant.externalId,
+      restaurant.source
+    );
+    
+    if (existingId) {
+      // Update menu items for existing restaurant (don't log duplicate here, logged in caller)
+      await updateMenuItems(existingId, restaurant.menu);
+      return null; // Return null to indicate it was a duplicate
+    }
+    
+    // Generate slug from name
+    const slug = restaurant.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') + '-' + Math.random().toString(36).substring(2, 9);
+    
+    // Generate a temporary google_place_id if not available
+    // Format: external_source_id (e.g., bolt-12345 or wolt-67890)
+    const google_place_id = `${restaurant.source}-${restaurant.externalId}`;
+    
+    // Insert new vendor
+    const vendorData: any = {
+      name: restaurant.name,
+      address: restaurant.address || null,
+      lat: restaurant.lat || null,
+      lng: restaurant.lng || null,
+      phone: restaurant.phone || null,
+      website: restaurant.website || null,
+      photos_json: restaurant.imageUrl ? [{ url: restaurant.imageUrl }] : null,
+      status: 'active',
+      google_place_id: google_place_id, // Use source-specific ID as placeholder
+      slug: slug,
+    };
+    
+    const { data: vendor, error: vendorError } = await supabase
+      .from('vendors')
+      .insert(vendorData)
+      .select()
+      .single();
+    
+    if (vendorError) {
+      console.error(`Error inserting vendor ${restaurant.name}:`, vendorError);
+      return null;
+    }
+    
+    console.log(`✅ Saved restaurant: ${restaurant.name} (ID: ${vendor.id})`);
+    
+    // Save menu items
+    await saveMenuItems(vendor.id, restaurant.menu);
+    
+    return vendor.id;
+  } catch (error) {
+    console.error(`Error saving restaurant ${restaurant.name}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Save menu items for a vendor
+ */
+async function saveMenuItems(vendorId: string, menu: MenuItemData[]) {
+  if (menu.length === 0) return;
+  
+  const menuItemsData = menu.map(item => ({
+    vendor_id: vendorId,
+    name: item.name,
+    description: item.description || null,
+    price: item.price,
+    category: item.category || 'Mains',
+    is_available: true,
+    image_url: item.imageUrl || null,
+    currency: 'EUR',
+  }));
+  
+  // Check for existing menu items to avoid duplicates
+  const { data: existing } = await supabase
+    .from('menu_items')
+    .select('name')
+    .eq('vendor_id', vendorId);
+  
+  const existingNames = new Set(existing?.map(item => item.name.toLowerCase()) || []);
+  const newItems = menuItemsData.filter(item => !existingNames.has(item.name.toLowerCase()));
+  
+  if (newItems.length === 0) {
+    console.log(`   No new menu items to add for vendor ${vendorId}`);
+    return;
+  }
+  
+  const { error } = await supabase
+    .from('menu_items')
+    .insert(newItems);
+  
+  if (error) {
+    console.error(`Error saving menu items for vendor ${vendorId}:`, error);
+  } else {
+    console.log(`✅ Saved ${menu.length} menu items for vendor ${vendorId}`);
+  }
+}
+
+/**
+ * Update menu items for existing vendor
+ */
+async function updateMenuItems(vendorId: string, menu: MenuItemData[]) {
+  // Delete existing menu items and insert new ones
+  await supabase.from('menu_items').delete().eq('vendor_id', vendorId);
+  await saveMenuItems(vendorId, menu);
+}
+
+/**
+ * Main scraping function
+ */
+async function main() {
+  console.log('🚀 Starting restaurant scraping...');
+  
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('❌ Missing Supabase credentials!');
+    console.error('Set VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables');
+    process.exit(1);
+  }
+  
+  // Test Supabase connection
+  console.log('🔌 Testing Supabase connection...');
+  const { error: testError } = await supabase.from('vendors').select('id').limit(1);
+  if (testError) {
+    if (testError.message.includes('Invalid API key')) {
+      console.error('❌ Error: Invalid Supabase API key!');
+      console.error('Please check your SUPABASE_SERVICE_ROLE_KEY in the .env file.');
+      console.error('Make sure you\'re using the service_role key, NOT the anon key.');
+      console.error('Get it from: https://supabase.com/dashboard/project/elhlcdiosomutugpneoc/settings/api');
+      process.exit(1);
+    } else {
+      console.error('❌ Error connecting to Supabase:', testError.message);
+      process.exit(1);
+    }
+  }
+  console.log('✅ Supabase connection successful!\n');
+  
+  const browser = await chromium.launch({ headless: true });
+  const allRestaurants: RestaurantData[] = [];
+  
+  try {
+    // Scrape both sources
+    const boltRestaurants = await scrapeBoltFood(browser);
+    const woltRestaurants = await scrapeWolt(browser);
+    
+    allRestaurants.push(...boltRestaurants);
+    allRestaurants.push(...woltRestaurants);
+    
+    // Note: Restaurants are already saved live during scraping
+    // This is just the final summary
+    console.log(`\n📊 Scraping Summary:`);
+    console.log(`   - Total restaurants scraped: ${allRestaurants.length}`);
+    console.log(`   - Bolt Food: ${boltRestaurants.length}`);
+    console.log(`   - Wolt: ${woltRestaurants.length}`);
+    console.log(`\n💡 All restaurants have been saved to Supabase in real-time!`);
+    console.log(`   Check your Supabase Dashboard to see them live.`);
+    
+  } catch (error) {
+    console.error('❌ Fatal error:', error);
+  } finally {
+    await browser.close();
+  }
+}
+
+// Run main function (this file is meant to be executed directly)
+main().catch(console.error);
+
+export { scrapeBoltFood, scrapeWolt, saveRestaurant };
+

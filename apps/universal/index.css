@@ -1,0 +1,434 @@
+/* Mobile-First PWA Styles */
+/* World-class mobile optimization for native-like experience */
+
+/* ============================================================================
+   CSS Variables for Mobile Optimization
+   ============================================================================ */
+:root {
+  --min-touch-target: 44px; /* iOS/Android guideline minimum */
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-left: env(safe-area-inset-left);
+  --safe-area-right: env(safe-area-inset-right);
+}
+
+/* ============================================================================
+          Accessibility Utilities
+          ============================================================================ */
+
+/* Screen reader only - visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Remove screen reader only when focused */
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ============================================================================
+          Base Mobile Optimizations
+          ============================================================================ */
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* Optimize touch scrolling */
+}
+
+body {
+  /* Prevent text selection on app-like UI elements */
+  -webkit-user-select: none;
+  user-select: none;
+  /* Prevent pull-to-refresh on body (handled by components) */
+  overscroll-behavior-y: none;
+  /* Smooth scrolling */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent zoom on double tap */
+  touch-action: pan-x pan-y;
+}
+
+/* Allow text selection in input fields and text areas */
+input,
+textarea,
+[contenteditable="true"],
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: auto;
+}
+
+/* ============================================================================
+   Touch Targets - Minimum 44x44px for Accessibility
+   ============================================================================ */
+
+/* Ensure all interactive elements meet minimum touch target size */
+button,
+a,
+[role="button"],
+[tabindex="0"] {
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  /* Center content if smaller */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Touch-friendly padding for buttons */
+button {
+  padding: 0.75rem 1.5rem;
+  /* Prevent default button styles that can interfere */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ============================================================================
+   Touch Feedback & Ripple Effects
+   ============================================================================ */
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Active state for better touch feedback */
+button:active,
+a:active,
+[role="button"]:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+  transition: opacity 0.1s, transform 0.1s;
+}
+
+/* Touch ripple animation */
+.touch-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================================================
+   Safe Area Handling (Notches, Home Indicator)
+   ============================================================================ */
+
+/* Safe area padding utilities */
+.pt-safe-top {
+  padding-top: calc(var(--safe-area-top) + 1rem);
+}
+
+.pb-safe-bottom {
+  padding-bottom: calc(var(--safe-area-bottom) + 1rem);
+}
+
+.pl-safe-left {
+  padding-left: calc(var(--safe-area-left) + 1rem);
+}
+
+.pr-safe-right {
+  padding-right: calc(var(--safe-area-right) + 1rem);
+}
+
+/* Safe area margins */
+.mt-safe-top {
+  margin-top: var(--safe-area-top);
+}
+
+.mb-safe-bottom {
+  margin-bottom: var(--safe-area-bottom);
+}
+
+/* Full safe area */
+.safe-area-inset {
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+/* ============================================================================
+   Native-Like Animations
+   ============================================================================ */
+
+/* Smooth page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+/* Bottom sheet animation */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.bottom-sheet-enter {
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottom-sheet-exit {
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Shimmer loading effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface-highlight) 0px,
+    rgba(255, 255, 255, 0.1) 40px,
+    var(--bg-surface-highlight) 80px
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ============================================================================
+   Scroll Behavior
+   ============================================================================ */
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Momentum scrolling for iOS */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================================
+   Mobile-Specific Optimizations
+   ============================================================================ */
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Optimize font rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Prevent image dragging */
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* But allow dragging for interactive images if needed */
+img.draggable {
+  -webkit-user-drag: element;
+  pointer-events: auto;
+}
+
+/* ============================================================================
+   Touch Action Optimizations
+   ============================================================================ */
+
+/* Pan gestures for scrollable content */
+.scrollable-x {
+  touch-action: pan-x;
+  overflow-x: auto;
+}
+
+.scrollable-y {
+  touch-action: pan-y;
+  overflow-y: auto;
+}
+
+.scrollable {
+  touch-action: pan-x pan-y;
+  overflow: auto;
+}
+
+/* Disable touch actions for non-interactive elements */
+.static-element {
+  touch-action: none;
+}
+
+/* ============================================================================
+   Responsive Typography
+   ============================================================================ */
+
+/* Base font size scales with viewport */
+html {
+  font-size: 16px;
+}
+
+/* On smaller screens, ensure readable font sizes */
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Minimum readable font sizes */
+body {
+  font-size: 1rem; /* 16px base */
+  line-height: 1.5;
+}
+
+/* Headings should scale appropriately */
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+h4 { font-size: 1.125rem; }
+
+/* ============================================================================
+   Focus States for Accessibility
+   ============================================================================ */
+
+/* Visible focus indicators (important for keyboard navigation) */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Hide focus outline on mouse clicks (only show for keyboard) */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================================================
+   Performance Optimizations
+   ============================================================================ */
+
+/* Use GPU acceleration for animations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Optimize repaints */
+.gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* ============================================================================
+   PWA Standalone Mode Styles
+   ============================================================================ */
+
+/* Adjustments when running as standalone PWA */
+@media (display-mode: standalone) {
+  body {
+    /* Full screen when in standalone mode */
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
+  }
+  
+  /* Hide browser UI elements */
+  .browser-only {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   Utility Classes
+   ============================================================================ */
+
+/* Touch-friendly spacing */
+.touch-padding {
+  padding: 0.75rem;
+}
+
+.touch-margin {
+  margin: 0.75rem;
+}
+
+/* Ensure adequate touch target size */
+.touch-target {
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+}
+
+/* Prevent text selection */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection */
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+

@@ -1,0 +1,23 @@
+{
+  "name": "dinein-scraper",
+  "version": "1.0.0",
+  "description": "Restaurant scraper for Bolt Food and Wolt",
+  "type": "module",
+  "main": "scrape-restaurants.ts",
+  "scripts": {
+    "scrape": "tsx scrape-restaurants.ts",
+    "scrape:bolt": "tsx scrape-restaurants.ts --source=bolt",
+    "scrape:wolt": "tsx scrape-restaurants.ts --source=wolt"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.6.1",
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

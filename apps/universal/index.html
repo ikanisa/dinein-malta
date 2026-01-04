@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f9fafb" media="(prefers-color-scheme: light)">
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DineIn">
+    
+    <!-- IOS Icons (Point to Supabase Storage) -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    
+    <title>DineIn | Liquid Glass Dining</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: ['class', '[data-theme="dark"]'],
+        theme: {
+          extend: {
+            colors: {
+              background: 'var(--bg-main)',
+              surface: 'var(--bg-surface)',
+              'surface-highlight': 'var(--bg-surface-highlight)',
+              foreground: 'var(--text-main)',
+              muted: 'var(--text-muted)',
+              border: 'var(--border-color)',
+              glass: "var(--glass-bg)",
+              glassBorder: "var(--glass-border)",
+              primary: "#3b82f6",
+              secondary: "#ec4899",
+            },
+            backdropBlur: {
+              xs: '2px',
+              xl: '20px',
+            },
+            boxShadow: {
+              'glow': '0 0 20px rgba(59, 130, 246, 0.3)',
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      :root {
+        --safe-top: env(safe-area-inset-top);
+        --safe-bottom: env(safe-area-inset-bottom);
+
+        /* LIGHT MODE (Default) */
+        --bg-main: #f9fafb; /* gray-50 - cleaner white */
+        --bg-surface: #ffffff;
+        --bg-surface-highlight: rgba(0, 0, 0, 0.04);
+        --text-main: #111827; /* gray-900 */
+        --text-muted: #6b7280; /* gray-500 */
+        --border-color: rgba(0, 0, 0, 0.08);
+        --glass-bg: rgba(255, 255, 255, 0.75);
+        --glass-border: rgba(255, 255, 255, 0.8);
+        --body-gradient: radial-gradient(circle at 50% 0%, #e0f2fe 0%, #f9fafb 60%); /* lighter blue tint */
+      }
+
+      [data-theme="dark"] {
+        /* DARK MODE */
+        --bg-main: #000000;
+        --bg-surface: #121212;
+        --bg-surface-highlight: rgba(255, 255, 255, 0.08);
+        --text-main: #ffffff;
+        --text-muted: #9ca3af;
+        --border-color: rgba(255, 255, 255, 0.12);
+        --glass-bg: rgba(30, 30, 30, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --body-gradient: radial-gradient(circle at 50% 0%, #172554 0%, #000000 60%);
+      }
+
+      body {
+        background: var(--bg-main);
+        background-image: var(--body-gradient);
+        color: var(--text-main);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        overscroll-behavior-y: none; /* Prevent pull-to-refresh on body */
+        user-select: none; /* App feel */
+        -webkit-user-select: none;
+        transition: background-color 0.5s ease, color 0.5s ease;
+      }
+      
+      /* Hide Scrollbar but keep functionality */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Premium Glass Panel */
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+      }
+
+      /* Input fields should allow selection */
+      input, textarea {
+        user-select: text;
+        -webkit-user-select: text;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@0.1.1",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.28.0?external=react,react-dom",
+    "@remix-run/router": "https://esm.sh/@remix-run/router@1.16.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react": "https://esm.sh/react@18.2.0",
+    "jszip": "https://esm.sh/jszip@3.10.1",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "qrcode": "https://esm.sh/qrcode@1.5.3",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.7",
+    "framer-motion": "https://esm.sh/framer-motion@10.16.4?external=react,react-dom",
+    "react-hot-toast": "https://esm.sh/react-hot-toast@2.4.1?external=react,react-dom",
+    "clsx": "https://esm.sh/clsx@2.1.0",
+    "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+    <link rel="stylesheet" href="/index.css">
+    <style>
+      /* Ripple animation for touch feedback */
+      @keyframes ripple {
+        to {
+          transform: scale(4);
+          opacity: 0;
+        }
+      }
+    </style>
+</head>
+  <body>
+    <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => {
+              console.log('SW registered');
+              
+              // Listen for service worker updates
+              reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      // New service worker available
+                      window.dispatchEvent(new CustomEvent('sw-update-available'));
+                    }
+                  });
+                }
+              });
+            })
+            .catch(err => console.log('SW registration failed', err));
+        });
+        
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data && event.data.type === 'SW_UPDATED') {
+            window.dispatchEvent(new CustomEvent('sw-update-available'));
+          }
+        });
+      }
+    </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
