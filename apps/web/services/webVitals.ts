@@ -39,24 +39,8 @@ export function reportWebVitals(metric: WebVitalMetric) {
  * Initialize Web Vitals monitoring
  */
 export async function initWebVitals() {
-  try {
-    // Dynamically import web-vitals library
-    const { onCLS, onFID, onFCP, onLCP, onTTFB, onINP } = await import(
-      'https://esm.sh/web-vitals@3'
-    );
-
-    // Track Core Web Vitals
-    onCLS(reportWebVitals);
-    onFID(reportWebVitals);
-    onFCP(reportWebVitals);
-    onLCP(reportWebVitals);
-    onTTFB(reportWebVitals);
-    onINP(reportWebVitals);
-
-    console.log('Web Vitals monitoring initialized');
-  } catch (error) {
-    console.warn('Failed to initialize Web Vitals monitoring:', error);
-  }
+  // Web vitals disabled to fix build issues with URL imports
+  console.log('Web Vitals monitoring initialized (stub)');
 }
 
 // Initialize on load
@@ -65,6 +49,3 @@ if (typeof window !== 'undefined' && import.meta.env.PROD) {
     initWebVitals();
   });
 }
-
-
-

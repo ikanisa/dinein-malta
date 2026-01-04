@@ -134,3 +134,6 @@ npm install --legacy-peer-deps && npm run build
 
 **Status**: ✅ **Backend fully deployed, Frontend configuration ready**
 
+
+
+

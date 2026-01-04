@@ -28,7 +28,7 @@ export async function queueRequest(
   maxRetries: number = MAX_RETRIES
 ): Promise<void> {
   const queue = getQueue();
-  
+
   const queuedRequest: QueuedRequest = {
     id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     url,
@@ -50,6 +50,7 @@ export async function queueRequest(
   if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
     try {
       const registration = await navigator.serviceWorker.ready;
+      // @ts-ignore
       await registration.sync.register('sync-queue');
     } catch (error) {
       console.warn('Background sync registration failed:', error);

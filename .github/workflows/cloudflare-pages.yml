@@ -60,3 +60,6 @@ jobs:
           echo "✅ Deployment successful!"
           echo "🌐 View deployment at: https://dinein-malta.pages.dev"
 
+
+
+

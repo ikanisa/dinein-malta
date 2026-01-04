@@ -3,7 +3,8 @@
  * Handles order creation with background sync for offline scenarios
  */
 
-import { createOrder as dbCreateOrder, type Order } from './databaseService';
+import { createOrder as dbCreateOrder } from './databaseService';
+import { type Order } from '../types';
 import { queueRequest } from './offlineQueue';
 import { supabase } from './supabase';
 
@@ -49,6 +50,7 @@ export async function createOrderWithOfflineSupport(input: CreateOrderInput): Pr
     if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
       try {
         const registration = await navigator.serviceWorker.ready;
+        // @ts-ignore
         await registration.sync.register(`sync-order-${tempOrderId}`);
       } catch (error) {
         console.warn('Background sync registration failed:', error);
@@ -64,9 +66,11 @@ export async function createOrderWithOfflineSupport(input: CreateOrderInput): Pr
       status: 'received' as any,
       paymentStatus: 'unpaid' as any,
       totalAmount: input.totalAmount || 0,
-      items: input.items,
+      items: orderData.items as any,
+      currency: 'EUR',
+      timestamp: Date.now(),
       createdAt: new Date().toISOString(),
-      customerNote: input.notes,
+      customerNote: orderData.notes || ''
     };
 
     return tempOrder;

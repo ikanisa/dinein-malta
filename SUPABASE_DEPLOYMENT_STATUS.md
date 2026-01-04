@@ -64,3 +64,6 @@ All tables, functions, RLS policies, and indexes are deployed:
 
 The Supabase project is ready for production use.
 
+
+
+

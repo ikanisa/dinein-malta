@@ -194,3 +194,6 @@ Each push to `main` will automatically build and deploy.
 
 **Recommended**: Use Supabase Hosting for seamless integration with your Supabase backend.
 
+
+
+

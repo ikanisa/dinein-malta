@@ -40,7 +40,7 @@ const ClientOrderStatus = () => {
       if (orderData) {
         setOrder(orderData);
         // Stop polling if order is complete
-        if (orderData.status === 'served' || orderData.status === 'cancelled') {
+        if (orderData.status === OrderStatus.SERVED || orderData.status === OrderStatus.CANCELLED) {
           setPolling(false);
         }
       } else {
@@ -57,11 +57,11 @@ const ClientOrderStatus = () => {
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case 'received':
+      case OrderStatus.RECEIVED:
         return 'text-blue-500';
-      case 'served':
+      case OrderStatus.SERVED:
         return 'text-green-500';
-      case 'cancelled':
+      case OrderStatus.CANCELLED:
         return 'text-red-500';
       default:
         return 'text-muted';
@@ -70,11 +70,11 @@ const ClientOrderStatus = () => {
 
   const getStatusIcon = (status: OrderStatus) => {
     switch (status) {
-      case 'received':
+      case OrderStatus.RECEIVED:
         return '⏳';
-      case 'served':
+      case OrderStatus.SERVED:
         return '✅';
-      case 'cancelled':
+      case OrderStatus.CANCELLED:
         return '❌';
       default:
         return '📦';
@@ -82,7 +82,7 @@ const ClientOrderStatus = () => {
   };
 
   const getPaymentStatusColor = (status: PaymentStatus) => {
-    return (status === 'paid' || status === PaymentStatus.PAID) ? 'text-green-500' : 'text-orange-500';
+    return (status === PaymentStatus.PAID) ? 'text-green-500' : 'text-orange-500';
   };
 
   if (loading) {
@@ -149,12 +149,12 @@ const ClientOrderStatus = () => {
 
           {/* Status Progress */}
           <div className="mt-4 space-y-2">
-            <div className={`flex items-center gap-2 ${(order.status === 'received' || order.status === OrderStatus.RECEIVED) ? 'text-blue-500' : 'text-muted'}`}>
-              <span>{(order.status === 'received' || order.status === OrderStatus.RECEIVED) ? '●' : '○'}</span>
+            <div className={`flex items-center gap-2 ${(order.status === OrderStatus.RECEIVED) ? 'text-blue-500' : 'text-muted'}`}>
+              <span>{(order.status === OrderStatus.RECEIVED) ? '●' : '○'}</span>
               <span className="text-sm">Order Received</span>
             </div>
-            <div className={`flex items-center gap-2 ${(order.status === 'served' || order.status === OrderStatus.SERVED) ? 'text-green-500' : 'text-muted'}`}>
-              <span>{(order.status === 'served' || order.status === OrderStatus.SERVED) ? '●' : '○'}</span>
+            <div className={`flex items-center gap-2 ${(order.status === OrderStatus.SERVED) ? 'text-green-500' : 'text-muted'}`}>
+              <span>{(order.status === OrderStatus.SERVED) ? '●' : '○'}</span>
               <span className="text-sm">Order Served</span>
             </div>
           </div>
@@ -169,7 +169,7 @@ const ClientOrderStatus = () => {
               const itemName = typeof item === 'object' && 'item' in item ? item.item.name : (item as any).name || 'Item';
               const itemPrice = typeof item === 'object' && 'item' in item ? item.item.price : (item as any).price || 0;
               const itemQuantity = typeof item === 'object' && 'quantity' in item ? item.quantity : (item as any).quantity || 1;
-              
+
               return (
                 <div key={index} className="flex justify-between items-start pb-3 border-b border-border last:border-0">
                   <div className="flex-1">
@@ -218,11 +218,11 @@ const ClientOrderStatus = () => {
 
         {/* Actions */}
         <div className="space-y-3">
-          {(order.paymentStatus === 'unpaid' || order.paymentStatus === PaymentStatus.UNPAID) && (
+          {(order.paymentStatus === PaymentStatus.UNPAID) && (
             <button
               onClick={() => {
                 // Navigate to payment or show payment options
-                toast.info('Payment options coming soon');
+                toast('Payment options coming soon', { icon: 'ℹ️' });
               }}
               className="w-full py-4 bg-blue-500 text-white rounded-xl font-bold"
             >

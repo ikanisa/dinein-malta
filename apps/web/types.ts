@@ -23,16 +23,16 @@ export enum ReservationStatus {
 }
 
 export interface UIContext {
-    appName: string;
-    greeting: string;
-    currencySymbol: string;
-    visualVibe?: string;
+  appName: string;
+  greeting: string;
+  currencySymbol: string;
+  visualVibe?: string;
 }
 
 export interface MenuOption {
   id: string;
   name: string;
-  priceModifier: number; 
+  priceModifier: number;
 }
 
 export interface MenuItem {
@@ -61,7 +61,7 @@ export interface Venue {
   instagramUrl?: string;
   facebookUrl?: string;
   openingHours?: string;
-  tags?: string[]; 
+  tags?: string[];
   menu: MenuItem[];
   imageUrl?: string;
   ownerId?: string;
@@ -74,20 +74,9 @@ export interface Venue {
 export interface Table {
   id: string;
   venueId: string;
-  label: string; 
-  code: string; 
+  label: string;
+  code: string;
   active: boolean;
-}
-
-export interface Reservation {
-  id: string;
-  venueId: string;
-  clientAuthUserId: string; // Changed from customerName - matches DB schema
-  partySize: number;
-  datetime: string; // ISO timestamp string, changed from dateTime (number)
-  note?: string;
-  status: ReservationStatus;
-  createdAt: string; // ISO timestamp string
 }
 
 export interface Order {
@@ -101,7 +90,20 @@ export interface Order {
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   timestamp: number;
+  createdAt?: string;
   customerNote?: string;
+}
+
+export interface Reservation {
+  id: string;
+  venueId: string;
+  clientAuthUserId: string;
+  customerName?: string;
+  partySize: number;
+  datetime: string; // ISO timestamp string
+  note?: string;
+  status: ReservationStatus;
+  createdAt: string;
 }
 
 export interface User {

@@ -138,3 +138,6 @@
 - **OAuth Failed** → Show error, retry
 - **Vendor Creation Failed** → Show error details
 
+
+
+
