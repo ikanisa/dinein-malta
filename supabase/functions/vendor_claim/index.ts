@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,20 +8,28 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-interface VendorClaimInput {
-  google_place_id: string;
-  slug?: string;
-  name: string;
-  address?: string;
-  lat?: number;
-  lng?: number;
-  hours_json?: any;
-  photos_json?: any;
-  website?: string;
-  phone?: string;
-  revolut_link?: string;
-  whatsapp?: string;
-}
+const vendorClaimSchema = z.object({
+  google_place_id: z.string().min(1),
+  slug: z.string().min(1).optional().nullable(),
+  name: z.string().min(1),
+  address: z.string().optional().nullable(),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
+  hours_json: z.unknown().optional().nullable(),
+  photos_json: z.unknown().optional().nullable(),
+  website: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  revolut_link: z.string().optional().nullable(),
+  whatsapp: z.string().optional().nullable(),
+});
+
+type VendorClaimInput = z.infer<typeof vendorClaimSchema>;
+
+const RATE_LIMIT = {
+  maxRequests: 10,
+  window: "1 hour",
+  endpoint: "vendor_claim",
+};
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -81,14 +90,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body
-    const body: VendorClaimInput = await req.json();
-
-    // Validate required fields
-    if (!body.google_place_id || !body.name) {
+    // Parse + validate request body
+    const body = await req.json();
+    const parsed = vendorClaimSchema.safeParse(body);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: google_place_id, name" }),
+        JSON.stringify({ error: "Invalid request data", details: parsed.error.issues }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const input: VendorClaimInput = parsed.data;
+
+    const { data: allowed, error: rateLimitError } = await supabaseAdmin.rpc("check_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: RATE_LIMIT.endpoint,
+      p_limit: RATE_LIMIT.maxRequests,
+      p_window: RATE_LIMIT.window,
+    });
+
+    if (rateLimitError) {
+      console.error("Rate limit check failed:", rateLimitError);
+      return new Response(
+        JSON.stringify({ error: "Rate limit check failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many requests" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -98,7 +130,7 @@ Deno.serve(async (req) => {
     const { data: existingVendor } = await supabaseAdmin
       .from("vendors")
       .select("id, status")
-      .eq("google_place_id", body.google_place_id)
+      .eq("google_place_id", input.google_place_id)
       .single();
 
     if (existingVendor) {
@@ -143,7 +175,7 @@ Deno.serve(async (req) => {
         .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
     };
 
-    let slug = body.slug || generateSlug(body.name);
+    let slug = input.slug || generateSlug(input.name);
     let slugAttempts = 0;
     let slugExists = true;
 
@@ -174,18 +206,18 @@ Deno.serve(async (req) => {
     // STEP 3: Create vendor record
     // ========================================================================
     const vendorData = {
-      google_place_id: body.google_place_id,
+      google_place_id: input.google_place_id,
       slug: slug,
-      name: body.name,
-      address: body.address || null,
-      lat: body.lat || null,
-      lng: body.lng || null,
-      hours_json: body.hours_json || null,
-      photos_json: body.photos_json || null,
-      website: body.website || null,
-      phone: body.phone || null,
-      revolut_link: body.revolut_link || null,
-      whatsapp: body.whatsapp || null,
+      name: input.name,
+      address: input.address || null,
+      lat: input.lat || null,
+      lng: input.lng || null,
+      hours_json: input.hours_json || null,
+      photos_json: input.photos_json || null,
+      website: input.website || null,
+      phone: input.phone || null,
+      revolut_link: input.revolut_link || null,
+      whatsapp: input.whatsapp || null,
       status: "pending", // Requires admin approval
       country: "MT",
     };
@@ -253,4 +285,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-

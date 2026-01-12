@@ -66,6 +66,13 @@ const OfflineIndicator = () => {
           }
         });
       });
+      import('./services/orderService').then(({ processQueuedOrders }) => {
+        processQueuedOrders().then(({ success, failed }) => {
+          if (success > 0 || failed > 0) {
+            console.log(`Synced ${success} queued orders, ${failed} failed`);
+          }
+        });
+      });
     };
     const handleOffline = () => {
       setIsOnline(false);
@@ -237,6 +244,30 @@ const DevButton = () => {
   );
 };
 
+const MenuEntry = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let lastVenueId: string | null = null;
+    try {
+      lastVenueId = localStorage.getItem('last_venue_id');
+    } catch (error) {
+      console.warn('Failed to read last venue from storage', error);
+    }
+    if (lastVenueId) {
+      navigate(`/menu/${lastVenueId}`, { replace: true });
+      return;
+    }
+    navigate('/explore', { replace: true });
+  }, [navigate]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-muted">Loading menu...</div>
+    </div>
+  );
+};
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   
@@ -264,8 +295,11 @@ const AnimatedRoutes = () => {
               <Route path="/explore" element={<ClientExplore />} />
               <Route path="/profile" element={<ClientProfile />} />
               <Route path="/order/:id" element={<ClientOrderStatus />} />
-              <Route path="/v/:vendorSlug" element={<ClientMenu />} />
-              <Route path="/v/:vendorSlug/t/:tableCode" element={<ClientMenu />} />
+              <Route path="/menu" element={<MenuEntry />} />
+              <Route path="/menu/:venueId" element={<ClientMenu />} />
+              <Route path="/menu/:venueId/t/:tableCode" element={<ClientMenu />} />
+              <Route path="/v/:venueId" element={<ClientMenu />} />
+              <Route path="/v/:venueId/t/:tableCode" element={<ClientMenu />} />
 
               {/* Vendor Routes (Private) */}
               <Route path="/vendor/login" element={<VendorLogin />} />
@@ -357,7 +391,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   // Bottom Navigation
   const NavBtn = ({ icon, label, path, badge }: { icon: string; label: string; path: string; badge?: number }) => {
-    const isActive = location.pathname === path || (path === '/' && location.pathname === '/');
+    const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
     return (
       <button
         onClick={() => {

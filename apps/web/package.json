@@ -17,11 +17,15 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,json,css,md}\"",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@google/genai": "*",
     "@remix-run/router": "1.16.1",
+    "@sentry/react": "^7.120.4",
+    "@sentry/tracing": "^7.120.4",
     "@supabase/supabase-js": "^2.45.0",
     "clsx": "2.1.0",
     "framer-motion": "10.16.4",
@@ -33,9 +37,11 @@
     "react-hot-toast": "2.4.1",
     "react-router-dom": "6.28.0",
     "serve": "^14.2.5",
-    "tailwind-merge": "2.2.1"
+    "tailwind-merge": "2.2.1",
+    "web-vitals": "^5.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",

@@ -1,9 +1,10 @@
 // Service Worker for DineIn PWA
 // Cache-first strategy for static assets, network-first for API calls
 
-const CACHE_NAME = 'dinein-v1';
-const STATIC_CACHE = 'dinein-static-v1';
-const API_CACHE = 'dinein-api-v1';
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = `dinein-${CACHE_VERSION}`;
+const STATIC_CACHE = `dinein-static-${CACHE_VERSION}`;
+const API_CACHE = `dinein-api-${CACHE_VERSION}`;
 
 // Assets to precache
 const PRECACHE_ASSETS = [
@@ -39,9 +40,9 @@ self.addEventListener('activate', (event) => {
             return caches.delete(name);
           })
       );
-    })
+    }).then(() => self.clients.claim())
+      .then(() => notifyClients({ type: 'SW_UPDATED', version: CACHE_VERSION }))
   );
-  event.waitUntil(self.clients.claim());
 });
 
 // Fetch event - cache strategy
@@ -142,68 +143,23 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(fetch(request));
 });
 
-// Background sync for offline orders
+// Background sync: notify clients to process queued work with auth
 self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-queue') {
+    event.waitUntil(notifyClients({ type: 'SYNC_QUEUE' }));
+  }
+
   if (event.tag.startsWith('sync-order-')) {
-    event.waitUntil(syncOrder(event.tag));
+    event.waitUntil(
+      notifyClients({
+        type: 'SYNC_ORDER',
+        orderId: event.tag.replace('sync-order-', ''),
+      })
+    );
   }
 });
 
-async function syncOrder(tag) {
-  try {
-    const queuedOrders = JSON.parse(localStorage.getItem('queued_orders') || '[]');
-    const orderId = tag.replace('sync-order-', '');
-    const queuedOrder = queuedOrders.find((o) => o.id === orderId);
-
-    if (!queuedOrder) {
-      return;
-    }
-
-    // Try to create order
-    const response = await fetch('/functions/order_create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${await getAuthToken()}`,
-      },
-      body: JSON.stringify(queuedOrder.orderData),
-    });
-
-    if (response.ok) {
-      // Remove from queue
-      const updated = queuedOrders.filter((o) => o.id !== orderId);
-      localStorage.setItem('queued_orders', JSON.stringify(updated));
-      
-      // Notify client
-      const clients = await self.clients.matchAll();
-      clients.forEach((client) => {
-        client.postMessage({
-          type: 'ORDER_SYNCED',
-          orderId: queuedOrder.orderData.vendor_id,
-        });
-      });
-    }
-  } catch (error) {
-    console.error('[SW] Sync error:', error);
-  }
-}
-
-async function getAuthToken() {
-  // Get auth token from IndexedDB or return null
-  // This is a simplified version - in production, you'd need to store the token
-  return null;
-}
-
-// Message handler for manual sync
-self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SYNC_QUEUE') {
-    event.waitUntil(syncAllOrders());
-  }
-});
-
-async function syncAllOrders() {
-  const queuedOrders = JSON.parse(localStorage.getItem('queued_orders') || '[]');
-  for (const order of queuedOrders) {
-    await syncOrder(`sync-order-${order.id}`);
-  }
+async function notifyClients(message) {
+  const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+  clients.forEach((client) => client.postMessage(message));
 }

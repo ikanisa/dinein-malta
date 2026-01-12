@@ -8,6 +8,9 @@ describe('Analytics Service', () => {
   beforeEach(() => {
     // Mock gtag
     (window as any).gtag = jest.fn();
+    // Reset singleton state between tests
+    (analytics as any).initialized = false;
+    (analytics as any).measurementId = null;
   });
 
   afterEach(() => {
@@ -71,6 +74,5 @@ describe('Analytics Service', () => {
     });
   });
 });
-
 
 

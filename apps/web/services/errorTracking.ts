@@ -1,7 +1,10 @@
 /**
  * Error Tracking Service
- * Integrates with error tracking service (Sentry-ready)
+ * Integrates with Sentry for error monitoring and performance.
  */
+
+import * as Sentry from '@sentry/react';
+import { BrowserTracing } from '@sentry/tracing';
 
 export interface ErrorContext {
   userId?: string;
@@ -15,6 +18,7 @@ export interface ErrorContext {
 class ErrorTracker {
   private initialized = false;
   private sentryDSN: string | null = null;
+  private sentryEnabled = false;
 
   /**
    * Initialize error tracking (Sentry)
@@ -25,10 +29,17 @@ class ErrorTracker {
     this.sentryDSN = dsn || import.meta.env.VITE_SENTRY_DSN || null;
 
     if (this.sentryDSN) {
-      // In production, initialize Sentry here
-      // import * as Sentry from "@sentry/react";
-      // Sentry.init({ dsn: this.sentryDSN, ... });
-      console.log('Error tracking initialized');
+      const tracesSampleRate = Number(
+        import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE || '0.1'
+      );
+
+      Sentry.init({
+        dsn: this.sentryDSN,
+        integrations: [new BrowserTracing()],
+        tracesSampleRate: Number.isNaN(tracesSampleRate) ? 0.1 : tracesSampleRate,
+        environment: import.meta.env.MODE,
+      });
+      this.sentryEnabled = true;
     }
 
     this.initialized = true;
@@ -40,10 +51,9 @@ class ErrorTracker {
   captureError(error: Error, context?: ErrorContext) {
     console.error('Error captured:', error, context);
 
-    // In production, send to Sentry
-    // if (this.initialized && this.sentryDSN) {
-    //   Sentry.captureException(error, { extra: context });
-    // }
+    if (this.initialized && this.sentryEnabled) {
+      Sentry.captureException(error, { extra: context });
+    }
 
     // For now, log to console and potentially send to backend
     this.logError(error, context);
@@ -55,40 +65,36 @@ class ErrorTracker {
   captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context?: ErrorContext) {
     console.log(`[${level.toUpperCase()}]`, message, context);
 
-    // In production, send to Sentry
-    // if (this.initialized && this.sentryDSN) {
-    //   Sentry.captureMessage(message, { level, extra: context });
-    // }
+    if (this.initialized && this.sentryEnabled) {
+      Sentry.captureMessage(message, { level, extra: context });
+    }
   }
 
   /**
    * Set user context
    */
   setUser(userId: string, email?: string, metadata?: Record<string, any>) {
-    // In production, set Sentry user context
-    // if (this.initialized && this.sentryDSN) {
-    //   Sentry.setUser({ id: userId, email, ...metadata });
-    // }
+    if (this.initialized && this.sentryEnabled) {
+      Sentry.setUser({ id: userId, email, ...metadata });
+    }
   }
 
   /**
    * Clear user context
    */
   clearUser() {
-    // In production, clear Sentry user context
-    // if (this.initialized && this.sentryDSN) {
-    //   Sentry.setUser(null);
-    // }
+    if (this.initialized && this.sentryEnabled) {
+      Sentry.setUser(null);
+    }
   }
 
   /**
    * Add breadcrumb for debugging
    */
   addBreadcrumb(message: string, category?: string, level: 'info' | 'warning' | 'error' = 'info', data?: Record<string, any>) {
-    // In production, add Sentry breadcrumb
-    // if (this.initialized && this.sentryDSN) {
-    //   Sentry.addBreadcrumb({ message, category, level, data });
-    // }
+    if (this.initialized && this.sentryEnabled) {
+      Sentry.addBreadcrumb({ message, category, level, data });
+    }
   }
 
   /**
@@ -124,6 +130,5 @@ export const errorTracker = new ErrorTracker();
 if (import.meta.env.PROD) {
   errorTracker.init();
 }
-
 
 

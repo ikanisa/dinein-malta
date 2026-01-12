@@ -1,4 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,6 +24,36 @@ function toNumber(v: unknown) {
   const n = typeof v === "string" ? Number(v) : (typeof v === "number" ? v : NaN);
   return Number.isFinite(n) ? n : null;
 }
+
+const numberFromUnknown = z.preprocess((value) => {
+  if (typeof value === "string" || typeof value === "number") {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : value;
+  }
+  return value;
+}, z.number());
+
+const limitSchema = z.preprocess((value) => {
+  if (typeof value === "string" || typeof value === "number") {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : value;
+  }
+  return value;
+}, z.number().int().min(1).max(30));
+
+const nearbyPlacesSchema = z.object({
+  lat: numberFromUnknown,
+  lng: numberFromUnknown,
+  limit: limitSchema.optional(),
+  mode: z.enum(["client", "vendor"]).optional(),
+  intent: z.string().optional(),
+});
+
+const RATE_LIMIT = {
+  maxRequests: 30,
+  window: "1 hour",
+  endpoint: "nearby_places_live",
+};
 
 function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371000;
@@ -75,29 +107,60 @@ Deno.serve(async (req) => {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) return json({ ok: false, error: "MISSING_GEMINI_API_KEY" }, 500);
 
-    // Require auth header (keep it simple; Supabase “Verify JWT” can enforce validity)
+    // Require auth header + verify user
     const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
     if (!authHeader) return json({ ok: false, error: "MISSING_AUTHORIZATION" }, 401);
 
-    let body: any = {};
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+      return json({ ok: false, error: "SUPABASE_ENV_MISSING" }, 500);
+    }
+
+    const supabaseUser = createClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) return json({ ok: false, error: "UNAUTHORIZED" }, 401);
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    let body: unknown;
     try {
       body = await req.json();
     } catch {
       return json({ ok: false, error: "INVALID_JSON_BODY" }, 400);
     }
 
-    const lat = toNumber(body?.lat);
-    const lng = toNumber(body?.lng);
-    const limitRaw = toNumber(body?.limit);
-    const limit = Math.max(1, Math.min(30, limitRaw ?? 30));
-    const mode = (typeof body?.mode === "string" ? body.mode : "client") as "client" | "vendor";
-    const intent = typeof body?.intent === "string" ? body.intent.trim() : "";
-
-    if (lat === null || lng === null) {
-      return json({ ok: false, error: "lat/lng required", hint: { lat: "number", lng: "number" } }, 400);
+    const parsed = nearbyPlacesSchema.safeParse(body);
+    if (!parsed.success) {
+      return json({ ok: false, error: "INVALID_REQUEST", details: parsed.error.issues }, 400);
     }
+
+    const { lat, lng } = parsed.data;
+    const limit = parsed.data.limit ?? 30;
+    const mode = parsed.data.mode ?? "client";
+    const intent = parsed.data.intent?.trim() ?? "";
     if (!isInMalta(lat, lng)) {
       return json({ ok: false, error: "OUT_OF_SCOPE_MALTA_ONLY" }, 400);
+    }
+
+    const { data: allowed, error: rateLimitError } = await supabaseAdmin.rpc("check_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: RATE_LIMIT.endpoint,
+      p_limit: RATE_LIMIT.maxRequests,
+      p_window: RATE_LIMIT.window,
+    });
+
+    if (rateLimitError) {
+      return json({ ok: false, error: "RATE_LIMIT_CHECK_FAILED" }, 500);
+    }
+
+    if (!allowed) {
+      return json({ ok: false, error: "TOO_MANY_REQUESTS" }, 429);
     }
 
     const userIntentLine = intent ? `User intent: ${intent}\n` : "";

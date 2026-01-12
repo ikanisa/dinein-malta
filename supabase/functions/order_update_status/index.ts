@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,10 +8,18 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-interface OrderUpdateStatusInput {
-  order_id: string;
-  status: "served" | "cancelled"; // Only allow these transitions
-}
+const orderUpdateSchema = z.object({
+  order_id: z.string().uuid(),
+  status: z.enum(["served", "cancelled"]),
+});
+
+type OrderUpdateStatusInput = z.infer<typeof orderUpdateSchema>;
+
+const RATE_LIMIT = {
+  maxRequests: 60,
+  window: "1 hour",
+  endpoint: "order_update_status",
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -52,19 +61,36 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body: OrderUpdateStatusInput = await req.json();
-
-    if (!body.order_id || !body.status) {
+    const body = await req.json();
+    const parsed = orderUpdateSchema.safeParse(body);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: order_id, status" }),
+        JSON.stringify({ error: "Invalid request data", details: parsed.error.issues }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!["served", "cancelled"].includes(body.status)) {
+    const input: OrderUpdateStatusInput = parsed.data;
+
+    const { data: allowed, error: rateLimitError } = await supabaseAdmin.rpc("check_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: RATE_LIMIT.endpoint,
+      p_limit: RATE_LIMIT.maxRequests,
+      p_window: RATE_LIMIT.window,
+    });
+
+    if (rateLimitError) {
+      console.error("Rate limit check failed:", rateLimitError);
       return new Response(
-        JSON.stringify({ error: "Invalid status. Must be 'served' or 'cancelled'" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Rate limit check failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many requests" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -72,7 +98,7 @@ Deno.serve(async (req) => {
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .select("id, vendor_id, status")
-      .eq("id", body.order_id)
+      .eq("id", input.order_id)
       .single();
 
     if (orderError || !order) {
@@ -121,8 +147,8 @@ Deno.serve(async (req) => {
     // Update order status
     const { data: updatedOrder, error: updateError } = await supabaseAdmin
       .from("orders")
-      .update({ status: body.status })
-      .eq("id", body.order_id)
+      .update({ status: input.status })
+      .eq("id", input.order_id)
       .select()
       .single();
 
@@ -152,4 +178,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-

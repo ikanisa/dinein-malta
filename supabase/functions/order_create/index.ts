@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,18 +8,26 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-interface OrderItemInput {
-  menu_item_id: string;
-  qty: number;
-  modifiers_json?: any;
-}
+const orderItemSchema = z.object({
+  menu_item_id: z.string().uuid(),
+  qty: z.number().int().positive(),
+  modifiers_json: z.unknown().optional(),
+});
 
-interface CreateOrderInput {
-  vendor_id: string;
-  table_public_code: string;
-  items: OrderItemInput[];
-  notes?: string;
-}
+const createOrderSchema = z.object({
+  vendor_id: z.string().uuid(),
+  table_public_code: z.string().min(1),
+  items: z.array(orderItemSchema).min(1),
+  notes: z.string().max(1000).optional(),
+});
+
+type CreateOrderInput = z.infer<typeof createOrderSchema>;
+
+const RATE_LIMIT = {
+  maxRequests: 20,
+  window: "1 hour",
+  endpoint: "order_create",
+};
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -64,14 +73,38 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body
-    const body: CreateOrderInput = await req.json();
-
-    // Validate input
-    if (!body.vendor_id || !body.table_public_code || !body.items || body.items.length === 0) {
+    // Parse + validate input
+    const body = await req.json();
+    const parsed = createOrderSchema.safeParse(body);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: vendor_id, table_public_code, items" }),
+        JSON.stringify({ error: "Invalid request data", details: parsed.error.issues }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const input: CreateOrderInput = parsed.data;
+
+    // Rate limiting (per user + endpoint)
+    const { data: allowed, error: rateLimitError } = await supabaseAdmin.rpc("check_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: RATE_LIMIT.endpoint,
+      p_limit: RATE_LIMIT.maxRequests,
+      p_window: RATE_LIMIT.window,
+    });
+
+    if (rateLimitError) {
+      console.error("Rate limit check failed:", rateLimitError);
+      return new Response(
+        JSON.stringify({ error: "Rate limit check failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many requests" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -81,7 +114,7 @@ Deno.serve(async (req) => {
     const { data: vendor, error: vendorError } = await supabaseAdmin
       .from("vendors")
       .select("id, status")
-      .eq("id", body.vendor_id)
+      .eq("id", input.vendor_id)
       .single();
 
     if (vendorError || !vendor) {
@@ -101,15 +134,43 @@ Deno.serve(async (req) => {
     // ========================================================================
     // STEP 2: Validate table belongs to vendor and is active
     // ========================================================================
-    const { data: table, error: tableError } = await supabaseAdmin
+    const rawTableInput = input.table_public_code.trim();
+    const normalizedTableCode = rawTableInput.toUpperCase();
+
+    let table: { id: string; vendor_id: string; table_number: number; label: string } | null = null;
+
+    const { data: tableByCode } = await supabaseAdmin
       .from("tables")
       .select("id, vendor_id, table_number, label")
-      .eq("public_code", body.table_public_code)
-      .eq("vendor_id", body.vendor_id)
+      .eq("public_code", normalizedTableCode)
+      .eq("vendor_id", input.vendor_id)
       .eq("is_active", true)
       .single();
 
-    if (tableError || !table) {
+    if (tableByCode) {
+      table = tableByCode;
+    } else {
+      const isLikelyPublicCode = /^TBL-[A-Z0-9]+$/i.test(rawTableInput);
+      if (!isLikelyPublicCode) {
+        const digitsMatch = rawTableInput.match(/\d+/);
+        const tableNumber = digitsMatch ? Number.parseInt(digitsMatch[0], 10) : NaN;
+        if (!Number.isNaN(tableNumber)) {
+          const { data: tableByNumber } = await supabaseAdmin
+            .from("tables")
+            .select("id, vendor_id, table_number, label")
+            .eq("table_number", tableNumber)
+            .eq("vendor_id", input.vendor_id)
+            .eq("is_active", true)
+            .single();
+
+          if (tableByNumber) {
+            table = tableByNumber;
+          }
+        }
+      }
+    }
+
+    if (!table) {
       return new Response(
         JSON.stringify({ error: "Table not found or inactive" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -119,12 +180,12 @@ Deno.serve(async (req) => {
     // ========================================================================
     // STEP 3: Fetch menu items and validate availability
     // ========================================================================
-    const menuItemIds = body.items.map((item) => item.menu_item_id);
+    const menuItemIds = input.items.map((item) => item.menu_item_id);
     const { data: menuItems, error: menuItemsError } = await supabaseAdmin
       .from("menu_items")
       .select("id, name, price, is_available, vendor_id")
       .in("id", menuItemIds)
-      .eq("vendor_id", body.vendor_id);
+      .eq("vendor_id", input.vendor_id);
 
     if (menuItemsError || !menuItems || menuItems.length === 0) {
       return new Response(
@@ -135,7 +196,7 @@ Deno.serve(async (req) => {
 
     // Validate all items belong to vendor and are available
     const menuItemsMap = new Map(menuItems.map((item) => [item.id, item]));
-    for (const inputItem of body.items) {
+    for (const inputItem of input.items) {
       const menuItem = menuItemsMap.get(inputItem.menu_item_id);
       if (!menuItem) {
         return new Response(
@@ -161,7 +222,7 @@ Deno.serve(async (req) => {
     // STEP 4: Compute total amount server-side
     // ========================================================================
     let totalAmount = 0;
-    const orderItemsData = body.items.map((inputItem) => {
+    const orderItemsData = input.items.map((inputItem) => {
       const menuItem = menuItemsMap.get(inputItem.menu_item_id)!;
       const itemTotal = Number(menuItem.price) * inputItem.qty;
       totalAmount += itemTotal;
@@ -195,7 +256,7 @@ Deno.serve(async (req) => {
       const { data: existing } = await supabaseAdmin
         .from("orders")
         .select("id")
-        .eq("vendor_id", body.vendor_id)
+        .eq("vendor_id", input.vendor_id)
         .eq("order_code", orderCode)
         .single();
 
@@ -225,7 +286,7 @@ Deno.serve(async (req) => {
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .insert({
-        vendor_id: body.vendor_id,
+        vendor_id: input.vendor_id,
         table_id: table.id,
         client_auth_user_id: user.id,
         order_code: orderCode,
@@ -233,7 +294,7 @@ Deno.serve(async (req) => {
         payment_status: "unpaid",
         total_amount: totalAmount,
         currency: "EUR",
-        notes: body.notes || null,
+        notes: input.notes || null,
       })
       .select()
       .single();
@@ -293,4 +354,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-

@@ -4,9 +4,15 @@
  */
 
 import { createOrder as dbCreateOrder } from './databaseService';
-import { type Order } from '../types';
-import { queueRequest } from './offlineQueue';
+import { type Order, OrderStatus, PaymentStatus } from '../types';
 import { supabase } from './supabase';
+import {
+  enqueueQueuedOrder,
+  getQueuedOrders as getQueuedOrdersFromStore,
+  replaceQueuedOrders,
+  removeQueuedOrders,
+  type QueuedOrderRecord
+} from './queuedOrdersStore';
 
 export interface CreateOrderInput {
   venueId: string;
@@ -16,6 +22,37 @@ export interface CreateOrderInput {
   totalAmount?: number;
   notes?: string;
 }
+
+const ACCESS_TOKEN_REFRESH_WINDOW_MS = 60_000;
+
+const getAuthHeaders = async (): Promise<Record<string, string> | undefined> => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.access_token) {
+      if (error) {
+        console.warn('Failed to read auth session:', error);
+      }
+      return undefined;
+    }
+
+    const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+    if (expiresAt && expiresAt - Date.now() < ACCESS_TOKEN_REFRESH_WINDOW_MS) {
+      const { data, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.warn('Failed to refresh auth session:', refreshError);
+        return { Authorization: `Bearer ${session.access_token}` };
+      }
+      if (data.session?.access_token) {
+        return { Authorization: `Bearer ${data.session.access_token}` };
+      }
+    }
+
+    return { Authorization: `Bearer ${session.access_token}` };
+  } catch (error) {
+    console.warn('Failed to prepare auth headers:', error);
+    return undefined;
+  }
+};
 
 /**
  * Create an order with offline support
@@ -38,13 +75,11 @@ export async function createOrderWithOfflineSupport(input: CreateOrderInput): Pr
 
     // Store the order data for background sync
     const tempOrderId = `temp-${Date.now()}`;
-    const queuedOrders = JSON.parse(localStorage.getItem('queued_orders') || '[]');
-    queuedOrders.push({
+    await enqueueQueuedOrder({
       id: tempOrderId,
       orderData,
       timestamp: Date.now(),
     });
-    localStorage.setItem('queued_orders', JSON.stringify(queuedOrders));
 
     // Register background sync
     if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
@@ -58,19 +93,24 @@ export async function createOrderWithOfflineSupport(input: CreateOrderInput): Pr
     }
 
     // Return a temporary order object for UI
-    const tempOrder: Order = {
+    const tempOrder: Order & { _isQueued: true } = {
       id: tempOrderId,
       venueId: input.venueId,
       tableNumber: input.tableNumber || input.tablePublicCode || '',
       orderCode: 'PENDING',
-      status: 'received' as any,
-      paymentStatus: 'unpaid' as any,
+      status: OrderStatus.RECEIVED,
+      paymentStatus: PaymentStatus.UNPAID,
       totalAmount: input.totalAmount || 0,
-      items: orderData.items as any,
+      items: input.items.map(cartItem => ({
+        item: cartItem.item,
+        quantity: cartItem.quantity,
+        selectedOptions: cartItem.selectedOptions
+      })),
       currency: 'EUR',
       timestamp: Date.now(),
       createdAt: new Date().toISOString(),
-      customerNote: orderData.notes || ''
+      customerNote: orderData.notes || '',
+      _isQueued: true
     };
 
     return tempOrder;
@@ -87,31 +127,35 @@ export async function createOrderWithOfflineSupport(input: CreateOrderInput): Pr
 }
 
 /**
- * Get queued orders from localStorage
+ * Get queued orders from storage
  */
-export function getQueuedOrders(): Array<{ id: string; orderData: any; timestamp: number }> {
-  try {
-    return JSON.parse(localStorage.getItem('queued_orders') || '[]');
-  } catch {
-    return [];
-  }
+export async function getQueuedOrders(): Promise<QueuedOrderRecord[]> {
+  return getQueuedOrdersFromStore();
 }
 
 /**
  * Process queued orders (called when back online)
  */
 export async function processQueuedOrders(): Promise<{ success: number; failed: number }> {
-  const queued = getQueuedOrders();
+  const queued = await getQueuedOrdersFromStore();
   if (queued.length === 0) return { success: 0, failed: 0 };
 
+  const authHeaders = await getAuthHeaders();
   const results = { success: 0, failed: 0 };
   const remaining: typeof queued = [];
 
   for (const queuedOrder of queued) {
     try {
-      await supabase.functions.invoke('order_create', {
+      const { data, error } = await supabase.functions.invoke('order_create', {
         body: queuedOrder.orderData,
+        headers: authHeaders,
       });
+      if (error) {
+        throw error;
+      }
+      if (!data || (typeof data === 'object' && 'success' in data && !data.success)) {
+        throw new Error('Order sync failed');
+      }
       results.success++;
       // Order succeeded, remove from queue
     } catch (error) {
@@ -123,7 +167,7 @@ export async function processQueuedOrders(): Promise<{ success: number; failed: 
   }
 
   // Save remaining queue
-  localStorage.setItem('queued_orders', JSON.stringify(remaining));
+  await replaceQueuedOrders(remaining);
 
   return results;
 }
@@ -131,9 +175,6 @@ export async function processQueuedOrders(): Promise<{ success: number; failed: 
 /**
  * Clear queued orders (after successful sync)
  */
-export function clearQueuedOrders(orderIds: string[]): void {
-  const queued = getQueuedOrders();
-  const remaining = queued.filter(q => !orderIds.includes(q.id));
-  localStorage.setItem('queued_orders', JSON.stringify(remaining));
+export async function clearQueuedOrders(orderIds: string[]): Promise<void> {
+  await removeQueuedOrders(orderIds);
 }
-

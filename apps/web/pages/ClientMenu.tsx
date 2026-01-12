@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GlassCard } from '../components/GlassCard';
-import { Skeleton, MenuListSkeleton } from '../components/Loading';
+import { MenuListSkeleton } from '../components/Loading';
 import { OptimizedImage } from '../components/OptimizedImage';
-import { getVenueById, createOrder, getOrdersForVenue } from '../services/databaseService';
-import { Venue, MenuItem, Order, OrderStatus } from '../types';
+import { getVenueBySlugOrId, getOrdersForVenue, toOrderStatus, toPaymentStatus } from '../services/databaseService';
+import { Venue, Order, OrderStatus } from '../types';
 import { useCart } from '../context/CartContext';
 import { supabase } from '../services/supabase';
 
 const ClientMenu = () => {
-  const { venueId, tableId } = useParams();
+  const { venueId, tableCode } = useParams();
   const navigate = useNavigate();
   const { cart, addToCart, removeFromCart, clearCart, totalAmount, totalItems } = useCart();
   
@@ -21,33 +21,51 @@ const ClientMenu = () => {
   
   // Review Modal State
   const [isReviewOpen, setIsReviewOpen] = useState(false);
-  const [manualTableNum, setManualTableNum] = useState(tableId || '');
+  const [manualTableRef, setManualTableRef] = useState(tableCode || '');
   const [tableError, setTableError] = useState(false);
   
   // Refs
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const tableInputRef = useRef<HTMLInputElement>(null);
 
-  const loadMyOrders = async () => {
+  const loadMyOrders = async (vendorId?: string) => {
       const stored = localStorage.getItem('my_orders_ids');
-      if (stored && venueId) {
+      if (!stored || !vendorId) return;
+      try {
           const ids = JSON.parse(stored);
-          const allVenueOrders = await getOrdersForVenue(venueId);
+          if (!Array.isArray(ids) || ids.length === 0) return;
+          const allVenueOrders = await getOrdersForVenue(vendorId);
           const mines = allVenueOrders.filter(o => ids.includes(o.id));
           setMyOrders(mines.sort((a,b) => b.timestamp - a.timestamp));
+      } catch (error) {
+          console.warn('Failed to load order history', error);
       }
   };
 
   useEffect(() => {
-    if (venueId) {
-      getVenueById(venueId).then(setVenue);
-      loadMyOrders();
-    }
+    if (!venueId) return;
+    let active = true;
+
+    (async () => {
+      const v = await getVenueBySlugOrId(venueId);
+      if (!active) return;
+      setVenue(v);
+      if (v) {
+        try {
+          localStorage.setItem('last_venue_id', v.id);
+        } catch (error) {
+          console.warn('Failed to persist last venue', error);
+        }
+        await loadMyOrders(v.id);
+      }
+    })();
+
+    return () => { active = false; };
   }, [venueId]);
 
   useEffect(() => {
-      if (tableId) setManualTableNum(tableId);
-  }, [tableId]);
+      if (tableCode) setManualTableRef(tableCode);
+  }, [tableCode]);
 
   // Realtime subscription for current order status
   useEffect(() => {
@@ -59,9 +77,13 @@ const ClientMenu = () => {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${currentOrder.id}` },
         async (payload) => {
-            setCurrentOrder(prev => prev ? { ...prev, ...payload.new } : null);
+            setCurrentOrder(prev => prev ? {
+              ...prev,
+              status: toOrderStatus(payload.new.status),
+              paymentStatus: toPaymentStatus(payload.new.payment_status),
+            } : null);
             // Refresh history list too
-            await loadMyOrders();
+            await loadMyOrders(venue?.id);
             
             // Update badge when order status changes
             const { setBadge } = await import('../services/badgeAPI');
@@ -75,7 +97,7 @@ const ClientMenu = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [currentOrder?.id]);
+  }, [currentOrder?.id, venue?.id]);
 
 
   const copyToClipboard = (text: string) => {
@@ -116,7 +138,7 @@ const ClientMenu = () => {
   const paymentProvider = getPaymentProvider();
 
   const validateAndProceed = (method: 'digital' | 'cash') => {
-      if (!manualTableNum.trim()) {
+      if (!manualTableRef.trim()) {
           setTableError(true);
           // Auto-focus the input if invalid
           if (tableInputRef.current) {
@@ -138,17 +160,18 @@ const ClientMenu = () => {
         const { createOrderWithOfflineSupport } = await import('../services/orderService');
         const newOrder = await createOrderWithOfflineSupport({
         venueId: venue.id,
-        tablePublicCode: tableId || manualTableNum.trim(),
-        tableNumber: manualTableNum.trim(),
+        tablePublicCode: tableCode || manualTableRef.trim(),
+        tableNumber: manualTableRef.trim(),
         items: cart,
         totalAmount,
         });
 
-        // Handle queued orders
-        if ((newOrder as any)._isQueued) {
-          // Order is queued for offline sync
+        const isQueued = Boolean((newOrder as any)._isQueued);
+        if (isQueued) {
           const { toast } = await import('react-hot-toast');
           toast.success('Order queued - will be sent when online', { duration: 4000 });
+          clearCart();
+          return;
         }
 
         const stored = localStorage.getItem('my_orders_ids');
@@ -157,7 +180,7 @@ const ClientMenu = () => {
         localStorage.setItem('my_orders_ids', JSON.stringify(ids));
 
         setCurrentOrder(newOrder);
-        loadMyOrders();
+        await loadMyOrders(venue.id);
 
         // Navigate to order status page
         navigate(`/order/${newOrder.id}`);
@@ -307,8 +330,8 @@ const ClientMenu = () => {
          <div className="absolute bottom-0 left-0 w-full p-6 z-20">
              <h1 className="text-4xl font-bold text-white mb-2 leading-tight">{venue.name}</h1>
              <div className="flex flex-wrap gap-2 text-sm text-gray-200">
-                <span className={`bg-black/40 backdrop-blur-md px-2 py-1 rounded-md text-xs font-bold ${!manualTableNum ? 'animate-pulse border border-red-500/50 text-red-200' : 'text-white'}`}>
-                    {manualTableNum ? `Table ${manualTableNum}` : '🚫 No Table Set'}
+                <span className={`bg-black/40 backdrop-blur-md px-2 py-1 rounded-md text-xs font-bold ${!manualTableRef ? 'animate-pulse border border-red-500/50 text-red-200' : 'text-white'}`}>
+                    {manualTableRef ? `Table ${manualTableRef}` : '🚫 No Table Set'}
                 </span>
                 <span>• {venue.description}</span>
              </div>
@@ -421,22 +444,22 @@ const ClientMenu = () => {
                     <button onClick={() => setIsReviewOpen(false)} className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center text-muted">✕</button>
                 </div>
 
-                {/* Table Number Input */}
+                {/* Table Reference Input */}
                 <div className="mb-6 bg-surface-highlight p-4 rounded-xl border border-border">
-                    <label className="text-xs text-muted font-bold uppercase tracking-wider mb-2 block">Table Number (Required)</label>
+                    <label className="text-xs text-muted font-bold uppercase tracking-wider mb-2 block">Table Number or Code (Required)</label>
                     <input 
                         ref={tableInputRef}
                         type="text" 
-                        value={manualTableNum}
+                        value={manualTableRef}
                         onChange={(e) => {
-                            setManualTableNum(e.target.value);
+                            setManualTableRef(e.target.value);
                             if (e.target.value.trim()) setTableError(false);
                         }}
-                        placeholder="e.g. 12 or Bar 3"
+                        placeholder="e.g. 12 or TBL-ABCD"
                         className={`w-full bg-background border p-3 rounded-lg text-foreground font-bold text-lg outline-none transition-colors ${tableError ? 'border-red-500 animate-pulse' : 'border-border focus:border-blue-500'}`}
                     />
                     {tableError && (
-                        <p className="text-red-400 text-xs mt-2 font-bold animate-pulse">Please enter your table number to proceed.</p>
+                        <p className="text-red-400 text-xs mt-2 font-bold animate-pulse">Please enter your table number or code to proceed.</p>
                     )}
                 </div>
 
@@ -474,14 +497,14 @@ const ClientMenu = () => {
                 <div className="grid grid-cols-2 gap-3 pb-6">
                      <button 
                         onClick={() => validateAndProceed('cash')}
-                        className={`py-4 rounded-xl border border-border font-bold transition flex items-center justify-center gap-2 bg-surface-highlight text-muted hover:bg-black/10 active:scale-95 ${!manualTableNum.trim() ? 'opacity-70' : ''}`}
+                        className={`py-4 rounded-xl border border-border font-bold transition flex items-center justify-center gap-2 bg-surface-highlight text-muted hover:bg-black/10 active:scale-95 ${!manualTableRef.trim() ? 'opacity-70' : ''}`}
                      >
                         💶 Cash
                      </button>
                      <button 
                         onClick={() => validateAndProceed('digital')}
                         disabled={!paymentProvider}
-                        className={`py-4 rounded-xl font-bold shadow-lg transition flex items-center justify-center gap-2 ${paymentProvider ? paymentProvider.color + ' text-white' : 'bg-gray-500/20 text-gray-500 cursor-not-allowed'} active:scale-95 ${!manualTableNum.trim() ? 'opacity-70' : ''}`}
+                        className={`py-4 rounded-xl font-bold shadow-lg transition flex items-center justify-center gap-2 ${paymentProvider ? paymentProvider.color + ' text-white' : 'bg-gray-500/20 text-gray-500 cursor-not-allowed'} active:scale-95 ${!manualTableRef.trim() ? 'opacity-70' : ''}`}
                      >
                         {paymentProvider ? <>{paymentProvider.icon} {paymentProvider.name}</> : 'No Digital Pay'}
                      </button>

@@ -18,7 +18,7 @@ class Analytics {
   init(measurementId?: string) {
     if (this.initialized) return;
 
-    this.measurementId = measurementId || import.meta.env.VITE_GA_MEASUREMENT_ID || null;
+    this.measurementId = measurementId || process.env.VITE_GA_MEASUREMENT_ID || null;
 
     if (this.measurementId && typeof window !== 'undefined') {
       // Load Google Analytics script
@@ -29,13 +29,15 @@ class Analytics {
 
       // Initialize gtag
       (window as any).dataLayer = (window as any).dataLayer || [];
-      function gtag(...args: any[]) {
-        (window as any).dataLayer.push(args);
+      if (!(window as any).gtag) {
+        function gtag(...args: any[]) {
+          (window as any).dataLayer.push(args);
+        }
+        (window as any).gtag = gtag;
       }
-      (window as any).gtag = gtag;
 
-      gtag('js', new Date());
-      gtag('config', this.measurementId, {
+      (window as any).gtag('js', new Date());
+      (window as any).gtag('config', this.measurementId, {
         page_path: window.location.pathname,
       });
 
@@ -113,11 +115,6 @@ class Analytics {
 
 export const analytics = new Analytics();
 
-// Initialize on import (can be disabled in dev)
-if (import.meta.env.PROD) {
-  analytics.init();
-}
-
 // Track common events
 export const trackEvent = (eventName: string, params?: Record<string, any>) => {
   analytics.trackEvent(eventName, params);
@@ -145,6 +142,3 @@ export const trackSearch = (query: string, resultCount: number) => {
     result_count: resultCount,
   });
 };
-
-
-

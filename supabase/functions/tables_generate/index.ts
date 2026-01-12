@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,12 +8,22 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-interface TablesGenerateInput {
-  vendor_id: string;
-  count?: number; // If provided, generates count tables starting from 1
-  table_numbers?: number[]; // If provided, generates tables with these numbers
-  start_number?: number; // If count provided, start from this number (default: 1)
-}
+const tablesGenerateSchema = z.object({
+  vendor_id: z.string().uuid(),
+  count: z.number().int().positive().optional(),
+  table_numbers: z.array(z.number().int().positive()).optional(),
+  start_number: z.number().int().positive().optional(),
+}).refine((data) => {
+  return (data.count && data.count > 0) || (data.table_numbers && data.table_numbers.length > 0);
+}, { message: "Must provide either count or table_numbers array" });
+
+type TablesGenerateInput = z.infer<typeof tablesGenerateSchema>;
+
+const RATE_LIMIT = {
+  maxRequests: 20,
+  window: "1 hour",
+  endpoint: "tables_generate",
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -55,12 +66,36 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body: TablesGenerateInput = await req.json();
-
-    if (!body.vendor_id) {
+    const body = await req.json();
+    const parsed = tablesGenerateSchema.safeParse(body);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: "Missing vendor_id" }),
+        JSON.stringify({ error: "Invalid request data", details: parsed.error.issues }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const input: TablesGenerateInput = parsed.data;
+
+    const { data: allowed, error: rateLimitError } = await supabaseAdmin.rpc("check_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: RATE_LIMIT.endpoint,
+      p_limit: RATE_LIMIT.maxRequests,
+      p_window: RATE_LIMIT.window,
+    });
+
+    if (rateLimitError) {
+      console.error("Rate limit check failed:", rateLimitError);
+      return new Response(
+        JSON.stringify({ error: "Rate limit check failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many requests" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -68,7 +103,7 @@ Deno.serve(async (req) => {
     const { data: vendorCheck } = await supabaseUser
       .from("vendor_users")
       .select("role")
-      .eq("vendor_id", body.vendor_id)
+      .eq("vendor_id", input.vendor_id)
       .eq("auth_user_id", user.id)
       .eq("is_active", true)
       .single();
@@ -94,7 +129,7 @@ Deno.serve(async (req) => {
     const { data: vendor } = await supabaseAdmin
       .from("vendors")
       .select("id")
-      .eq("id", body.vendor_id)
+      .eq("id", input.vendor_id)
       .single();
 
     if (!vendor) {
@@ -112,11 +147,11 @@ Deno.serve(async (req) => {
 
     // Determine table numbers to create
     let tableNumbers: number[] = [];
-    if (body.table_numbers && body.table_numbers.length > 0) {
-      tableNumbers = body.table_numbers;
-    } else if (body.count && body.count > 0) {
-      const start = body.start_number || 1;
-      tableNumbers = Array.from({ length: body.count }, (_, i) => start + i);
+    if (input.table_numbers && input.table_numbers.length > 0) {
+      tableNumbers = input.table_numbers;
+    } else if (input.count && input.count > 0) {
+      const start = input.start_number || 1;
+      tableNumbers = Array.from({ length: input.count }, (_, i) => start + i);
     } else {
       return new Response(
         JSON.stringify({ error: "Must provide either count or table_numbers array" }),
@@ -136,7 +171,7 @@ Deno.serve(async (req) => {
     const { data: existingTables } = await supabaseAdmin
       .from("tables")
       .select("table_number")
-      .eq("vendor_id", body.vendor_id)
+      .eq("vendor_id", input.vendor_id)
       .in("table_number", tableNumbers);
 
     if (existingTables && existingTables.length > 0) {
@@ -163,7 +198,7 @@ Deno.serve(async (req) => {
       }
 
       return {
-        vendor_id: body.vendor_id,
+        vendor_id: input.vendor_id,
         table_number: tableNumber,
         label: `Table ${tableNumber}`,
         public_code: publicCode,
@@ -204,4 +239,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-

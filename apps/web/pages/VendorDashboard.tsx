@@ -6,7 +6,8 @@ import { PullToRefresh } from '../components/PullToRefresh';
 import {
     getOrdersForVenue, getVenueByOwner, updateOrderStatus, updateVenueMenu,
     updatePaymentStatus, getTablesForVenue, createTablesBatch, deleteTable,
-    getReservationsForVenue, updateReservationStatus, updateVenue, updateTableStatus, regenerateTableCode, getVenueById
+    getReservationsForVenue, updateReservationStatus, updateVenue, updateTableStatus, regenerateTableCode, getVenueById,
+    toOrderStatus, toPaymentStatus
 } from '../services/databaseService';
 import { parseMenuFromFile, generateMenuItemImagePreview, generateMenuItemImage } from '../services/geminiService';
 import { Order, OrderStatus, Venue, MenuItem, PaymentStatus, Table, Reservation, ReservationStatus, MenuOption } from '../types';
@@ -124,6 +125,26 @@ const VendorDashboard = () => {
         }
     }, []);
 
+    const resolveTableLabel = (tableId?: string | null) => {
+        if (!tableId) return '';
+        const match = tables.find(t => t.id === tableId);
+        return match?.label || match?.code || '';
+    };
+
+    const mapRealtimeOrder = (row: any): Order => ({
+        id: row.id,
+        venueId: row.vendor_id,
+        tableNumber: resolveTableLabel(row.table_id) || 'N/A',
+        orderCode: row.order_code,
+        items: [],
+        totalAmount: Number(row.total_amount || 0),
+        currency: row.currency || 'EUR',
+        status: toOrderStatus(row.status),
+        paymentStatus: toPaymentStatus(row.payment_status),
+        timestamp: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+        customerNote: row.notes || undefined
+    });
+
     // 3. Supabase Realtime Subscription for Orders
     useEffect(() => {
         if (!venueId) return;
@@ -131,10 +152,10 @@ const VendorDashboard = () => {
             .channel('public:orders')
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'orders', filter: `venue_id=eq.${venueId}` },
+                { event: '*', schema: 'public', table: 'orders', filter: `vendor_id=eq.${venueId}` },
                 (payload) => {
                     if (payload.eventType === 'INSERT') {
-                        const newOrder = payload.new as Order;
+                        const newOrder = mapRealtimeOrder(payload.new);
                         setOrders(prev => [newOrder, ...prev]);
 
                         // Local Notification if background
@@ -157,7 +178,8 @@ const VendorDashboard = () => {
                         toast.success(`New Order! Table ${newOrder.tableNumber}`, { icon: '🔔' });
                         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                     } else if (payload.eventType === 'UPDATE') {
-                        setOrders(prev => prev.map(o => o.id === payload.new.id ? { ...o, ...payload.new } as Order : o));
+                        const updatedOrder = mapRealtimeOrder(payload.new);
+                        setOrders(prev => prev.map(o => o.id === updatedOrder.id ? { ...o, ...updatedOrder, tableNumber: updatedOrder.tableNumber || o.tableNumber } : o));
                     }
                 }
             )
@@ -166,7 +188,7 @@ const VendorDashboard = () => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [venueId]);
+    }, [venueId, tables]);
 
     useEffect(() => {
         if (tables.length > 0 && venueId) {

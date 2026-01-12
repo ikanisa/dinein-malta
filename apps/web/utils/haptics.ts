@@ -10,7 +10,7 @@ export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 
  * @param type - Type of haptic feedback
  */
 export const haptic = (type: HapticType = 'medium'): void => {
-  if (!('vibrate' in navigator)) return;
+  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
 
   const patterns: Record<HapticType, number | number[]> = {
     light: 5,
@@ -57,4 +57,3 @@ export const hapticSelection = () => haptic('selection');
  * Haptic feedback for important actions (heavy feedback)
  */
 export const hapticImportant = () => haptic('heavy');
-

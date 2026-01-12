@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '../services/supabase';
 import type { User } from '@supabase/supabase-js';
+import { errorTracker } from '../services/errorTracking';
 
 export type UserRole = 'client' | 'vendor' | 'admin';
 
@@ -129,6 +130,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      errorTracker.setUser(user.id, user.email ?? undefined);
+    } else {
+      errorTracker.clearUser();
+    }
+  }, [user]);
+
   const signInAnonymously = async () => {
     const { data, error } = await supabase.auth.signInAnonymously();
     if (error) throw error;
@@ -184,4 +193,3 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

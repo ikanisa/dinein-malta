@@ -15,6 +15,18 @@ const handleSupabaseError = (error: any, context: string) => {
 // --- MAPPERS ---
 // Maps SQL snake_case to App camelCase
 
+export const toOrderStatus = (value?: string | null): OrderStatus => {
+  const normalized = (value || '').toString().toUpperCase();
+  if (normalized === OrderStatus.SERVED) return OrderStatus.SERVED;
+  if (normalized === OrderStatus.CANCELLED) return OrderStatus.CANCELLED;
+  return OrderStatus.RECEIVED;
+};
+
+export const toPaymentStatus = (value?: string | null): PaymentStatus => {
+  const normalized = (value || '').toString().toUpperCase();
+  return normalized === PaymentStatus.PAID ? PaymentStatus.PAID : PaymentStatus.UNPAID;
+};
+
 const mapVenue = (row: any): Venue => ({
   id: row.id,
   name: row.name,
@@ -39,26 +51,29 @@ const mapVenue = (row: any): Venue => ({
   status: row.status || 'active'
 });
 
-const mapOrder = (row: any): Order => ({
-  id: row.id,
-  venueId: row.venue_id,
-  tableNumber: row.table_number,
-  orderCode: row.order_code,
-  items: row.items || [],
-  totalAmount: row.total_amount,
-  currency: row.currency || '$',
-  status: row.status as OrderStatus,
-  paymentStatus: row.payment_status as PaymentStatus,
-  timestamp: row.timestamp ? parseInt(row.timestamp) : Date.now(),
-  customerNote: row.customer_note
-});
+const mapOrder = (row: any): Order => {
+  const tableLabel = row.table?.label || row.table?.table_number?.toString() || row.table_number?.toString();
+  return {
+    id: row.id,
+    venueId: row.vendor_id || row.venue_id,
+    tableNumber: tableLabel || '',
+    orderCode: row.order_code,
+    items: row.items || [],
+    totalAmount: Number(row.total_amount || 0),
+    currency: row.currency || 'EUR',
+    status: toOrderStatus(row.status),
+    paymentStatus: toPaymentStatus(row.payment_status),
+    timestamp: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+    customerNote: row.notes || row.customer_note
+  };
+};
 
 const mapTable = (row: any): Table => ({
   id: row.id,
-  venueId: row.venue_id,
+  venueId: row.vendor_id || row.venue_id,
   label: row.label,
-  code: row.code,
-  active: row.active
+  code: row.public_code || row.code,
+  active: row.is_active ?? row.active
 });
 
 // Helper to map DB status to frontend enum
@@ -123,7 +138,7 @@ export const getVenueById = async (id: string): Promise<Venue | undefined> => {
   // Optimized query: select only needed columns
   const { data, error } = await supabase
     .from('vendors')
-    .select('id, name, address, google_place_id, revolut_link, phone, whatsapp, website, hours_json, photos_json, lat, lng, status, owner_id')
+    .select('id, name, address, google_place_id, revolut_link, phone, whatsapp, website, hours_json, photos_json, lat, lng, status')
     .eq('id', id)
     .single();
   if (error) return undefined;
@@ -132,6 +147,27 @@ export const getVenueById = async (id: string): Promise<Venue | undefined> => {
   // Fetch menu items using the helper function
   venue.menu = await getMenuItemsForVendor(id);
 
+  return venue;
+};
+
+export const getVenueBySlugOrId = async (value: string): Promise<Venue | null> => {
+  if (!value) return null;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+  if (isUuid) {
+    const venue = await getVenueById(value);
+    return venue || null;
+  }
+
+  const { data, error } = await supabase
+    .from('vendors')
+    .select('id, name, address, google_place_id, revolut_link, phone, whatsapp, website, hours_json, photos_json, lat, lng, status, slug')
+    .eq('slug', value)
+    .single();
+
+  if (error || !data) return null;
+
+  const venue = mapVenue(data);
+  venue.menu = await getMenuItemsForVendor(venue.id);
   return venue;
 };
 
@@ -162,7 +198,7 @@ export const getAllVenues = async (): Promise<Venue[]> => {
   // Optimized query: select only needed columns
   const { data, error } = await supabase
     .from('vendors')
-    .select('id, name, address, google_place_id, revolut_link, phone, whatsapp, website, hours_json, photos_json, lat, lng, status, owner_id')
+    .select('id, name, address, google_place_id, revolut_link, phone, whatsapp, website, hours_json, photos_json, lat, lng, status')
     .eq('status', 'active');
   if (error) handleSupabaseError(error, 'getAllVenues');
   const venues = (data || []).map(mapVenue);
@@ -198,7 +234,7 @@ export const getFeaturedVenues = async (limit = 10): Promise<Venue[]> => {
   // Optimized query: select only needed columns
   const { data, error } = await supabase
     .from('vendors')
-    .select('id, name, address, google_place_id, revolut_link, phone, whatsapp, website, hours_json, photos_json, lat, lng, status, owner_id')
+    .select('id, name, address, google_place_id, revolut_link, phone, whatsapp, website, hours_json, photos_json, lat, lng, status')
     .eq('status', 'active')
     .limit(limit);
   if (error) handleSupabaseError(error, 'getFeaturedVenues');
@@ -578,8 +614,8 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
     items,
     totalAmount: Number(data.total_amount),
     currency: data.currency || 'EUR',
-    status: data.status as OrderStatus,
-    paymentStatus: data.payment_status as PaymentStatus,
+    status: toOrderStatus(data.status),
+    paymentStatus: toPaymentStatus(data.payment_status),
     timestamp: new Date(data.created_at).getTime(),
     customerNote: data.notes || undefined,
     createdAt: data.created_at
@@ -587,13 +623,18 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
 };
 
 export const getOrdersForVenue = async (venueId: string): Promise<Order[]> => {
-  const { data, error } = await supabase.from('orders').select('*').eq('vendor_id', venueId);
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, table:tables (table_number, label, public_code)')
+    .eq('vendor_id', venueId);
   if (error) handleSupabaseError(error, 'getOrdersForVenue');
   return (data || []).map(mapOrder);
 };
 
 export const getAllOrders = async (): Promise<Order[]> => {
-  const { data, error } = await supabase.from('orders').select('*');
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, table:tables (table_number, label, public_code)');
   if (error) handleSupabaseError(error, 'getAllOrders');
   return (data || []).map(mapOrder);
 }
@@ -645,7 +686,10 @@ export const adminSetVendorStatus = async (vendorId: string, status: 'active' | 
 // TABLES
 
 export const getTablesForVenue = async (venueId: string): Promise<Table[]> => {
-  const { data, error } = await supabase.from('tables').select('*').eq('venue_id', venueId);
+  const { data, error } = await supabase
+    .from('tables')
+    .select('id, vendor_id, table_number, label, public_code, is_active')
+    .eq('vendor_id', venueId);
   if (error) handleSupabaseError(error, 'getTables');
   return (data || []).map(mapTable);
 };
@@ -680,16 +724,16 @@ export const deleteTable = async (tableId: string): Promise<void> => {
 };
 
 export const updateTableStatus = async (tableId: string, active: boolean): Promise<void> => {
-  const { error } = await supabase.from('tables').update({ active }).eq('id', tableId);
+  const { error } = await supabase.from('tables').update({ is_active: active }).eq('id', tableId);
   if (error) throw error;
 };
 
 export const regenerateTableCode = async (tableId: string): Promise<void> => {
   const suffix = Math.random().toString(36).substr(2, 6).toUpperCase();
-  const { data } = await supabase.from('tables').select('code').eq('id', tableId).single();
+  const { data } = await supabase.from('tables').select('public_code').eq('id', tableId).single();
   if (data) {
-    const prefix = data.code.split('-')[0];
-    const { error } = await supabase.from('tables').update({ code: `${prefix}-${suffix}` }).eq('id', tableId);
+    const prefix = data.public_code.split('-')[0];
+    const { error } = await supabase.from('tables').update({ public_code: `${prefix}-${suffix}` }).eq('id', tableId);
     if (error) throw error;
   }
 };

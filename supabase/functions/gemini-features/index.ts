@@ -1,4 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,10 +8,66 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-interface GeminiRequest {
-  action: string;
-  payload: any;
-}
+const geminiRequestSchema = z.object({
+  action: z.enum([
+    "discover",
+    "search",
+    "enrich-profile",
+    "adapt",
+    "generate-image",
+    "parse-menu",
+    "smart-description",
+  ]),
+  payload: z.record(z.unknown()).optional(),
+});
+
+const payloadSchemas = {
+  discover: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    radius: z.number().optional(),
+  }),
+  search: z.object({
+    query: z.string().min(1),
+    lat: z.number().optional(),
+    lng: z.number().optional(),
+  }),
+  "enrich-profile": z.object({
+    name: z.string().min(1),
+    address: z.string().min(1),
+  }),
+  adapt: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }),
+  "generate-image": z.object({
+    prompt: z.string().min(1),
+    size: z.enum(["1K", "2K", "4K"]).optional(),
+    locationContext: z.object({
+      city: z.string().optional(),
+      country: z.string().optional(),
+      lat: z.number().optional(),
+      lng: z.number().optional(),
+    }).optional(),
+    referenceImages: z.array(z.string()).optional(),
+  }),
+  "parse-menu": z.object({
+    fileData: z.string().min(1),
+    mimeType: z.string().min(1),
+  }),
+  "smart-description": z.object({
+    name: z.string().min(1),
+    category: z.string().min(1),
+  }),
+} as const;
+
+type GeminiAction = z.infer<typeof geminiRequestSchema>["action"];
+
+const RATE_LIMIT = {
+  maxRequests: 30,
+  window: "1 hour",
+  endpointPrefix: "gemini",
+};
 
 // Gemini API Configuration
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
@@ -500,13 +558,88 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body: GeminiRequest = await req.json();
-    const { action, payload } = body;
-
-    if (!action) {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Missing 'action' field" }),
+        JSON.stringify({ error: "Missing authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+      return new Response(
+        JSON.stringify({ error: "Supabase environment variables missing" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUser = createClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const parsed = geminiRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid request data", details: parsed.error.issues }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { action, payload } = parsed.data;
+    const payloadSchema = payloadSchemas[action as GeminiAction];
+    const payloadParsed = payloadSchema.safeParse(payload ?? {});
+    if (!payloadParsed.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid payload", details: payloadParsed.error.issues }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const validatedPayload = payloadParsed.data;
+
+    const { data: allowed, error: rateLimitError } = await supabaseAdmin.rpc("check_rate_limit", {
+      p_user_id: user.id,
+      p_endpoint: `${RATE_LIMIT.endpointPrefix}_${action}`,
+      p_limit: RATE_LIMIT.maxRequests,
+      p_window: RATE_LIMIT.window,
+    });
+
+    if (rateLimitError) {
+      console.error("Rate limit check failed:", rateLimitError);
+      return new Response(
+        JSON.stringify({ error: "Rate limit check failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many requests" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -514,25 +647,25 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "discover":
-        result = await handleDiscover(payload);
+        result = await handleDiscover(validatedPayload);
         break;
       case "search":
-        result = await handleSearch(payload);
+        result = await handleSearch(validatedPayload);
         break;
       case "enrich-profile":
-        result = await handleEnrichProfile(payload);
+        result = await handleEnrichProfile(validatedPayload);
         break;
       case "adapt":
-        result = await handleAdapt(payload);
+        result = await handleAdapt(validatedPayload);
         break;
       case "generate-image":
-        result = await handleGenerateImage(payload);
+        result = await handleGenerateImage(validatedPayload);
         break;
       case "parse-menu":
-        result = await handleParseMenu(payload);
+        result = await handleParseMenu(validatedPayload);
         break;
       case "smart-description":
-        result = await handleSmartDescription(payload);
+        result = await handleSmartDescription(validatedPayload);
         break;
       default:
         return new Response(

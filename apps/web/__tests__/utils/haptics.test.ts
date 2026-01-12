@@ -40,15 +40,12 @@ describe('Haptics Utilities', () => {
   it('should handle missing vibrate support gracefully', () => {
     const originalVibrate = navigator.vibrate;
     // @ts-ignore
-    delete navigator.vibrate;
+    navigator.vibrate = undefined;
     
     expect(() => hapticButton()).not.toThrow();
     
     // Restore
-    Object.defineProperty(navigator, 'vibrate', {
-      writable: true,
-      value: originalVibrate,
-    });
+    // @ts-ignore
+    navigator.vibrate = originalVibrate;
   });
 });
-
