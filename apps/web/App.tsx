@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
-// Lazy load routes for code splitting and better performance
+// Lazy load routes for code splitting for better performance
 import { lazy, Suspense } from 'react';
 
 const ClientHome = lazy(() => import('./pages/ClientHome'));
@@ -45,10 +45,6 @@ if (import.meta.env.PROD) {
 }
 
 // Legacy vibrate function (for backward compatibility)
-const vibrate = () => {
-    hapticButton();
-};
-
 // --- COMPONENTS ---
 
 const OfflineIndicator = () => {
@@ -92,8 +88,8 @@ const OfflineIndicator = () => {
         // Process queued orders when back online
         import('./services/orderService').then(({ processQueuedOrders }) => {
           processQueuedOrders().then(({ success, failed }) => {
-            if (success > 0) {
-              console.log(`Synced ${success} queued orders`);
+            if (success > 0 || failed > 0) {
+              console.log(`Synced ${success} queued orders, ${failed} failed`);
             }
           });
         });
@@ -196,7 +192,7 @@ const InstallPrompt = () => {
             </h3>
             <p className="text-white/90 text-xs mb-3">
               {isIOS 
-                ? 'Tap the share button, then "Add to Home Screen"'
+                ? 'Tap the share button, then &ldquo;Add to Home Screen&rdquo;'
                 : 'Install for a faster, app-like experience'
               }
             </p>
@@ -204,7 +200,7 @@ const InstallPrompt = () => {
               <div className="flex items-center gap-2 text-white/80 text-xs">
                 <span>Share</span>
                 <span>→</span>
-                <span>"Add to Home Screen"</span>
+                <span>&ldquo;Add to Home Screen&rdquo;</span>
               </div>
             )}
           </div>
@@ -429,6 +425,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className="min-h-screen flex flex-col bg-background" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
       <SkipLink />
       <OfflineIndicator />
+      <Toaster position="top-right" />
       <main
         id="main-content"
         className="flex-1 overflow-y-auto"
@@ -457,6 +454,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       
       <InstallPrompt />
       <UpdatePrompt />
+      <DevButton />
     </div>
   );
 };

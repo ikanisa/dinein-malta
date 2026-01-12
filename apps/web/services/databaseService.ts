@@ -357,16 +357,6 @@ export const getMenuItemsForVendor = async (vendorId: string, includeUnavailable
 };
 
 export const createMenuItem = async (vendorId: string, item: Omit<MenuItem, 'id'>): Promise<MenuItem> => {
-  // Generate image if not provided
-  let imageUrl = item.imageUrl;
-  if (!imageUrl && item.name) {
-    try {
-      // We'll generate the image after creating the item (so we have an ID)
-      // For now, create the item first
-    } catch (e) {
-      console.warn('Image generation will happen after item creation', e);
-    }
-  }
 
   const { data, error } = await supabase
     .from('menu_items')

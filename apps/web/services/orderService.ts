@@ -85,7 +85,7 @@ export async function createOrderWithOfflineSupport(input: CreateOrderInput): Pr
     if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
       try {
         const registration = await navigator.serviceWorker.ready;
-        // @ts-ignore
+        // @ts-expect-error -- sync registration only exists in secure contexts
         await registration.sync.register(`sync-order-${tempOrderId}`);
       } catch (error) {
         console.warn('Background sync registration failed:', error);
@@ -117,13 +117,7 @@ export async function createOrderWithOfflineSupport(input: CreateOrderInput): Pr
   }
 
   // Online - create order normally
-  try {
-    return await dbCreateOrder(input);
-  } catch (error) {
-    // If creation fails and we're still online, throw the error
-    // The UI should handle it appropriately
-    throw error;
-  }
+  return await dbCreateOrder(input);
 }
 
 /**

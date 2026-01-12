@@ -308,7 +308,7 @@ export async function cleanupOldImages(): Promise<void> {
       const fileWeek = parseInt(weekMatch[2]);
       
       // Calculate week difference
-      let weekDiff = (currentYear - fileYear) * 52 + (currentWeek - fileWeek);
+      const weekDiff = (currentYear - fileYear) * 52 + (currentWeek - fileWeek);
       if (weekDiff > 4) {
         // Delete old file
         await supabase.storage
@@ -320,4 +320,3 @@ export async function cleanupOldImages(): Promise<void> {
     console.error('Error cleaning up old images:', error);
   }
 }
-

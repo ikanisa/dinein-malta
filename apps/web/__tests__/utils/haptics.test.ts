@@ -39,13 +39,13 @@ describe('Haptics Utilities', () => {
 
   it('should handle missing vibrate support gracefully', () => {
     const originalVibrate = navigator.vibrate;
-    // @ts-ignore
+    // @ts-expect-error -- navigator.vibrate can be undefined
     navigator.vibrate = undefined;
     
     expect(() => hapticButton()).not.toThrow();
     
     // Restore
-    // @ts-ignore
+    // @ts-expect-error -- restore to the original mocked function
     navigator.vibrate = originalVibrate;
   });
 });

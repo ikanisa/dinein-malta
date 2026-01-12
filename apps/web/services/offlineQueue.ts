@@ -50,7 +50,7 @@ export async function queueRequest(
   if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
     try {
       const registration = await navigator.serviceWorker.ready;
-      // @ts-ignore
+      // @ts-expect-error -- background sync is only available in secure contexts
       await registration.sync.register('sync-queue');
     } catch (error) {
       console.warn('Background sync registration failed:', error);
@@ -160,4 +160,3 @@ export function initQueueProcessor(): void {
     handleOnline();
   }
 }
-

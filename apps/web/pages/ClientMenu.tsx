@@ -250,7 +250,7 @@ const ClientMenu = () => {
             onClick={() => { setShowPaymentModal(false); clearCart(); }}
             className="block w-full py-4 text-center bg-surface-highlight text-foreground font-bold rounded-2xl active:scale-95 transition-transform"
           >
-            I've Paid
+            I&rsquo;ve Paid
           </button>
         </GlassCard>
       </div>

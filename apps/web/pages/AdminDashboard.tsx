@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { GlassCard } from '../components/GlassCard';
 import { getAllVenues, getAllOrders } from '../services/databaseService';
-import { Venue, Order, OrderStatus } from '../types';
+import { Venue } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState({ 
       activeVenues: 0, 
       pendingVenues: 0, 
@@ -18,7 +17,6 @@ const AdminDashboard = () => {
   useEffect(() => {
     Promise.all([getAllVenues(), getAllOrders()]).then(([vData, oData]) => {
         setVenues(vData);
-        setOrders(oData);
         
         // Calculate Stats
         const active = vData.filter(v => v.status === 'active').length;
@@ -54,7 +52,7 @@ const AdminDashboard = () => {
       {/* KPI Grid */}
       <div className="grid grid-cols-2 gap-4">
         <GlassCard className="p-4 bg-gradient-to-br from-white/5 to-white/0 border-border">
-          <div className="text-[10px] text-muted uppercase font-bold tracking-wider">Today's Volume</div>
+          <div className="text-[10px] text-muted uppercase font-bold tracking-wider">Today&apos;s Volume</div>
           <div className="text-3xl font-bold text-foreground mt-1">€{stats.todayRevenue.toFixed(0)}</div>
           <div className="text-xs text-muted">{stats.todayOrders} orders processed</div>
         </GlassCard>

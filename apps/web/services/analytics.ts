@@ -30,9 +30,9 @@ class Analytics {
       // Initialize gtag
       (window as any).dataLayer = (window as any).dataLayer || [];
       if (!(window as any).gtag) {
-        function gtag(...args: any[]) {
+        const gtag = (...args: any[]) => {
           (window as any).dataLayer.push(args);
-        }
+        };
         (window as any).gtag = gtag;
       }
 
