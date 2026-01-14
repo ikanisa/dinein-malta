@@ -9,7 +9,8 @@
    CSS Variables for Mobile Optimization
    ============================================================================ */
 :root {
-  --min-touch-target: 44px; /* iOS/Android guideline minimum */
+  --min-touch-target: 44px;
+  /* iOS/Android guideline minimum */
   --safe-area-top: env(safe-area-inset-top);
   --safe-area-bottom: env(safe-area-inset-bottom);
   --safe-area-left: env(safe-area-inset-left);
@@ -51,7 +52,8 @@
 
 * {
   -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation; /* Optimize touch scrolling */
+  touch-action: manipulation;
+  /* Optimize touch scrolling */
 }
 
 body {
@@ -197,6 +199,7 @@ a:active,
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
@@ -206,6 +209,7 @@ a:active,
   from {
     transform: translateY(0);
   }
+
   to {
     transform: translateY(100%);
   }
@@ -224,18 +228,17 @@ a:active,
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
 }
 
 .shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--bg-surface-highlight) 0px,
-    rgba(255, 255, 255, 0.1) 40px,
-    var(--bg-surface-highlight) 80px
-  );
+  background: linear-gradient(90deg,
+      var(--bg-surface-highlight) 0px,
+      rgba(255, 255, 255, 0.1) 40px,
+      var(--bg-surface-highlight) 80px);
   background-size: 1000px 100%;
   animation: shimmer 2s infinite;
 }
@@ -338,15 +341,27 @@ html {
 
 /* Minimum readable font sizes */
 body {
-  font-size: 1rem; /* 16px base */
+  font-size: 1rem;
+  /* 16px base */
   line-height: 1.5;
 }
 
 /* Headings should scale appropriately */
-h1 { font-size: 2rem; }
-h2 { font-size: 1.5rem; }
-h3 { font-size: 1.25rem; }
-h4 { font-size: 1.125rem; }
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+h4 {
+  font-size: 1.125rem;
+}
 
 h1,
 h2,
@@ -404,9 +419,10 @@ a:focus:not(:focus-visible) {
   body {
     /* Full screen when in standalone mode */
     height: 100vh;
-    height: 100dvh; /* Dynamic viewport height */
+    height: 100dvh;
+    /* Dynamic viewport height */
   }
-  
+
   /* Hide browser UI elements */
   .browser-only {
     display: none;
@@ -446,4 +462,193 @@ a:focus:not(:focus-visible) {
 
 .font-accent {
   font-family: var(--font-accent);
+}
+
+/* ============================================================================
+   REDUCED MOTION SUPPORT
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable specific animations */
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-scale-in,
+  .animate-glass-in,
+  .animate-shimmer {
+    animation: none !important;
+  }
+
+  /* Keep opacity changes but make them instant */
+  .animate-fade-in {
+    opacity: 1;
+  }
+
+  .animate-slide-up {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .animate-scale-in {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   GLASS ANIMATION UTILITIES
+   ============================================================================ */
+
+/* Glass fade in effect */
+.animate-glass-in {
+  animation: glassIn var(--duration-slow, 0.3s) var(--ease-spring, cubic-bezier(0.175, 0.885, 0.32, 1.275));
+}
+
+@keyframes glassIn {
+  0% {
+    transform: scale(0.95) translateY(8px);
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    backdrop-filter: blur(var(--blur-xl, 20px));
+  }
+}
+
+/* Slide up with fade */
+.animate-slide-up-fade {
+  animation: slideUpFade var(--duration-slow, 0.3s) var(--ease-ios, cubic-bezier(0.25, 0.1, 0.25, 1));
+}
+
+@keyframes slideUpFade {
+  0% {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Enhanced shimmer for skeletons */
+.shimmer-enhanced {
+  background: linear-gradient(90deg,
+      var(--bg-surface-highlight, rgba(255, 107, 53, 0.08)) 0%,
+      rgba(255, 255, 255, 0.15) 50%,
+      var(--bg-surface-highlight, rgba(255, 107, 53, 0.08)) 100%);
+  background-size: 1000px 100%;
+  animation: shimmerEnhanced 2s infinite linear;
+}
+
+@keyframes shimmerEnhanced {
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Pulse glow effect */
+.animate-glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    box-shadow: var(--shadow-glass);
+  }
+
+  50% {
+    box-shadow: var(--shadow-glow-primary);
+  }
+}
+
+/* ============================================================================
+   FOCUS RING UTILITIES
+   ============================================================================ */
+
+/* Customizable focus ring */
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--color-secondary-500));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+/* High contrast focus for accessibility */
+.focus-ring-high-contrast:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   STAGGER ANIMATION HELPERS
+   ============================================================================ */
+
+.stagger-children>*:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.stagger-children>*:nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.stagger-children>*:nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.stagger-children>*:nth-child(4) {
+  animation-delay: 150ms;
+}
+
+.stagger-children>*:nth-child(5) {
+  animation-delay: 200ms;
+}
+
+.stagger-children>*:nth-child(6) {
+  animation-delay: 250ms;
+}
+
+.stagger-children>*:nth-child(7) {
+  animation-delay: 300ms;
+}
+
+.stagger-children>*:nth-child(8) {
+  animation-delay: 350ms;
+}
+
+.stagger-children>*:nth-child(9) {
+  animation-delay: 400ms;
+}
+
+.stagger-children>*:nth-child(10) {
+  animation-delay: 450ms;
+}
+
+.stagger-children>*:nth-child(11) {
+  animation-delay: 500ms;
+}
+
+.stagger-children>*:nth-child(12) {
+  animation-delay: 550ms;
 }

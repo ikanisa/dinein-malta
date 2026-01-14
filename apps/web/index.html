@@ -1,116 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
-    <meta name="theme-color" content="#0E1120" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#FFF7F2" media="(prefers-color-scheme: light)">
-    
-    <!-- PWA Settings -->
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="DineIn">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Supabase API preconnect (faster auth & data fetching) -->
-    <link rel="preconnect" href="https://bqprjfcysegmcpnbqxjy.supabase.co" crossorigin>
-    <link rel="dns-prefetch" href="https://bqprjfcysegmcpnbqxjy.supabase.co">
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- IOS Icons (Point to Supabase Storage) -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    
-    <title>DineIn | Liquid Glass Dining</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+  <meta name="theme-color" content="#0E1120" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#FFF7F2" media="(prefers-color-scheme: light)">
 
-    <style>
-      :root {
-        --safe-top: env(safe-area-inset-top);
-        --safe-bottom: env(safe-area-inset-bottom);
+  <!-- PWA Settings -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DineIn">
 
-        /* LIGHT MODE (Default) */
-        --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
-        --font-display: "Fraunces", "Times New Roman", serif;
-        --font-accent: "Fraunces", "Times New Roman", serif;
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Supabase API preconnect (faster auth & data fetching) -->
+  <link rel="preconnect" href="https://bqprjfcysegmcpnbqxjy.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://bqprjfcysegmcpnbqxjy.supabase.co">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
 
-        --color-primary-500: #FF6B35;
-        --color-primary-600: #E65A2F;
-        --color-secondary-500: #0077B6;
-        --color-secondary-600: #00659E;
-        --color-accent-500: #FF8360;
-        --color-ink: #1A1A2E;
+  <!-- IOS Icons (Point to Supabase Storage) -->
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-        --bg-main: #FFF7F2;
-        --bg-surface: #FFFFFF;
-        --bg-surface-highlight: rgba(255, 107, 53, 0.08);
-        --text-main: var(--color-ink);
-        --text-muted: #5D5F78;
-        --border-color: rgba(26, 26, 46, 0.08);
-        --glass-bg: rgba(255, 255, 255, 0.82);
-        --glass-border: rgba(255, 255, 255, 0.9);
-        --gradient-primary: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
-        --gradient-secondary: linear-gradient(135deg, #0077B6 0%, #00B4D8 100%);
-        --shadow-elev-1: 0 10px 30px rgba(26, 26, 46, 0.1);
-        --shadow-elev-2: 0 18px 50px rgba(26, 26, 46, 0.14);
-        --body-gradient: radial-gradient(circle at 20% 0%, rgba(255, 107, 53, 0.18) 0%, rgba(255, 167, 99, 0.08) 35%, #FFF7F2 70%);
-      }
+  <title>DineIn | Liquid Glass Dining</title>
 
-      [data-theme="dark"] {
-        /* DARK MODE */
-        --color-ink: #F5F7FF;
-        --bg-main: #0E1120;
-        --bg-surface: #151A2E;
-        --bg-surface-highlight: rgba(255, 255, 255, 0.06);
-        --text-main: #F5F7FF;
-        --text-muted: #A0A8C8;
-        --border-color: rgba(255, 255, 255, 0.08);
-        --glass-bg: rgba(21, 26, 46, 0.7);
-        --glass-border: rgba(255, 255, 255, 0.08);
-        --shadow-elev-1: 0 12px 28px rgba(0, 0, 0, 0.45);
-        --shadow-elev-2: 0 24px 60px rgba(0, 0, 0, 0.55);
-        --body-gradient: radial-gradient(circle at 20% 0%, rgba(0, 180, 216, 0.18) 0%, rgba(14, 17, 32, 0.96) 60%);
-      }
+  <!-- Design Tokens (loaded first for CSS variables) -->
+  <link rel="stylesheet" href="/design-tokens.css">
 
-      body {
-        background: var(--bg-main);
-        background-image: var(--body-gradient);
-        color: var(--text-main);
-        font-family: var(--font-body);
-        -webkit-tap-highlight-color: transparent;
-        overscroll-behavior-y: none; /* Prevent pull-to-refresh on body */
-        user-select: none; /* App feel */
-        -webkit-user-select: none;
-        transition: background-color 0.5s ease, color 0.5s ease;
-      }
-      
-      /* Hide Scrollbar but keep functionality */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
+  <style>
+    /* Critical inline styles to prevent FOUC */
+    body {
+      background: var(--bg-main);
+      background-image: var(--body-gradient);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
 
-      /* Premium Glass Panel */
-      .glass-panel {
-        background: var(--glass-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--border-color);
-        box-shadow: var(--shadow-elev-1);
-      }
+    /* Hide Scrollbar but keep functionality */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
 
-      /* Input fields should allow selection */
-      input, textarea {
-        user-select: text;
-        -webkit-user-select: text;
-      }
-    </style>
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Premium Glass Panel */
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--blur-xl));
+      -webkit-backdrop-filter: blur(var(--blur-xl));
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-glass);
+    }
+
+    /* Input fields should allow selection */
+    input,
+    textarea {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -133,20 +96,21 @@
   }
 }
 </script>
-    <link rel="stylesheet" href="/index.css">
-    <style>
-      /* Ripple animation for touch feedback */
-      @keyframes ripple {
-        to {
-          transform: scale(4);
-          opacity: 0;
-        }
+  <link rel="stylesheet" href="/index.css">
+  <style>
+    /* Ripple animation for touch feedback */
+    @keyframes ripple {
+      to {
+        transform: scale(4);
+        opacity: 0;
       }
-    </style>
+    }
+  </style>
 </head>
-  <body>
-    <div id="root"></div>
-    <script>
+
+<body>
+  <div id="root"></div>
+  <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
@@ -176,7 +140,8 @@
           }
         });
       }
-    </script>
+  </script>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

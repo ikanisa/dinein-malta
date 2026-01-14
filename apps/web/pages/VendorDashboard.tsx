@@ -31,6 +31,7 @@ const VendorDashboard = () => {
         tables,
         reservations,
         qrCodes,
+        loading,
         refreshData
     } = useVendorDashboardData({ tab });
 
@@ -108,7 +109,45 @@ const VendorDashboard = () => {
         navigate(`/vendor-dashboard/${nextTab}`);
     };
 
-    if (!venue) return <div className="pt-safe-top p-6 text-center text-muted">Loading Vendor Portal...</div>;
+    // Loading skeleton for vendor dashboard
+    const VendorSkeleton = () => (
+        <div className="min-h-screen bg-background pt-safe-top pb-32 flex flex-col animate-fade-in">
+            <div className="bg-surface border-b border-border px-6 py-4">
+                <div className="h-6 w-40 shimmer-enhanced rounded mb-2" />
+                <div className="h-3 w-16 shimmer-enhanced rounded" />
+            </div>
+            <div className="flex gap-2 p-4 overflow-x-auto">
+                {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="h-10 w-20 shimmer-enhanced rounded-lg flex-shrink-0" />
+                ))}
+            </div>
+            <div className="flex-1 p-4 space-y-4">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="h-24 shimmer-enhanced rounded-xl" />
+                ))}
+            </div>
+        </div>
+    );
+
+    if (!venue) {
+        if (loading) {
+            return <VendorSkeleton />;
+        }
+        // Import EmptyState dynamically to avoid circular deps
+        const EmptyState = React.lazy(() => import('../components/ui/EmptyState'));
+        return (
+            <div className="min-h-screen flex items-center justify-center p-6 bg-background animate-fade-in">
+                <React.Suspense fallback={<VendorSkeleton />}>
+                    <EmptyState
+                        icon="🏪"
+                        title="Loading Vendor Portal"
+                        description="Please wait while we fetch your venue data..."
+                        size="lg"
+                    />
+                </React.Suspense>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background pt-safe-top pb-32 flex flex-col transition-colors duration-500">

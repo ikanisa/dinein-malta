@@ -59,8 +59,8 @@ export const UpdatePrompt: React.FC = () => {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-safe-bottom">
-      <GlassCard className="bg-gradient-to-r from-primary-500/90 to-secondary-500/90 backdrop-blur-md border-white/20 shadow-xl">
+    <div className="fixed bottom-0 left-0 right-0 z-40 p-4 pb-safe-bottom pointer-events-none">
+      <GlassCard className="bg-gradient-to-r from-primary-500/90 to-secondary-500/90 backdrop-blur-md border-white/20 shadow-xl pointer-events-auto">
         <div className="flex items-start gap-3">
           <div className="flex-1">
             <h3 className="font-bold text-white text-sm mb-1">Update Available</h3>

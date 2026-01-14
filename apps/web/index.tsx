@@ -12,8 +12,8 @@ const updateSW = registerSW({
   onOfflineReady() {
     console.log('App ready to work offline');
   },
-  onRegisteredSW(swUrl, registration) {
-    console.log('SW registered:', swUrl);
+  onRegistered(registration) {
+    console.log('SW registered');
     // Check for updates every hour
     if (registration) {
       setInterval(() => {

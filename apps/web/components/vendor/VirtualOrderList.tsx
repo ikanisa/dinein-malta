@@ -12,12 +12,12 @@ let AutoSizer: any = null;
 // Lazy load the windowing libraries
 const loadVirtualizationLibs = async () => {
     if (!FixedSizeList) {
-        const reactWindow = await import('react-window');
-        FixedSizeList = reactWindow.FixedSizeList;
+        const reactWindow = await import('react-window') as any;
+        FixedSizeList = reactWindow.FixedSizeList || reactWindow.default?.FixedSizeList;
     }
     if (!AutoSizer) {
-        const autoSizer = await import('react-virtualized-auto-sizer');
-        AutoSizer = autoSizer.AutoSizer || autoSizer.default;
+        const autoSizer = await import('react-virtualized-auto-sizer') as any;
+        AutoSizer = autoSizer.default || autoSizer.AutoSizer || autoSizer;
     }
 };
 

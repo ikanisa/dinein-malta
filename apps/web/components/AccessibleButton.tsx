@@ -55,10 +55,10 @@ export const AccessibleButton: React.FC<AccessibleButtonProps> = ({
   `;
 
   const variantClasses = {
-    primary: 'bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 active:bg-primary-600',
-    secondary: 'bg-secondary-500 text-white hover:bg-secondary-600 focus:ring-secondary-500 active:bg-secondary-600',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 active:bg-red-800',
-    ghost: 'bg-transparent text-foreground hover:bg-surface-highlight focus:ring-secondary-500',
+    primary: 'bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 active:bg-primary-600 active:scale-95',
+    secondary: 'bg-secondary-500 text-white hover:bg-secondary-600 focus:ring-secondary-500 active:bg-secondary-600 active:scale-95',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 active:bg-red-800 active:scale-95',
+    ghost: 'bg-transparent text-foreground hover:bg-surface-highlight focus:ring-secondary-500 active:scale-95',
   };
 
   const sizeClasses = {

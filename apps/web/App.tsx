@@ -26,6 +26,7 @@ import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { RequireAuth } from './components/RequireAuth';
 import { GlassCard } from './components/GlassCard';
+import { SuspenseFallback } from './components/SuspenseFallback';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { SkipLink } from './components/AccessibleSkipLink';
@@ -203,9 +204,9 @@ const InstallPrompt = () => {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 100, opacity: 0 }}
-      className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-safe-bottom"
+      className="fixed bottom-0 left-0 right-0 z-40 p-4 pb-safe-bottom pointer-events-none"
     >
-      <GlassCard className="bg-gradient-to-r from-primary-500 to-secondary-500 border-white/20 shadow-xl">
+      <GlassCard className="bg-gradient-to-r from-primary-500 to-secondary-500 border-white/20 shadow-xl pointer-events-auto">
         <div className="flex items-start gap-3">
           <div className="flex-1">
             <h3 className="font-bold text-white text-sm mb-1">
@@ -298,14 +299,7 @@ const AnimatedRoutes = () => {
         transition={{ duration: 0.2, ease: 'easeInOut' }}
         className="min-h-full"
       >
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center bg-background">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-              <div className="text-muted">Loading...</div>
-            </div>
-          </div>
-        }>
+        <Suspense fallback={<SuspenseFallback />}>
           <Routes location={location}>
             {/* Public Client Routes */}
             <Route path="/" element={<ClientHome />} />

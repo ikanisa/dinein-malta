@@ -1,10 +1,10 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 import { clsx } from 'clsx';
 import { hapticButton } from '@/utils/haptics';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'glass';
     size?: 'sm' | 'md' | 'lg';
     loading?: boolean;
     hapticFeedback?: boolean;
@@ -29,13 +29,14 @@ export const Button: React.FC<ButtonProps> = ({
         onClick?.(e);
     };
 
-    const baseClasses = 'relative inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseClasses = 'relative inline-flex items-center justify-center font-medium rounded-xl transition-all duration-normal focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variantClasses = {
-        primary: 'bg-primary text-white hover:bg-primary-600 focus:ring-primary-500 shadow-lg shadow-primary/25',
-        secondary: 'bg-secondary text-white hover:bg-secondary-600 focus:ring-secondary-500',
-        outline: 'border-2 border-border text-foreground hover:bg-surface-highlight focus:ring-primary-500 backdrop-blur-sm',
-        ghost: 'text-foreground hover:bg-surface-highlight focus:ring-primary-500'
+        primary: 'bg-primary text-white hover:bg-primary-600 focus-visible:ring-primary-500 shadow-lg shadow-primary/25 hover:shadow-glow',
+        secondary: 'bg-secondary text-white hover:bg-secondary-600 focus-visible:ring-secondary-500 hover:shadow-glow-secondary',
+        outline: 'border-2 border-border text-foreground hover:bg-surface-highlight focus-visible:ring-primary-500 backdrop-blur-sm hover:border-border-strong',
+        ghost: 'text-foreground hover:bg-surface-highlight focus-visible:ring-primary-500',
+        glass: 'bg-glass backdrop-blur-xl border border-glassBorder text-foreground hover:bg-glass-strong focus-visible:ring-primary-500 shadow-glass hover:shadow-glass-lg',
     };
 
     const sizeClasses = {
