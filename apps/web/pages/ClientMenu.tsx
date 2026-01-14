@@ -134,12 +134,18 @@ const ClientMenu = () => {
 
   if (error || !venue) {
     return (
-      <div className="min-h-screen pt-safe-top flex items-center justify-center">
+      <div className="min-h-screen pt-safe-top flex flex-col items-center justify-center p-6">
         <ErrorState
-          error={error || new Error("Venue not found")}
+          error={error || new Error("This venue could not be found. It may have been removed or is temporarily unavailable.")}
           onRetry={() => window.location.reload()}
-          className="w-full"
+          className="w-full max-w-md"
         />
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-6 px-6 py-3 bg-surface-highlight text-foreground font-medium rounded-xl border border-border hover:bg-surface transition-colors"
+        >
+          ← Go Back
+        </button>
       </div>
     );
   }

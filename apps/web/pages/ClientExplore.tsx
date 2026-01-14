@@ -16,6 +16,23 @@ interface DiscoveredVenue extends VenueResult {
   registeredVenueId?: string;
 }
 
+// Helper function to infer venue category from name and description
+const inferVenueCategory = (venue: Venue): string => {
+  const name = venue.name.toLowerCase();
+  const desc = (venue.description || '').toLowerCase();
+  const address = (venue.address || '').toLowerCase();
+  const combined = `${name} ${desc} ${address}`;
+
+  if (combined.includes('cafe') || combined.includes('coffee') || combined.includes('bakery')) return 'Cafes';
+  if (combined.includes('restaurant') || combined.includes('dining') || combined.includes('bistro') || combined.includes('kitchen')) return 'Restaurants';
+  if (combined.includes('nightclub') || combined.includes('club') || combined.includes('disco')) return 'Clubs';
+  if (combined.includes('beach bar') || combined.includes('beach club')) return 'Beach Bars';
+  if (combined.includes('bar') || combined.includes('pub') || combined.includes('lounge') || combined.includes('tavern')) return 'Bars';
+
+  // Default based on common venue naming patterns
+  return 'Bars';
+};
+
 const ClientExplore = () => {
   const [venues, setVenues] = useState<DiscoveredVenue[]>([]);
   const [registeredVenues, setRegisteredVenues] = useState<Venue[]>([]);
@@ -84,11 +101,11 @@ const ClientExplore = () => {
           v.address?.includes(countryNames[selectedCountry] || '')
         );
 
-        // Map to DiscoveredVenue format
+        // Map to DiscoveredVenue format with proper category inference
         const mappedVenues: DiscoveredVenue[] = filteredVenues.map(v => ({
           name: v.name,
           address: v.address || '',
-          category: v.description || 'Bar',
+          category: inferVenueCategory(v),
           isRegistered: true,
           registeredVenueId: v.id,
           photo_url: v.imageUrl,
@@ -228,15 +245,25 @@ const ClientExplore = () => {
     }
   };
 
-  // Filter venues by category
+  // Filter venues by category with improved matching
   const filteredVenues = venues.filter(v => {
     const matchesSearch = !searchTerm ||
       v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       v.address?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory = selectedCategory === 'All' ||
-      v.category?.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-      v.category_tags?.some(tag => tag.toLowerCase().includes(selectedCategory.toLowerCase()));
+    if (selectedCategory === 'All') return matchesSearch;
+
+    // Normalize category for comparison (e.g., "Bars" matches "Bar", "Bars")
+    const normalizeCategory = (cat: string) => cat.toLowerCase().replace(/s$/, '');
+    const selectedNorm = normalizeCategory(selectedCategory);
+    const venueCategory = v.category?.toLowerCase() || '';
+
+    // Match exact category or partial match
+    const matchesCategory =
+      venueCategory === selectedCategory.toLowerCase() ||
+      normalizeCategory(venueCategory) === selectedNorm ||
+      venueCategory.includes(selectedNorm) ||
+      v.category_tags?.some(tag => normalizeCategory(tag) === selectedNorm);
 
     return matchesSearch && matchesCategory;
   });
@@ -355,9 +382,21 @@ const ClientExplore = () => {
           <div className="py-16 text-center">
             <span className="text-6xl mb-4 block">🔍</span>
             <h3 className="font-bold text-lg text-foreground mb-2">No venues found</h3>
-            <p className="text-muted text-sm">
-              {searchTerm ? `No results for "${searchTerm}"` : 'Try a different search or category'}
+            <p className="text-muted text-sm mb-4">
+              {searchTerm
+                ? `No results for "${searchTerm}"`
+                : selectedCategory !== 'All'
+                  ? `No ${selectedCategory.toLowerCase()} found in this area`
+                  : 'Try a different search or category'}
             </p>
+            {selectedCategory !== 'All' && (
+              <button
+                onClick={() => setSelectedCategory('All')}
+                className="px-4 py-2 bg-surface hover:bg-surface-highlight text-foreground text-sm font-medium rounded-full border border-border transition-colors"
+              >
+                Show all venues
+              </button>
+            )}
           </div>
         )}
 
