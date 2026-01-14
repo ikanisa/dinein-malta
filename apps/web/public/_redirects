@@ -1,1 +1,13 @@
-/* /index.html 200
+# =============================================================================
+# Cloudflare Pages Redirects - SPA Routing
+# =============================================================================
+
+# API routes - pass through (for future Pages Functions)
+/api/*  /api/:splat  200
+
+# Static assets - explicit pass-through (no rewrite)
+/assets/*  /assets/:splat  200
+/icons/*   /icons/:splat   200
+
+# SPA fallback - all other routes serve index.html
+/*  /index.html  200
