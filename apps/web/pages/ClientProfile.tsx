@@ -80,7 +80,38 @@ const ClientProfile = () => {
          <section>
             <h2 className="text-lg font-bold mb-4">Settings</h2>
             <GlassCard className="space-y-4">
+               {/* Country Selector */}
                <div className="flex justify-between items-center">
+                  <div>
+                     <span className="block">🌍 Explore Country</span>
+                     <span className="text-xs text-muted">Browse bars in a specific country</span>
+                  </div>
+                  <select
+                     value={localStorage.getItem('dinein_selected_country') || 'auto'}
+                     onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === 'auto') {
+                           localStorage.removeItem('dinein_selected_country');
+                        } else {
+                           localStorage.setItem('dinein_selected_country', value);
+                        }
+                        // Force re-render
+                        window.location.reload();
+                     }}
+                     className="bg-surface-highlight border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-secondary-500"
+                  >
+                     <option value="auto">Auto-detect</option>
+                     <option value="RW">Rwanda</option>
+                     <option value="MT">Malta</option>
+                     <option value="DE">Germany</option>
+                     <option value="FR">France</option>
+                     <option value="ES">Spain</option>
+                     <option value="IT">Italy</option>
+                     <option value="GB">United Kingdom</option>
+                     <option value="US">United States</option>
+                  </select>
+               </div>
+               <div className="flex justify-between items-center border-t border-border pt-4">
                   <span>🔔 Push Notifications</span>
                   <button
                      onClick={toggleNotify}

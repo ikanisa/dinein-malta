@@ -11,6 +11,7 @@ const ClientMenu = lazy(() => import('./pages/ClientMenu'));
 const ClientExplore = lazy(() => import('./pages/ClientExplore'));
 const ClientProfile = lazy(() => import('./pages/ClientProfile'));
 const ClientOrderStatus = lazy(() => import('./pages/ClientOrderStatus'));
+const ClientQRScanner = lazy(() => import('./pages/ClientQRScanner'));
 const VendorLogin = lazy(() => import('./pages/VendorLogin'));
 const VendorDashboard = lazy(() => import('./pages/VendorDashboard'));
 const DeveloperSwitchboard = lazy(() => import('./pages/DeveloperSwitchboard'));
@@ -306,6 +307,7 @@ const AnimatedRoutes = () => {
             <Route path="/explore" element={<ClientExplore />} />
             <Route path="/profile" element={<ClientProfile />} />
             <Route path="/order/:id" element={<ClientOrderStatus />} />
+            <Route path="/scan" element={<ClientQRScanner />} />
             <Route path="/menu" element={<MenuEntry />} />
             <Route path="/menu/:venueId" element={<ClientMenu />} />
             <Route path="/menu/:venueId/t/:tableCode" element={<ClientMenu />} />

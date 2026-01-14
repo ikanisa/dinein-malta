@@ -62,7 +62,53 @@ const ClientExplore = () => {
       const dbVenues = await getAllVenues().catch(() => []);
       setRegisteredVenues(dbVenues);
 
-      // Request location permission
+      // Check for manually selected country (from Profile settings)
+      const selectedCountry = localStorage.getItem('dinein_selected_country');
+
+      if (selectedCountry) {
+        // Filter venues by manually selected country
+        const countryNames: Record<string, string> = {
+          'RW': 'Rwanda',
+          'MT': 'Malta',
+          'DE': 'Germany',
+          'FR': 'France',
+          'ES': 'Spain',
+          'IT': 'Italy',
+          'GB': 'United Kingdom',
+          'US': 'United States'
+        };
+
+        // Filter registered venues by country
+        const filteredVenues = dbVenues.filter(v =>
+          v.country === selectedCountry ||
+          v.address?.includes(countryNames[selectedCountry] || '')
+        );
+
+        // Map to DiscoveredVenue format
+        const mappedVenues: DiscoveredVenue[] = filteredVenues.map(v => ({
+          name: v.name,
+          address: v.address || '',
+          category: v.description || 'Bar',
+          isRegistered: true,
+          registeredVenueId: v.id,
+          photo_url: v.imageUrl,
+          rating: 4.5, // Default rating
+        }));
+
+        setVenues(mappedVenues);
+        setUiContext({
+          appName: 'DineIn',
+          greeting: 'Welcome',
+          currencySymbol: selectedCountry === 'RW' ? 'RWF' : '€',
+          cityName: '',
+          visualVibe: countryNames[selectedCountry] || '',
+          country: countryNames[selectedCountry] || ''
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Request location permission (auto-detect mode)
       const { location, status } = await locationService.requestPermission();
       setLocationStatus(status);
 
@@ -276,7 +322,12 @@ const ClientExplore = () => {
         {uiContext?.country && (
           <div className="flex items-center gap-2 text-sm text-muted">
             <span className="text-lg">📍</span>
-            <span>Showing venues in <strong className="text-foreground">{uiContext.country}</strong></span>
+            <span>
+              {localStorage.getItem('dinein_selected_country')
+                ? <>Browsing <strong className="text-foreground">{uiContext.country}</strong> <span className="text-xs">(manual)</span></>
+                : <>Showing venues in <strong className="text-foreground">{uiContext.country}</strong></>
+              }
+            </span>
             {uiContext.currencySymbol && (
               <Badge tone="secondary">{uiContext.currencySymbol}</Badge>
             )}

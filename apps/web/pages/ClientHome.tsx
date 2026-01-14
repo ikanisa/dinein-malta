@@ -143,6 +143,7 @@ const NearbyVenueCard = ({ place, index, registeredVenue, currency }: { place: a
 
 
 const ClientHome = () => {
+    const navigate = useNavigate();
     const [categorizedVenues, setCategorizedVenues] = useState<Record<string, any[]>>({});
     const [allFetchedVenues, setAllFetchedVenues] = useState<any[]>([]);
     const [registeredVenues, setRegisteredVenues] = useState<Venue[]>([]);
@@ -438,11 +439,14 @@ const ClientHome = () => {
                         <p className="text-center text-xs text-muted py-4">Maximum venues loaded.</p>
                     )}
 
-                    {/* Quick Action */}
+                    {/* Quick Action - Scan QR at bar to order */}
                     <GlassCard className="bg-gradient-to-r from-secondary-500/30 to-primary-500/30 border-secondary-500/30 p-6 flex flex-col items-center text-center mt-8">
-                        <h3 className="font-bold text-xl mb-2 text-white">Already at a table?</h3>
-                        <p className="text-sm text-gray-200 mb-6">Scan the QR code on your table to skip the queue.</p>
-                        <button className="w-full py-4 bg-white text-black font-bold rounded-2xl shadow-xl active:scale-95 transition-transform flex items-center justify-center gap-2">
+                        <h3 className="font-bold text-xl mb-2 text-white">Ready to order?</h3>
+                        <p className="text-sm text-gray-200 mb-6">Scan the QR code at the bar to view their menu and start ordering.</p>
+                        <button
+                            onClick={() => navigate('/scan')}
+                            className="w-full py-4 bg-white text-black font-bold rounded-2xl shadow-xl active:scale-95 transition-transform flex items-center justify-center gap-2"
+                        >
                             <span className="text-xl">📸</span> Scan QR Code
                         </button>
                     </GlassCard>

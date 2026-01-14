@@ -364,10 +364,7 @@ const ClientMenu = () => {
         <div className="absolute bottom-0 left-0 w-full p-6 z-20">
           <h1 className="text-4xl font-bold text-white mb-2 leading-tight">{venue.name}</h1>
           <div className="flex flex-wrap gap-2 text-sm text-gray-200">
-            <span className={`bg-black/40 backdrop-blur-md px-2 py-1 rounded-md text-xs font-bold ${!manualTableRef ? 'animate-pulse border border-red-500/50 text-red-200' : 'text-white'}`}>
-              {manualTableRef ? `Table ${manualTableRef}` : '🚫 No Table Set'}
-            </span>
-            <span>• {venue.description}</span>
+            <span>{venue.description}</span>
           </div>
           {venue.tags && venue.tags.length > 0 && (
             <div className="flex gap-2 mt-2 overflow-x-auto no-scrollbar">
