@@ -12,7 +12,7 @@ This is a **monorepo with a single deployable app** (`apps/web`) that serves thr
 
 ### Key Features
 
-- ✅ Single PWA deployment (Firebase Hosting)
+- ✅ Single PWA deployment (Cloudflare Pages)
 - ✅ Role-based routing with frontend guards + Supabase RLS
 - ✅ Anonymous authentication for public access
 - ✅ Google OAuth for admin access
@@ -92,17 +92,13 @@ npm test           # Run tests
 
 See [Deployment Guide](./docs/DEPLOYMENT.md) for detailed instructions.
 
-### Quick Deploy to Firebase
+### Cloudflare Pages (Automatic)
 
-```bash
-cd apps/web
-npm run build
-firebase deploy --only hosting
-```
+Push to `main` branch triggers automatic deployment.
 
 ### Custom Domain
 
-1. Add custom domain in Firebase Hosting console
+1. Add custom domain in Cloudflare Pages dashboard
 2. Update DNS records as instructed
 3. SSL certificate auto-provisioned
 

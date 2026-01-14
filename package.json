@@ -9,5 +9,8 @@
     "build": "npm run build -w apps/web",
     "dev": "npm run dev -w apps/web",
     "lint": "npm run lint -w apps/web"
+  },
+  "devDependencies": {
+    "tinyglobby": "^0.2.15"
   }
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Lazy load routes for code splitting for better performance
 import { lazy, Suspense } from 'react';
 
@@ -44,6 +45,22 @@ if (import.meta.env.PROD) {
   initWebVitals();
 }
 
+// Configure React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
+
 // Legacy vibrate function (for backward compatibility)
 // --- COMPONENTS ---
 
@@ -76,7 +93,7 @@ const OfflineIndicator = () => {
     };
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
+
     // Listen for background sync messages from service worker
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'SYNC_QUEUE') {
@@ -96,7 +113,7 @@ const OfflineIndicator = () => {
       }
     };
     navigator.serviceWorker?.addEventListener('message', handleMessage);
-    
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -121,12 +138,12 @@ const InstallPrompt = () => {
   useEffect(() => {
     // 1. Robust iOS Check (handles iPads requesting desktop sites)
     const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(userAgent) || 
-                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    
+    const isIosDevice = /iphone|ipad|ipod/.test(userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
     // 2. Check if already standalone (installed)
-    const isStandalone = ('standalone' in window.navigator && (window.navigator as any).standalone) || 
-                         window.matchMedia('(display-mode: standalone)').matches;
+    const isStandalone = ('standalone' in window.navigator && (window.navigator as any).standalone) ||
+      window.matchMedia('(display-mode: standalone)').matches;
 
     if (isStandalone) return;
 
@@ -152,9 +169,9 @@ const InstallPrompt = () => {
 
   const handleInstall = () => {
     if (isIOS) {
-        // Just dismiss, we can't programmatically install on iOS.
-        setShow(false);
-        localStorage.setItem('pwa-prompt-dismissed', 'true');
+      // Just dismiss, we can't programmatically install on iOS.
+      setShow(false);
+      localStorage.setItem('pwa-prompt-dismissed', 'true');
     } else if (deferredPrompt) {
       hapticButton();
       deferredPrompt.prompt();
@@ -191,7 +208,7 @@ const InstallPrompt = () => {
               {isIOS ? 'Install DineIn' : 'Install App'}
             </h3>
             <p className="text-white/90 text-xs mb-3">
-              {isIOS 
+              {isIOS
                 ? 'Tap the share button, then &ldquo;Add to Home Screen&rdquo;'
                 : 'Install for a faster, app-like experience'
               }
@@ -231,7 +248,7 @@ const DevButton = () => {
   const location = useLocation();
   if (location.pathname === '/dev') return null;
   return (
-    <button 
+    <button
       onClick={() => { hapticButton(); navigate('/dev'); }}
       className="fixed top-safe right-4 z-[70] bg-black/40 backdrop-blur-md border border-white/10 text-white/30 hover:text-white text-[10px] px-2 py-1 rounded-full hover:bg-black/60 transition-colors mt-2 touch-target"
     >
@@ -266,7 +283,7 @@ const MenuEntry = () => {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -286,93 +303,93 @@ const AnimatedRoutes = () => {
           </div>
         }>
           <Routes location={location}>
-              {/* Public Client Routes */}
-              <Route path="/" element={<ClientHome />} />
-              <Route path="/explore" element={<ClientExplore />} />
-              <Route path="/profile" element={<ClientProfile />} />
-              <Route path="/order/:id" element={<ClientOrderStatus />} />
-              <Route path="/menu" element={<MenuEntry />} />
-              <Route path="/menu/:venueId" element={<ClientMenu />} />
-              <Route path="/menu/:venueId/t/:tableCode" element={<ClientMenu />} />
-              <Route path="/v/:venueId" element={<ClientMenu />} />
-              <Route path="/v/:venueId/t/:tableCode" element={<ClientMenu />} />
+            {/* Public Client Routes */}
+            <Route path="/" element={<ClientHome />} />
+            <Route path="/explore" element={<ClientExplore />} />
+            <Route path="/profile" element={<ClientProfile />} />
+            <Route path="/order/:id" element={<ClientOrderStatus />} />
+            <Route path="/menu" element={<MenuEntry />} />
+            <Route path="/menu/:venueId" element={<ClientMenu />} />
+            <Route path="/menu/:venueId/t/:tableCode" element={<ClientMenu />} />
+            <Route path="/v/:venueId" element={<ClientMenu />} />
+            <Route path="/v/:venueId/t/:tableCode" element={<ClientMenu />} />
 
-              {/* Vendor Routes (Private) */}
-              <Route path="/vendor/login" element={<VendorLogin />} />
-              <Route 
-                path="/vendor/dashboard" 
-                element={
-                  <RequireAuth requiredRole="vendor">
-                    <VendorDashboard />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/vendor/dashboard/:tab" 
-                element={
-                  <RequireAuth requiredRole="vendor">
-                    <VendorDashboard />
-                  </RequireAuth>
-                } 
-              />
+            {/* Vendor Routes (Private) */}
+            <Route path="/vendor/login" element={<VendorLogin />} />
+            <Route
+              path="/vendor/dashboard"
+              element={
+                <RequireAuth requiredRole="vendor">
+                  <VendorDashboard />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/vendor/dashboard/:tab"
+              element={
+                <RequireAuth requiredRole="vendor">
+                  <VendorDashboard />
+                </RequireAuth>
+              }
+            />
 
-              {/* Admin Routes (Private) */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route 
-                path="/admin/dashboard" 
-                element={
-                  <RequireAuth requiredRole="admin">
-                    <AdminDashboard />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/admin/vendors" 
-                element={
-                  <RequireAuth requiredRole="admin">
-                    <AdminVendors />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/admin/orders" 
-                element={
-                  <RequireAuth requiredRole="admin">
-                    <AdminOrders />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/admin/system" 
-                element={
-                  <RequireAuth requiredRole="admin">
-                    <AdminSystem />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/admin/users" 
-                element={
-                  <RequireAuth requiredRole="admin">
-                    <AdminUsers />
-                  </RequireAuth>
-                } 
-              />
+            {/* Admin Routes (Private) */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <RequireAuth requiredRole="admin">
+                  <AdminDashboard />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin/vendors"
+              element={
+                <RequireAuth requiredRole="admin">
+                  <AdminVendors />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin/orders"
+              element={
+                <RequireAuth requiredRole="admin">
+                  <AdminOrders />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin/system"
+              element={
+                <RequireAuth requiredRole="admin">
+                  <AdminSystem />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <RequireAuth requiredRole="admin">
+                  <AdminUsers />
+                </RequireAuth>
+              }
+            />
 
-              {/* Legacy routes - redirect to new structure */}
-              <Route path="/vendor-login" element={<VendorLogin />} />
-              <Route path="/business" element={<VendorLogin />} />
-              <Route path="/admin-login" element={<AdminLogin />} />
-              <Route path="/vendor-dashboard" element={<RequireAuth requiredRole="vendor"><VendorDashboard /></RequireAuth>} />
-              <Route path="/vendor-dashboard/:tab" element={<RequireAuth requiredRole="vendor"><VendorDashboard /></RequireAuth>} />
-              <Route path="/admin-dashboard" element={<RequireAuth requiredRole="admin"><AdminDashboard /></RequireAuth>} />
-              <Route path="/admin-vendors" element={<RequireAuth requiredRole="admin"><AdminVendors /></RequireAuth>} />
-              <Route path="/admin-orders" element={<RequireAuth requiredRole="admin"><AdminOrders /></RequireAuth>} />
-              <Route path="/admin-system" element={<RequireAuth requiredRole="admin"><AdminSystem /></RequireAuth>} />
-              <Route path="/admin-users" element={<RequireAuth requiredRole="admin"><AdminUsers /></RequireAuth>} />
+            {/* Legacy routes - redirect to new structure */}
+            <Route path="/vendor-login" element={<VendorLogin />} />
+            <Route path="/business" element={<VendorLogin />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/vendor-dashboard" element={<RequireAuth requiredRole="vendor"><VendorDashboard /></RequireAuth>} />
+            <Route path="/vendor-dashboard/:tab" element={<RequireAuth requiredRole="vendor"><VendorDashboard /></RequireAuth>} />
+            <Route path="/admin-dashboard" element={<RequireAuth requiredRole="admin"><AdminDashboard /></RequireAuth>} />
+            <Route path="/admin-vendors" element={<RequireAuth requiredRole="admin"><AdminVendors /></RequireAuth>} />
+            <Route path="/admin-orders" element={<RequireAuth requiredRole="admin"><AdminOrders /></RequireAuth>} />
+            <Route path="/admin-system" element={<RequireAuth requiredRole="admin"><AdminSystem /></RequireAuth>} />
+            <Route path="/admin-users" element={<RequireAuth requiredRole="admin"><AdminUsers /></RequireAuth>} />
 
-              {/* Dev */}
-              <Route path="/dev" element={<DeveloperSwitchboard />} />
+            {/* Dev */}
+            <Route path="/dev" element={<DeveloperSwitchboard />} />
           </Routes>
         </Suspense>
       </motion.div>
@@ -416,10 +433,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Only show bottom nav on client routes
-  const showBottomNav = !location.pathname.startsWith('/vendor') && 
-                       !location.pathname.startsWith('/admin') && 
-                       !location.pathname.startsWith('/dev') &&
-                       !location.pathname.startsWith('/business');
+  const showBottomNav = !location.pathname.startsWith('/vendor') &&
+    !location.pathname.startsWith('/admin') &&
+    !location.pathname.startsWith('/dev') &&
+    !location.pathname.startsWith('/business');
 
   return (
     <div className="min-h-screen flex flex-col bg-background" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
@@ -429,7 +446,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <main
         id="main-content"
         className="flex-1 overflow-y-auto"
-        style={{ 
+        style={{
           paddingBottom: showBottomNav ? 'calc(60px + var(--safe-area-bottom, 0px))' : 'var(--safe-area-bottom, 0px)',
           WebkitOverflowScrolling: 'touch'
         }}
@@ -437,9 +454,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       >
         {children}
       </main>
-      
+
       {showBottomNav && (
-        <nav 
+        <nav
           className="fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-40"
           style={{ paddingBottom: 'var(--safe-area-bottom, 0px)' }}
         >
@@ -451,7 +468,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </nav>
       )}
-      
+
       <InstallPrompt />
       <UpdatePrompt />
       <DevButton />
@@ -461,18 +478,20 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CartProvider>
-          <Router>
-            <ErrorBoundary>
-              <Layout>
-                <AnimatedRoutes />
-              </Layout>
-            </ErrorBoundary>
-          </Router>
-        </CartProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Router>
+              <ErrorBoundary>
+                <Layout>
+                  <AnimatedRoutes />
+                </Layout>
+              </ErrorBoundary>
+            </Router>
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
