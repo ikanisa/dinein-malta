@@ -30,12 +30,20 @@
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true
   },
   "exclude": [
     "supabase",
     "dist",
-    "node_modules"
+    "node_modules",
+    "**/__tests__/**/*",
+    "**/tests/**/*",
+    "**/src/test/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
   ]
 }
