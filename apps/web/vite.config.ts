@@ -97,6 +97,47 @@ export default defineConfig(({ mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,avif}'],
           runtimeCaching: [
+            // Menu data: Cache-first strategy (1 hour) - allows offline menu viewing
+            {
+              urlPattern: ({ url }) => {
+                // Match menu/vendor API calls from Supabase
+                return url.pathname.includes('/rest/v1/vendors') || 
+                       url.pathname.includes('/rest/v1/menu_items') ||
+                       (url.pathname.includes('/rest/v1/') && url.searchParams.has('vendor_id'));
+              },
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'menu-data-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 // 1 hour - menu data cached for 1 hour
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            },
+            // Orders: Network-first strategy (always fetch fresh orders)
+            {
+              urlPattern: ({ url }) => {
+                // Match order API calls
+                return url.pathname.includes('/rest/v1/orders') ||
+                       url.pathname.includes('/functions/order');
+              },
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'orders-cache',
+                expiration: {
+                  maxEntries: 20,
+                  maxAgeSeconds: 60 * 5 // 5 minutes fallback cache only
+                },
+                networkTimeoutSeconds: 10,
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            },
+            // Supabase API: Network-first with 1 hour cache
             {
               urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
               handler: 'NetworkFirst',
@@ -109,25 +150,27 @@ export default defineConfig(({ mode }) => {
                 networkTimeoutSeconds: 10
               }
             },
+            // Static assets: Cache-first indefinitely
             {
-              urlPattern: /^https:\/\/generativelanguage\.googleapis\.com\/.*/i,
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif|woff|woff2|ttf|eot)$/,
               handler: 'CacheFirst',
               options: {
-                cacheName: 'gemini-api-cache',
+                cacheName: 'static-assets-cache',
                 expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
+                  maxEntries: 500,
+                  maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year - effectively indefinite
                 }
               }
             },
+            // JavaScript and CSS: StaleWhileRevalidate for performance
             {
-              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/,
-              handler: 'CacheFirst',
+              urlPattern: /\.(?:js|css)$/,
+              handler: 'StaleWhileRevalidate',
               options: {
-                cacheName: 'image-cache',
+                cacheName: 'js-css-cache',
                 expiration: {
-                  maxEntries: 200,
-                  maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
                 }
               }
             }

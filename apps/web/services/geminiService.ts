@@ -83,46 +83,12 @@ async function invokeGeminiFunction(action: string, payload: any, retries = 2): 
 }
 
 // ============================================================================
-// DISCOVERY & SEARCH
+// DISCOVERY & SEARCH (Vendor/Admin Only)
 // ============================================================================
 
 /**
- * Discover nearby venues (sorted by distance, nearest first)
- * Cached for 10 minutes to reduce API calls
- */
-export const findNearbyPlaces = async (
-  lat: number,
-  lng: number,
-  excludeNames: string[] = [],
-  radius = 5000
-): Promise<VenueResult[]> => {
-  // Round coordinates to reduce cache misses for nearby locations
-  const roundedLat = Math.round(lat * 100) / 100; // ~1km precision
-  const roundedLng = Math.round(lng * 100) / 100;
-  const cacheKey = generateCacheKey('venues_discover', roundedLat, roundedLng, radius);
-  
-  // Check cache first
-  const cached = cacheService.get<VenueResult[]>(cacheKey);
-  if (cached) {
-    return cached.filter((v: VenueResult) => !excludeNames.includes(v.name));
-  }
-  
-  try {
-    const results = await invokeGeminiFunction('discover', { lat, lng, radius });
-    const venues = Array.isArray(results) ? results : [];
-    
-    // Cache for 10 minutes
-    cacheService.set(cacheKey, venues, 10 * 60 * 1000);
-    
-    return venues.filter((v: VenueResult) => !excludeNames.includes(v.name));
-  } catch (error) {
-    console.warn('Gemini API failed for nearby places', error);
-    return [];
-  }
-};
-
-/**
  * Find venues for claiming (vendor onboarding)
+ * NOTE: This is vendor/admin functionality only, not for client UI
  */
 export const findVenuesForClaiming = async (lat: number, lng: number): Promise<VenueResult[]> => {
   try {
@@ -130,61 +96,6 @@ export const findVenuesForClaiming = async (lat: number, lng: number): Promise<V
     return Array.isArray(results) ? results : [];
   } catch (error) {
     console.warn('Gemini API failed for venue discovery', error);
-    return [];
-  }
-};
-
-/**
- * Search venues by query
- */
-export const searchPlacesByName = async (
-  query: string,
-  lat?: number,
-  lng?: number
-): Promise<VenueResult[]> => {
-  try {
-    const results = await invokeGeminiFunction('search', { query, lat, lng });
-    return Array.isArray(results) ? results : [];
-  } catch (error) {
-    console.warn('Gemini API failed for venue search', error);
-    return [];
-  }
-};
-
-/**
- * Discover global/popular venues (uses user location if available)
- */
-export const discoverGlobalVenues = async (userLat?: number, userLng?: number): Promise<VenueResult[]> => {
-  try {
-    if (userLat && userLng) {
-      const results = await invokeGeminiFunction('discover', { 
-        lat: userLat, 
-        lng: userLng, 
-        radius: 5000 
-      });
-      return Array.isArray(results) ? results : [];
-    }
-    
-    // Try to get location from browser
-    const { locationService } = await import('./locationService');
-    const location = locationService.getLocation() || (await locationService.requestPermission()).location;
-    
-    if (location) {
-      const results = await invokeGeminiFunction('discover', { 
-        lat: location.lat, 
-        lng: location.lng, 
-        radius: 5000 
-      });
-      return Array.isArray(results) ? results : [];
-    }
-    
-    // No location - use generic search
-    const results = await invokeGeminiFunction('search', {
-      query: "popular bars and restaurants nearby",
-    });
-    return Array.isArray(results) ? results : [];
-  } catch (error) {
-    console.warn('Gemini API failed for global venue discovery', error);
     return [];
   }
 };
@@ -208,68 +119,6 @@ export const enrichVenueProfile = async (
   }
 };
 
-// ============================================================================
-// LOCATION ADAPTATION
-// ============================================================================
-
-/**
- * Adapt UI based on location
- * Cached for 1 hour (location UI context doesn't change frequently)
- */
-export const adaptUiToLocation = async (lat: number, lng: number): Promise<UIContext> => {
-  // Round coordinates for cache key
-  const roundedLat = Math.round(lat * 100) / 100;
-  const roundedLng = Math.round(lng * 100) / 100;
-  const cacheKey = generateCacheKey('ui_adapt', roundedLat, roundedLng);
-  
-  // Check cache first
-  const cached = cacheService.get<UIContext>(cacheKey);
-  if (cached) {
-    return cached;
-  }
-  
-  try {
-    const res = await invokeGeminiFunction('adapt', { lat, lng });
-    
-    const cityName = res?.cityName || 'Your Area';
-    const country = res?.country || '';
-    const currencySymbol = res?.currencySymbol || '$';
-    const greeting = res?.greeting || "Welcome";
-    
-    const appName = cityName && cityName !== 'Your Area' 
-      ? `DineIn ${cityName}` 
-      : country 
-        ? `DineIn ${country}`
-        : 'DineIn';
-    
-    const result = {
-      appName,
-      greeting,
-      currencySymbol,
-      visualVibe: country ? `${cityName}, ${country}` : cityName,
-      cityName,
-      country,
-    };
-    
-    // Cache for 1 hour
-    cacheService.set(cacheKey, result, 60 * 60 * 1000);
-    
-    return result;
-  } catch (error) {
-    console.warn('Gemini API failed for UI adaptation', error);
-    const fallback = {
-      appName: "DineIn",
-      greeting: "Welcome",
-      currencySymbol: "$",
-      visualVibe: "Local Dining",
-      cityName: "Your Area",
-      country: "",
-    };
-    // Cache fallback for shorter time (5 minutes)
-    cacheService.set(cacheKey, fallback, 5 * 60 * 1000);
-    return fallback;
-  }
-};
 
 // ============================================================================
 // IMAGE GENERATION

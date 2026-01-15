@@ -1,10 +1,11 @@
 // Service Worker for DineIn PWA
 // Cache-first strategy for static assets, network-first for API calls
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3'; // Increment for new caching strategy
 const CACHE_NAME = `dinein-${CACHE_VERSION}`;
 const STATIC_CACHE = `dinein-static-${CACHE_VERSION}`;
 const API_CACHE = `dinein-api-${CACHE_VERSION}`;
+const MENU_CACHE = `dinein-menu-${CACHE_VERSION}`;
 
 // Assets to precache
 const PRECACHE_ASSETS = [
@@ -34,7 +35,12 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== STATIC_CACHE && name !== API_CACHE)
+          .filter((name) => 
+            name !== STATIC_CACHE && 
+            name !== API_CACHE && 
+            name !== MENU_CACHE &&
+            name.startsWith('dinein-') // Only delete old dinein caches
+          )
           .map((name) => {
             console.log('[SW] Deleting old cache:', name);
             return caches.delete(name);
@@ -85,7 +91,95 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API calls: Network-first with cache fallback
+  // Menu data: Cache-first (1 hour) - allows offline menu viewing
+  if (
+    url.pathname.includes('/rest/v1/vendors') ||
+    url.pathname.includes('/rest/v1/menu_items') ||
+    (url.pathname.includes('/rest/v1/') && url.searchParams.has('vendor_id'))
+  ) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        // Return cached menu data immediately if available
+        if (cached) {
+          // Also fetch in background to update cache
+          fetch(request)
+            .then((response) => {
+              if (response.status === 200) {
+                const responseToCache = response.clone();
+                caches.open(MENU_CACHE).then((cache) => {
+                  cache.put(request, responseToCache);
+                });
+              }
+            })
+            .catch(() => {
+              // Silently fail background update if offline
+            });
+          return cached;
+        }
+        
+        // If not cached, fetch from network
+        return fetch(request)
+          .then((response) => {
+            if (response.status === 200) {
+              const responseToCache = response.clone();
+              caches.open(API_CACHE).then((cache) => {
+                cache.put(request, responseToCache);
+              });
+            }
+            return response;
+          })
+          .catch(() => {
+            // Return offline response if no cache and network fails
+            return new Response(
+              JSON.stringify({ error: 'Offline', offline: true }),
+              {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' },
+              }
+            );
+          });
+      })
+    );
+    return;
+  }
+
+  // Orders: Network-first (always fetch fresh)
+  if (
+    url.pathname.includes('/rest/v1/orders') ||
+    url.pathname.includes('/functions/order')
+  ) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Only cache GET requests for orders (read-only)
+          if (response.status === 200 && request.method === 'GET') {
+            const responseToCache = response.clone();
+            caches.open(API_CACHE).then((cache) => {
+              cache.put(request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache only if network fails
+          return caches.match(request).then((cached) => {
+            if (cached) {
+              return cached;
+            }
+            return new Response(
+              JSON.stringify({ error: 'Offline', offline: true }),
+              {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' },
+              }
+            );
+          });
+        })
+    );
+    return;
+  }
+
+  // Other API calls: Network-first with cache fallback
   if (url.pathname.includes('/functions/') || url.hostname.includes('supabase.co')) {
     event.respondWith(
       fetch(request)

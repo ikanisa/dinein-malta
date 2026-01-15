@@ -14,6 +14,11 @@ interface CartContextType {
   clearCart: () => void;
   totalAmount: number;
   totalItems: number;
+  favorites: MenuItem[];
+  addFavorite: (item: MenuItem) => void;
+  removeFavorite: (itemId: string) => void;
+  toggleFavorite: (item: MenuItem) => void;
+  isFavorite: (itemId: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -25,9 +30,36 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [favorites, setFavorites] = useState<MenuItem[]>(() => {
+    // Persist favorites across sessions
+    const saved = localStorage.getItem('dinein_favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => {
     localStorage.setItem('dinein_cart', JSON.stringify(cart));
   }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem('dinein_favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  // Clear cart after 24 hours
+  useEffect(() => {
+    const cartTimestamp = localStorage.getItem('dinein_cart_timestamp');
+    if (cartTimestamp) {
+      const timestamp = parseInt(cartTimestamp, 10);
+      const now = Date.now();
+      const hoursSince = (now - timestamp) / (1000 * 60 * 60);
+      if (hoursSince > 24) {
+        setCart([]);
+        localStorage.removeItem('dinein_cart');
+        localStorage.removeItem('dinein_cart_timestamp');
+      }
+    } else {
+      localStorage.setItem('dinein_cart_timestamp', Date.now().toString());
+    }
+  }, []);
 
   const addToCart = (item: MenuItem, quantity = 1, options: string[] = []) => {
     setCart(prev => {
@@ -55,7 +87,34 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    localStorage.removeItem('dinein_cart');
+    localStorage.removeItem('dinein_cart_timestamp');
+  };
+
+  const addFavorite = (item: MenuItem) => {
+    setFavorites(prev => {
+      if (prev.find(f => f.id === item.id)) return prev;
+      return [...prev, item];
+    });
+  };
+
+  const removeFavorite = (itemId: string) => {
+    setFavorites(prev => prev.filter(f => f.id !== itemId));
+  };
+
+  const toggleFavorite = (item: MenuItem) => {
+    if (isFavorite(item.id)) {
+      removeFavorite(item.id);
+    } else {
+      addFavorite(item);
+    }
+  };
+
+  const isFavorite = (itemId: string) => {
+    return favorites.some(f => f.id === itemId);
+  };
 
   const totalAmount = cart.reduce((sum, current) => {
       // Calculate base price + modifiers could go here
@@ -65,7 +124,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, totalAmount, totalItems }}>
+    <CartContext.Provider value={{ 
+      cart, 
+      addToCart, 
+      removeFromCart, 
+      clearCart, 
+      totalAmount, 
+      totalItems,
+      favorites,
+      addFavorite,
+      removeFavorite,
+      toggleFavorite,
+      isFavorite
+    }}>
       {children}
     </CartContext.Provider>
   );

@@ -6,10 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Lazy load routes for code splitting for better performance
 import { lazy, Suspense } from 'react';
 
-const ClientHome = lazy(() => import('./pages/ClientHome'));
 const ClientMenu = lazy(() => import('./pages/ClientMenu'));
-const ClientExplore = lazy(() => import('./pages/ClientExplore'));
-const ClientProfile = lazy(() => import('./pages/ClientProfile'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ClientOrderStatus = lazy(() => import('./pages/ClientOrderStatus'));
 const ClientQRScanner = lazy(() => import('./pages/ClientQRScanner'));
 const VendorLogin = lazy(() => import('./pages/VendorLogin'));
@@ -31,7 +29,6 @@ import { SuspenseFallback } from './components/SuspenseFallback';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { SkipLink } from './components/AccessibleSkipLink';
-import { hapticButton, hapticSuccess, hapticWarning } from './utils/haptics';
 import { initQueueProcessor } from './services/offlineQueue';
 import { errorTracker } from './services/errorTracking';
 import { analytics } from './services/analytics';
@@ -76,7 +73,6 @@ const OfflineIndicator = () => {
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      hapticSuccess();
       // Process queued requests when back online
       import('./services/offlineQueue').then(({ processQueue }) => {
         processQueue().then(({ success, failed }) => {
@@ -95,7 +91,6 @@ const OfflineIndicator = () => {
     };
     const handleOffline = () => {
       setIsOnline(false);
-      hapticWarning();
     };
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -179,11 +174,9 @@ const InstallPrompt = () => {
       setShow(false);
       localStorage.setItem('pwa-prompt-dismissed', 'true');
     } else if (deferredPrompt) {
-      hapticButton();
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult: any) => {
         if (choiceResult.outcome === 'accepted') {
-          hapticSuccess();
           localStorage.setItem('pwa-prompt-dismissed', 'true');
         }
         setDeferredPrompt(null);
@@ -193,7 +186,6 @@ const InstallPrompt = () => {
   };
 
   const handleDismiss = () => {
-    hapticButton();
     setShow(false);
     localStorage.setItem('pwa-prompt-dismissed', 'true');
   };
@@ -255,7 +247,7 @@ const DevButton = () => {
   if (location.pathname === '/dev') return null;
   return (
     <button
-      onClick={() => { hapticButton(); navigate('/dev'); }}
+      onClick={() => { navigate('/dev'); }}
       className="fixed top-safe right-4 z-[70] bg-black/40 backdrop-blur-md border border-white/10 text-white/30 hover:text-white text-[10px] px-2 py-1 rounded-full hover:bg-black/60 transition-colors mt-2 touch-target"
     >
       DEV
@@ -263,26 +255,23 @@ const DevButton = () => {
   );
 };
 
-const MenuEntry = () => {
+// Root route redirect - show QR scanner landing
+const RootRedirect = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let lastVenueId: string | null = null;
-    try {
-      lastVenueId = localStorage.getItem('last_venue_id');
-    } catch (error) {
-      console.warn('Failed to read last venue from storage', error);
-    }
+    // Check if user has last venue, otherwise go to scanner
+    const lastVenueId = localStorage.getItem('last_venue_id');
     if (lastVenueId) {
-      navigate(`/menu/${lastVenueId}`, { replace: true });
-      return;
+      navigate(`/v/${lastVenueId}`, { replace: true });
+    } else {
+      navigate('/scan', { replace: true });
     }
-    navigate('/explore', { replace: true });
   }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-muted">Loading menu...</div>
+      <div className="text-muted">Loading...</div>
     </div>
   );
 };
@@ -303,16 +292,16 @@ const AnimatedRoutes = () => {
         <Suspense fallback={<SuspenseFallback />}>
           <Routes location={location}>
             {/* Public Client Routes */}
-            <Route path="/" element={<ClientHome />} />
-            <Route path="/explore" element={<ClientExplore />} />
-            <Route path="/profile" element={<ClientProfile />} />
+            <Route path="/" element={<RootRedirect />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/order/:id" element={<ClientOrderStatus />} />
             <Route path="/scan" element={<ClientQRScanner />} />
-            <Route path="/menu" element={<MenuEntry />} />
-            <Route path="/menu/:venueId" element={<ClientMenu />} />
-            <Route path="/menu/:venueId/t/:tableCode" element={<ClientMenu />} />
             <Route path="/v/:venueId" element={<ClientMenu />} />
             <Route path="/v/:venueId/t/:tableCode" element={<ClientMenu />} />
+            {/* Legacy route redirects */}
+            <Route path="/profile" element={<RootRedirect />} />
+            <Route path="/menu/:venueId" element={<ClientMenu />} />
+            <Route path="/menu/:venueId/t/:tableCode" element={<ClientMenu />} />
 
             {/* Vendor Routes (Private) */}
             <Route path="/vendor/login" element={<VendorLogin />} />
@@ -398,46 +387,6 @@ const AnimatedRoutes = () => {
 };
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { totalItems } = useCart();
-
-  // Bottom Navigation
-  const NavBtn = ({ icon, label, path, badge }: { icon: string; label: string; path: string; badge?: number }) => {
-    const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
-    return (
-      <button
-        onClick={() => {
-          if (location.pathname !== path) {
-            hapticButton();
-            navigate(path);
-          }
-        }}
-        className={`
-          flex flex-col items-center justify-center gap-1 flex-1 py-2 px-2 touch-target rounded-xl
-          ${isActive ? 'text-primary-600 bg-primary-500/10' : 'text-muted'}
-          transition-colors
-        `}
-      >
-        <div className="relative">
-          <span className="text-xl">{icon}</span>
-          {badge && badge > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-              {badge > 9 ? '9+' : badge}
-            </span>
-          )}
-        </div>
-        <span className="text-[10px] font-medium">{label}</span>
-      </button>
-    );
-  };
-
-  // Only show bottom nav on client routes
-  const showBottomNav = !location.pathname.startsWith('/vendor') &&
-    !location.pathname.startsWith('/admin') &&
-    !location.pathname.startsWith('/dev') &&
-    !location.pathname.startsWith('/business');
-
   return (
     <div className="min-h-screen flex flex-col bg-background" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
       <SkipLink />
@@ -447,27 +396,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         id="main-content"
         className="flex-1 overflow-y-auto"
         style={{
-          paddingBottom: showBottomNav ? 'calc(60px + var(--safe-area-bottom, 0px))' : 'var(--safe-area-bottom, 0px)',
+          paddingBottom: 'var(--safe-area-bottom, 0px)',
           WebkitOverflowScrolling: 'touch'
         }}
         role="main"
       >
         {children}
       </main>
-
-      {showBottomNav && (
-        <nav
-          className="fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-border z-40"
-          style={{ paddingBottom: 'var(--safe-area-bottom, 0px)' }}
-        >
-          <div className="flex items-center">
-            <NavBtn icon="🏠" label="Home" path="/" />
-            <NavBtn icon="🔍" label="Explore" path="/explore" />
-            <NavBtn icon="🛒" label="Cart" path="/menu" badge={totalItems} />
-            <NavBtn icon="👤" label="Profile" path="/profile" />
-          </div>
-        </nav>
-      )}
 
       <InstallPrompt />
       <UpdatePrompt />

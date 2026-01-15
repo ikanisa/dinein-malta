@@ -4,18 +4,23 @@ import { GlassCard } from '../components/GlassCard';
 import { MenuListSkeleton } from '../components/Loading';
 import { OptimizedImage } from '../components/OptimizedImage';
 import { ErrorState } from '../components/common/ErrorState';
-import { getVenueBySlugOrId, getOrdersForVenue, toOrderStatus, toPaymentStatus } from '../services/databaseService';
-import { Venue, Order, OrderStatus } from '../types';
+import { CartBar } from '../components/menu/CartBar';
+import { useMenu } from '../hooks/useMenu';
+import { getOrdersForVenue, toOrderStatus, toPaymentStatus } from '../services/databaseService';
+import { Order, OrderStatus } from '../types';
 import { useCart } from '../context/CartContext';
 import { supabase } from '../services/supabase';
 
 const ClientMenu = () => {
   const { venueId, tableCode } = useParams();
   const navigate = useNavigate();
-  const { cart, addToCart, removeFromCart, clearCart, totalAmount, totalItems } = useCart();
+  const { cart, addToCart, removeFromCart, clearCart, totalAmount, totalItems, toggleFavorite, isFavorite, favorites } = useCart();
 
-  const [venue, setVenue] = useState<Venue | null>(null);
+  // Use optimized menu hook
+  const { venue, menu: allMenuItems, categories, isLoading: menuLoading, error: menuError } = useMenu(venueId, tableCode);
+
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [myOrders, setMyOrders] = useState<Order[]>([]);
@@ -43,50 +48,28 @@ const ClientMenu = () => {
     }
   };
 
-  const [error, setError] = useState<Error | null>(null);
-  const [loading, setLoading] = useState(true);
-
+  // Load orders when venue is available
   useEffect(() => {
-    if (!venueId) return;
-    let active = true;
-    setLoading(true);
-    setError(null);
-
-    (async () => {
-      try {
-        const v = await getVenueBySlugOrId(venueId);
-        if (!active) return;
-
-        if (!v) {
-          throw new Error('Venue not found');
-        }
-
-        setVenue(v);
-        try {
-          localStorage.setItem('last_venue_id', v.id);
-        } catch (error) {
-          console.warn('Failed to persist last venue', error);
-        }
-        await loadMyOrders(v.id);
-      } catch (err) {
-        if (!active) return;
-        console.error('Failed to load venue:', err);
-        setError(err instanceof Error ? err : new Error('Failed to load venue'));
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-
-    return () => { active = false; };
-  }, [venueId]);
+    if (venue?.id) {
+      localStorage.setItem('last_venue_id', venue.id);
+      loadMyOrders(venue.id);
+    }
+  }, [venue?.id]);
 
   useEffect(() => {
     if (tableCode) setManualTableRef(tableCode);
   }, [tableCode]);
 
+  // Update active category when categories change
+  useEffect(() => {
+    if (categories.length > 0 && !categories.includes(activeCategory)) {
+      setActiveCategory('All');
+    }
+  }, [categories]);
+
   // Realtime subscription for current order status
   useEffect(() => {
-    if (!currentOrder) return;
+    if (!currentOrder || !venue?.id) return;
 
     const channel = supabase
       .channel(`order-${currentOrder.id}`)
@@ -100,7 +83,7 @@ const ClientMenu = () => {
             paymentStatus: toPaymentStatus(payload.new.payment_status),
           } : null);
           // Refresh history list too
-          await loadMyOrders(venue?.id);
+          await loadMyOrders(venue.id);
 
           // Update badge when order status changes
           const { setBadge } = await import('../services/badgeAPI');
@@ -121,7 +104,7 @@ const ClientMenu = () => {
     navigator.clipboard.writeText(text);
   };
 
-  if (loading) {
+  if (menuLoading) {
     return (
       <div className="pb-32 animate-fade-in pt-safe-top">
         <div className="h-64 relative bg-gray-900 animate-pulse" />
@@ -132,11 +115,11 @@ const ClientMenu = () => {
     );
   }
 
-  if (error || !venue) {
+  if (menuError || !venue) {
     return (
       <div className="min-h-screen pt-safe-top flex flex-col items-center justify-center p-6">
         <ErrorState
-          error={error || new Error("This venue could not be found. It may have been removed or is temporarily unavailable.")}
+          error={menuError || new Error("This venue could not be found. It may have been removed or is temporarily unavailable.")}
           onRetry={() => window.location.reload()}
           className="w-full max-w-md"
         />
@@ -150,11 +133,16 @@ const ClientMenu = () => {
     );
   }
 
-  const availableItems = venue.menu.filter(i => i.available !== false);
-  const categories = ['All', ...Array.from(new Set(availableItems.map(i => i.category)))];
-  const filteredItems = activeCategory === 'All'
+  const availableItems = allMenuItems.filter(i => i.available !== false);
+  
+  // Apply filters: category and favorites
+  let filteredItems = activeCategory === 'All'
     ? availableItems
     : availableItems.filter(i => i.category === activeCategory);
+  
+  if (showFavoritesOnly) {
+    filteredItems = filteredItems.filter(item => isFavorite(item.id));
+  }
 
   // Determine payment availability dynamically from venue data
   const getPaymentProvider = () => {
@@ -357,14 +345,37 @@ const ClientMenu = () => {
         />
 
         <div className="absolute top-safe px-4 py-2 z-20 w-full flex justify-between items-start">
-          <button onClick={() => navigate('/')} aria-label="Go back to home" className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/10 active:scale-90 transition">
+          <button 
+            onClick={() => {
+              const lastVenueId = localStorage.getItem('last_venue_id');
+              if (lastVenueId) {
+                navigate(`/v/${lastVenueId}`);
+              } else {
+                navigate('/scan');
+              }
+            }} 
+            aria-label="Go back" 
+            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/10 active:scale-90 transition"
+          >
             ⬅
           </button>
-          {myOrders.length > 0 && (
-            <button className="px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full text-xs font-bold border border-white/10 text-white">
-              {myOrders.length} Orders
+          <div className="flex gap-2 items-center">
+            {myOrders.length > 0 && (
+              <button 
+                onClick={() => navigate(`/order/${myOrders[0].id}`)}
+                className="px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full text-xs font-bold border border-white/10 text-white"
+              >
+                {myOrders.length} Order{myOrders.length !== 1 ? 's' : ''}
+              </button>
+            )}
+            <button
+              onClick={() => navigate('/settings')}
+              aria-label="Settings"
+              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/10 active:scale-90 transition"
+            >
+              ⚙️
             </button>
-          )}
+          </div>
         </div>
 
         <div className="absolute bottom-0 left-0 w-full p-6 z-20">
@@ -406,7 +417,7 @@ const ClientMenu = () => {
       </div>
 
       {/* Menu Grid */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 pb-24">
         {filteredItems.map(item => (
           <GlassCard key={item.id} className="flex gap-4 p-0 overflow-hidden bg-surface border-0 shadow-sm">
             <div className="w-28 h-28 bg-surface-highlight relative flex-shrink-0">
@@ -419,8 +430,18 @@ const ClientMenu = () => {
             </div>
             <div className="flex-1 py-3 pr-3 flex flex-col justify-between">
               <div>
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-base leading-tight mb-1 text-foreground">{item.name}</h3>
+                <div className="flex justify-between items-start gap-2">
+                  <h3 className="font-bold text-base leading-tight mb-1 text-foreground flex-1">{item.name}</h3>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(item);
+                    }}
+                    className="text-xl flex-shrink-0 active:scale-90 transition-transform"
+                    aria-label={isFavorite(item.id) ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`}
+                  >
+                    {isFavorite(item.id) ? '⭐' : '☆'}
+                  </button>
                 </div>
                 <p className="text-xs text-muted line-clamp-2 leading-relaxed">{item.description}</p>
               </div>
@@ -439,15 +460,17 @@ const ClientMenu = () => {
           </GlassCard>
         ))}
         {filteredItems.length === 0 && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in pb-24">
             <React.Suspense fallback={<div className="py-10 text-center text-muted">Loading...</div>}>
               {(() => {
                 const EmptyState = React.lazy(() => import('../components/ui/EmptyState'));
                 return (
                   <EmptyState
-                    icon="🍽️"
-                    title="No items here"
-                    description={`No items in the "${activeCategory}" category yet.`}
+                    icon={showFavoritesOnly ? "⭐" : "🍽️"}
+                    title={showFavoritesOnly ? "No favorites yet" : "No items here"}
+                    description={showFavoritesOnly 
+                      ? "Tap the star icon on menu items to save them as favorites."
+                      : `No items in the "${activeCategory}" category yet.`}
                     size="sm"
                   />
                 );
@@ -457,27 +480,16 @@ const ClientMenu = () => {
         )}
       </div>
 
-      {/* Floating Summary Bar */}
-      {cart.length > 0 && !isReviewOpen && !showPaymentModal && !currentOrder && (
-        <div className="fixed bottom-6 left-4 right-4 z-[60] animate-slide-up">
-          <GlassCard
-            onClick={() => setIsReviewOpen(true)}
-            className="flex justify-between items-center bg-surface border border-border shadow-2xl p-4 cursor-pointer active:scale-95 transition-transform"
-          >
-            <div className="flex items-center gap-3">
-              <div className="bg-foreground text-background font-bold w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
-                {totalItems}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-muted font-bold uppercase tracking-wider">Total</span>
-                <span className="font-bold text-xl text-foreground">€{totalAmount.toFixed(2)}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 font-bold text-sm text-secondary-600">
-              View Order <span className="text-xl">→</span>
-            </div>
-          </GlassCard>
-        </div>
+      {/* Cart Bar - Always visible when not in modals */}
+      {!isReviewOpen && !showPaymentModal && !currentOrder && (
+        <CartBar
+          itemCount={totalItems}
+          total={totalAmount}
+          favoritesCount={favorites.length}
+          showFavoritesOnly={showFavoritesOnly}
+          onToggleFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
+          onReviewCart={() => setIsReviewOpen(true)}
+        />
       )}
 
       {/* Order Review Modal */}

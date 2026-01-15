@@ -95,29 +95,90 @@ const ClientQRScanner = () => {
     const handleQRCode = (rawValue: string) => {
         setScanning(false);
 
-        // Parse the QR code URL to extract venue ID
+        // Parse the QR code URL to extract venue ID and table code
         // Expected formats:
-        // - https://dinein.app/menu/{venueId}
-        // - /menu/{venueId}
-        // - {venueId} (direct ID)
+        // - https://dinein.app/v/{slug}/t/{tableCode}
+        // - https://dinein.app/menu/{venueId}/t/{tableCode}
+        // - /v/{slug}/t/{tableCode}
+        // - /menu/{venueId}/t/{tableCode}
+        // - /v/{slug} or /menu/{venueId} (no table code)
+        // - {venueId} (direct ID, no table code)
 
-        let venueId = rawValue;
+        let venueId: string | undefined;
+        let tableCode: string | undefined;
 
-        // Try to extract from URL
-        const menuMatch = rawValue.match(/\/menu\/([a-zA-Z0-9-]+)/);
-        if (menuMatch) {
-            venueId = menuMatch[1];
-        } else if (rawValue.startsWith('http')) {
-            // Try to get last path segment
-            const url = new URL(rawValue);
-            const pathParts = url.pathname.split('/').filter(Boolean);
-            if (pathParts.length > 0) {
-                venueId = pathParts[pathParts.length - 1];
+        // Try new format: /v/:slug/t/:tableCode
+        const vTableMatch = rawValue.match(/\/v\/([a-zA-Z0-9-]+)\/t\/([a-zA-Z0-9-]+)/);
+        if (vTableMatch) {
+            venueId = vTableMatch[1];
+            tableCode = vTableMatch[2];
+        }
+        
+        // Try old format: /menu/:venueId/t/:tableCode
+        const menuTableMatch = rawValue.match(/\/menu\/([a-zA-Z0-9-]+)\/t\/([a-zA-Z0-9-]+)/);
+        if (menuTableMatch) {
+            venueId = menuTableMatch[1];
+            tableCode = menuTableMatch[2];
+        }
+
+        // Try format: /v/:slug
+        if (!venueId) {
+            const vMatch = rawValue.match(/\/v\/([a-zA-Z0-9-]+)/);
+            if (vMatch) {
+                venueId = vMatch[1];
             }
         }
 
-        // Navigate to the venue menu
-        navigate(`/menu/${venueId}`);
+        // Try format: /menu/:venueId
+        if (!venueId) {
+            const menuMatch = rawValue.match(/\/menu\/([a-zA-Z0-9-]+)/);
+            if (menuMatch) {
+                venueId = menuMatch[1];
+            }
+        }
+
+        // If it's a full URL, try to extract from pathname
+        if (!venueId && rawValue.startsWith('http')) {
+            try {
+                const url = new URL(rawValue);
+                const pathParts = url.pathname.split('/').filter(Boolean);
+                
+                // Look for /v/ or /menu/ patterns
+                const vIndex = pathParts.indexOf('v');
+                const menuIndex = pathParts.indexOf('menu');
+                
+                if (vIndex >= 0 && pathParts[vIndex + 1]) {
+                    venueId = pathParts[vIndex + 1];
+                    if (pathParts[vIndex + 2] === 't' && pathParts[vIndex + 3]) {
+                        tableCode = pathParts[vIndex + 3];
+                    }
+                } else if (menuIndex >= 0 && pathParts[menuIndex + 1]) {
+                    venueId = pathParts[menuIndex + 1];
+                    if (pathParts[menuIndex + 2] === 't' && pathParts[menuIndex + 3]) {
+                        tableCode = pathParts[menuIndex + 3];
+                    }
+                }
+            } catch (e) {
+                // Invalid URL, fall through
+            }
+        }
+
+        // If no URL format detected, assume it's a direct venue ID
+        if (!venueId) {
+            venueId = rawValue.trim();
+        }
+
+        if (!venueId) {
+            setError('Invalid QR code format. Please enter venue code manually.');
+            return;
+        }
+
+        // Navigate to the venue menu with table code if available
+        if (tableCode) {
+            navigate(`/v/${venueId}/t/${tableCode}`);
+        } else {
+            navigate(`/v/${venueId}`);
+        }
     };
 
     const handleManualSubmit = () => {
