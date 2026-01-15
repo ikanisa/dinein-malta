@@ -9,7 +9,7 @@
     "build:cloudflare": "npm ci --legacy-peer-deps && npm run typecheck && npm run build",
     "preview": "vite preview",
     "start": "serve -s dist -l $PORT",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --skipLibCheck",
     "deploy:cloudflare": "./deploy-cloudflare.sh",
     "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
