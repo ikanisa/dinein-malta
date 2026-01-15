@@ -5,7 +5,7 @@ import './i18n/config'; // Initialize i18n
 import App from './App';
 
 // Register service worker with auto-update
-const updateSW = registerSW({
+registerSW({
   onNeedRefresh() {
     // Dispatch event for UpdatePrompt component to handle
     window.dispatchEvent(new CustomEvent('sw-update-available'));

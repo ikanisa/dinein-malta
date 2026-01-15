@@ -84,7 +84,7 @@ describe('Database Service Integration', () => {
 
             expect(error).toBeNull();
             expect(data).toHaveLength(1);
-            expect(data[0].name).toBe('Test Restaurant');
+            expect(data?.[0]?.name).toBe('Test Restaurant');
         });
 
         it('fetches single vendor', async () => {
@@ -109,7 +109,7 @@ describe('Database Service Integration', () => {
 
             expect(error).toBeNull();
             expect(data).toHaveLength(2);
-            expect(data[0].name).toBe('Burger Deluxe');
+            expect(data?.[0]?.name).toBe('Burger Deluxe');
         });
     });
 
@@ -123,7 +123,7 @@ describe('Database Service Integration', () => {
 
             expect(error).toBeNull();
             expect(data).toHaveLength(1);
-            expect(data[0].status).toBe('pending');
+            expect(data?.[0]?.status).toBe('pending');
         });
 
         it('creates a new order', async () => {

@@ -9,12 +9,12 @@ import { z } from 'zod';
  * Order validation schema
  */
 export const orderSchema = z.object({
-  vendor_id: z.string().uuid('Invalid vendor ID'),
+  vendor_id: z.string().min(1, 'Vendor ID is required'), // Can be UUID or slug
   table_id: z.string().uuid().optional(),
   table_code: z.string().min(1, 'Table code is required').max(50, 'Table code too long'),
   items: z.array(
     z.object({
-      menu_item_id: z.string().uuid('Invalid menu item ID'),
+      menu_item_id: z.string().min(1, 'Menu item ID is required'), // Can be UUID or other format
       quantity: z.number().int('Quantity must be a whole number').positive('Quantity must be positive').max(99, 'Quantity too high'),
       special_requests: z.string().max(500, 'Special requests too long').optional(),
       selectedOptions: z.array(z.string()).optional(),
@@ -52,12 +52,12 @@ export const tableCodeSchema = z.string()
 /**
  * Validate order input
  */
-export function validateOrder(input: unknown): { success: true; data: OrderInput } | { success: false; errors: z.ZodError } {
+export function validateOrder(input: unknown): { success: true; data: OrderInput } | { success: false; error: z.ZodError } {
   const result = orderSchema.safeParse(input);
   if (result.success) {
     return { success: true, data: result.data };
   }
-  return { success: false, errors: result.error };
+  return { success: false, error: result.error };
 }
 
 /**
@@ -80,5 +80,5 @@ export function validateTableCode(input: string): { valid: boolean; sanitized?: 
   if (result.success) {
     return { valid: true, sanitized: result.data };
   }
-  return { valid: false, error: result.error.errors[0]?.message || 'Invalid table code' };
+  return { valid: false, error: result.error.issues[0]?.message || 'Invalid table code' };
 }

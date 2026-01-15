@@ -24,9 +24,8 @@ const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminVendors = lazy(() => import('./pages/AdminVendors'));
 const AdminOrders = lazy(() => import('./pages/AdminOrders'));
 const AdminSystem = lazy(() => import('./pages/AdminSystem'));
-import { supabase } from './services/supabase';
 import { ThemeProvider } from './context/ThemeContext';
-import { CartProvider, useCart } from './context/CartContext';
+import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { RequireAuth } from './components/RequireAuth';
 import { GlassCard } from './components/GlassCard';
@@ -151,7 +150,7 @@ const InstallPrompt = () => {
     const isStandalone = ('standalone' in window.navigator && (window.navigator as any).standalone) ||
       window.matchMedia('(display-mode: standalone)').matches;
 
-    if (isStandalone) return;
+    if (isStandalone) return undefined;
 
     if (isIosDevice) {
       setIsIOS(true);
@@ -159,6 +158,7 @@ const InstallPrompt = () => {
       if (!localStorage.getItem('pwa-prompt-dismissed')) {
         setTimeout(() => setShow(true), 3000);
       }
+      return undefined;
     } else {
       // Android/Desktop standard mechanism
       const handler = (e: any) => {

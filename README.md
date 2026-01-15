@@ -52,13 +52,14 @@ dinein/
 
 ### Environment Variables
 
-Create `.env` file in `apps/web/`:
+Create `.env.local` file in `apps/web/`:
 
 ```env
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-GEMINI_API_KEY=your_gemini_api_key
 ```
+
+**Note:** `GEMINI_API_KEY` is only used server-side in Supabase edge functions, not in client builds. See [Supabase Setup](./docs/deployment/supabase-setup.md) for edge function configuration.
 
 ### Local Development
 
@@ -68,7 +69,7 @@ npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`
+The app will be available at `http://localhost:5173` (or the port shown in terminal)
 
 ### Build for Production
 
@@ -90,17 +91,26 @@ npm test           # Run tests
 
 ## Deployment
 
-See [Deployment Guide](./docs/DEPLOYMENT.md) for detailed instructions.
+See the [Deployment Guide](./docs/DEPLOYMENT.md) for complete deployment instructions.
 
-### Cloudflare Pages (Automatic)
+### Quick Deploy
 
-Push to `main` branch triggers automatic deployment.
+**Cloudflare Pages (Recommended):**
+```bash
+cd apps/web
+npm run deploy:cloudflare
+```
 
-### Custom Domain
+Push to `main` branch triggers automatic deployment via GitHub Actions.
 
-1. Add custom domain in Cloudflare Pages dashboard
-2. Update DNS records as instructed
-3. SSL certificate auto-provisioned
+### Deployment Documentation
+
+For detailed guides, see the [deployment documentation](./docs/deployment/README.md):
+
+- **[Cloudflare Pages](./docs/deployment/cloudflare-pages.md)** - Production deployment
+- **[Local Development](./docs/deployment/local-development.md)** - Local setup
+- **[Supabase Setup](./docs/deployment/supabase-setup.md)** - Database & backend
+- **[Troubleshooting](./docs/deployment/troubleshooting.md)** - Common issues
 
 ## Supabase Setup
 
@@ -214,9 +224,22 @@ npm run test:coverage
 
 ## Documentation
 
-- [User Journeys](./docs/user-journeys.md) - Complete user flows
+### Getting Started
+- [Deployment Guide](./docs/DEPLOYMENT.md) - Quick start and deployment overview
+- [Local Development Setup](./docs/deployment/local-development.md) - Setup for local development
+
+### Production & Operations
+- [Cloudflare Pages Deployment](./docs/deployment/cloudflare-pages.md) - Production deployment guide
+- [Supabase Backend Setup](./docs/deployment/supabase-setup.md) - Database, RLS, and edge functions
 - [Production Readiness](./docs/production-readiness.md) - Production checklist
-- [Deployment Guide](./docs/DEPLOYMENT.md) - Deployment instructions
+- [Troubleshooting](./docs/deployment/troubleshooting.md) - Common issues and solutions
+
+### Architecture & Design
+- [User Journeys](./docs/user-journeys.md) - Complete user flows
+- [Database Schema](./docs/DATABASE_SCHEMA.md) - Database structure
+- [API Integration](./docs/API_INTEGRATION.md) - API documentation
+
+### Changelog
 - [Changelog](./docs/CHANGELOG.md) - Version history
 
 ## License

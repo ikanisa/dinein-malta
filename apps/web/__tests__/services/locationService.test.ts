@@ -2,7 +2,7 @@
  * Unit tests for locationService.ts
  * Tests for location permission, distance calculation, and geolocation mocking
  */
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Create localStorage mock
 const createLocalStorageMock = () => {
@@ -28,7 +28,7 @@ const createGeolocationMock = () => {
 
     return {
         getCurrentPosition: vi.fn(
-            (success: PositionCallback, error?: PositionErrorCallback, options?: PositionOptions) => {
+            (success: PositionCallback, _error?: PositionErrorCallback, _options?: PositionOptions) => {
                 // Default: simulate success
                 const position: GeolocationPosition = {
                     coords: {
@@ -51,7 +51,7 @@ const createGeolocationMock = () => {
             }
         ),
         watchPosition: vi.fn(
-            (success: PositionCallback, error?: PositionErrorCallback, options?: PositionOptions) => {
+            (success: PositionCallback, _error?: PositionErrorCallback, _options?: PositionOptions) => {
                 const id = ++watchId;
                 watchCallbacks.set(id, { success, error });
                 return id;

@@ -15,7 +15,6 @@ export const useVendorMenuManager = ({ venue, setVenue }: UseVendorMenuManagerAr
   const [editingItem, setEditingItem] = useState<Partial<MenuItem>>({});
 
   const [aiImagePrompt, setAiImagePrompt] = useState('');
-  const [aiImageMode] = useState<'generate' | 'edit'>('generate');
   const [aiImageLoading, setAiImageLoading] = useState(false);
 
   const [menuSearch, setMenuSearch] = useState('');

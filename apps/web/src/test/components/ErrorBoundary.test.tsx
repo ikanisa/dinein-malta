@@ -103,7 +103,7 @@ describe('ErrorBoundary', () => {
             return <div>Success</div>;
         };
 
-        const { rerender } = render(
+        const { } = render(
             <ErrorBoundary>
                 <ToggleError />
             </ErrorBoundary>

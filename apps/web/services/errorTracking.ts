@@ -45,8 +45,6 @@ class ErrorTracker {
         environment: import.meta.env.MODE,
         // Release tracking for better debugging
         release: import.meta.env.VITE_APP_VERSION || 'unknown',
-        // Capture unhandled promise rejections
-        captureUnhandledRejections: true,
         // Set sample rate for sessions (1.0 = 100%)
         sampleRate: 1.0,
         // Performance monitoring
@@ -140,7 +138,7 @@ class ErrorTracker {
   private async logError(error: Error, context?: ErrorContext) {
     try {
       // Optionally send to your backend for logging
-      const errorLog = {
+      const _errorLog = {
         message: error.message,
         stack: error.stack,
         context,

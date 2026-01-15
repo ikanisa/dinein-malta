@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { GlassCard } from '../components/GlassCard';
 import { DataStateWrapper } from '../components/common';
 import { VendorCardSkeleton } from '../components/Loading';

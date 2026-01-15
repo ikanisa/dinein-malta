@@ -61,7 +61,9 @@ class CacheService {
     if (this.memoryCache.size >= this.MAX_MEMORY_ENTRIES) {
       // Remove oldest entry (simple FIFO)
       const firstKey = this.memoryCache.keys().next().value;
-      this.memoryCache.delete(firstKey);
+      if (firstKey) {
+        this.memoryCache.delete(firstKey);
+      }
     }
     this.memoryCache.set(key, entry);
 
@@ -114,8 +116,6 @@ class CacheService {
    * Clean expired entries
    */
   cleanExpired(): void {
-    const now = Date.now();
-    
     // Clean memory cache
     for (const [key, entry] of this.memoryCache.entries()) {
       if (!this.isValid(entry)) {

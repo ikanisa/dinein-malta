@@ -42,7 +42,43 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Analyze bundle size
+        working-directory: apps/web
+        run: |
+          echo "📊 Analyzing bundle size..."
+          
+          # Total dist size
+          DIST_SIZE=$(du -sm dist | cut -f1)
+          echo "Total dist size: ${DIST_SIZE}MB"
+          
+          # Find main JavaScript bundle (usually index-*.js)
+          MAIN_BUNDLE=$(find dist/assets -name "index-*.js" -type f | head -1)
+          if [ -n "$MAIN_BUNDLE" ]; then
+            MAIN_SIZE=$(stat -f%z "$MAIN_BUNDLE" 2>/dev/null || stat -c%s "$MAIN_BUNDLE" 2>/dev/null)
+            MAIN_SIZE_KB=$((MAIN_SIZE / 1024))
+            echo "Main bundle size: ${MAIN_SIZE_KB}KB ($(basename $MAIN_BUNDLE))"
+            
+            # Warn if main bundle exceeds 200KB
+            if [ $MAIN_SIZE_KB -gt 200 ]; then
+              echo "⚠️  WARNING: Main bundle exceeds 200KB target (${MAIN_SIZE_KB}KB)"
+              echo "Consider code splitting or removing unused dependencies"
+            else
+              echo "✅ Main bundle size is within target (< 200KB)"
+            fi
+          fi
+          
+          # List all JavaScript files over 100KB
+          echo ""
+          echo "📜 JavaScript files over 100KB:"
+          find dist/assets -name "*.js" -type f -size +100k -exec ls -lh {} \; | awk '{print $5, $9}' || echo "  None found"
+          
+          # Warn if total dist exceeds 1MB
+          if [ $DIST_SIZE -gt 1024 ]; then
+            echo "⚠️  WARNING: Total dist size exceeds 1MB target (${DIST_SIZE}MB)"
+          else
+            echo "✅ Total dist size is within target (< 1MB)"
+          fi
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1

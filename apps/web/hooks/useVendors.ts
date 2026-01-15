@@ -1,6 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { vendorsApi } from '../services/api';
-import { Venue } from '../types';
 
 // Query keys for cache management
 export const vendorKeys = {

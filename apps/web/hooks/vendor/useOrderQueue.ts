@@ -65,7 +65,7 @@ const playNotificationSound = () => {
     audio.volume = 0.7;
     
     // Check if file loaded (if 404, fallback to generated tone)
-    audio.addEventListener('error', (e) => {
+    audio.addEventListener('error', (_e) => {
       console.warn('Audio file not found, using generated tone');
       generateNotificationTone();
       if (navigator.vibrate) {

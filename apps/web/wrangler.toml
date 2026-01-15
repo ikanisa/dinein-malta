@@ -11,7 +11,7 @@ pages_build_output_dir = "dist"
 # Environment variables are set in Cloudflare Dashboard:
 # - VITE_SUPABASE_URL
 # - VITE_SUPABASE_ANON_KEY
-# - GEMINI_API_KEY (optional, if needed client-side)
+# Note: GEMINI_API_KEY is only used server-side in edge functions, not in client builds
 
 # Note: For Cloudflare Pages, use the dashboard or wrangler pages commands
 # This config is primarily for Workers if needed in the future

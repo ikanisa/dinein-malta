@@ -47,7 +47,7 @@ export async function share(data: ShareData): Promise<void> {
 /**
  * Share venue
  */
-export async function shareVenue(venueId: string, venueName: string, url: string) {
+export async function shareVenue(_venueId: string, venueName: string, url: string) {
   await share({
     title: `Check out ${venueName} on DineIn`,
     text: `I found this great place: ${venueName}`,

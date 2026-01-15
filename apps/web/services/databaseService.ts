@@ -575,14 +575,14 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
   }));
 
   // Get table number if table_id exists
-  let tableNumber: string | undefined;
+  let tableNumber = '';
   if (data.table_id) {
     const { data: tableData } = await supabase
       .from('tables')
       .select('table_number, label')
       .eq('id', data.table_id)
       .single();
-    tableNumber = tableData?.table_number?.toString() || tableData?.label;
+    tableNumber = tableData?.table_number?.toString() || tableData?.label || '';
   }
 
   return {

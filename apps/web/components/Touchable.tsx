@@ -33,7 +33,7 @@ const TouchableComponent: React.FC<TouchableProps> = ({
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartTimeRef = useRef<number>(0);
 
-  const handleTouchStart = (e: TouchEvent) => {
+  const handleTouchStart = (_e: TouchEvent) => {
     if (disabled) return;
     touchStartTimeRef.current = Date.now();
     

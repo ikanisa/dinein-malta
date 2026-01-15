@@ -1,7 +1,7 @@
 /**
  * Tests for orderService
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { getQueuedOrders, clearQueuedOrders } from '../../services/orderService';
 
 // Create a real localStorage mock for this test file

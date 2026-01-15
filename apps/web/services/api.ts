@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+// Supabase client imported via databaseService
 import {
     getAllVenues,
     getVenueBySlugOrId,

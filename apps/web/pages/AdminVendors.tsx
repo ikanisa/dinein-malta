@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GlassCard } from '../components/GlassCard';
 import { getAllVenues, adminSetVendorStatus } from '../services/databaseService';
 import { Venue } from '../types';

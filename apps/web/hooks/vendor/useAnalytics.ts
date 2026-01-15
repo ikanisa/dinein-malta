@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../services/supabase';
-import { Order } from '../../types';
 
 interface AnalyticsData {
   revenue: number;

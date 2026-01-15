@@ -1,61 +1,201 @@
-# Deployment Guide
+# DineIn Malta - Deployment Guide
 
-Complete guide for deploying the DineIn Malta PWA to Cloudflare Pages and building Android APKs.
+Complete guide for deploying the DineIn Malta PWA to production and managing the deployment lifecycle.
 
-## Prerequisites
+> **📚 For detailed guides, see the [deployment documentation directory](./deployment/README.md)**
 
-- Node.js 18+
-- Wrangler CLI (`npm install -g wrangler`) - optional for advanced Cloudflare management
-- Android Studio (for Android builds)
-- Java JDK 17+ (for Android builds)
-- Access to the Cloudflare Pages project
+## Quick Links
 
-## Environment Variables
+- **[Quick Start & Overview](./deployment/README.md)** - Get started immediately
+- **[Cloudflare Pages](./deployment/cloudflare-pages.md)** - Production deployment
+- **[Local Development](./deployment/local-development.md)** - Local setup
+- **[Supabase Setup](./deployment/supabase-setup.md)** - Database & backend
+- **[Troubleshooting](./deployment/troubleshooting.md)** - Common issues
 
-Create a `.env` file in `apps/web/` with the following variables:
+## Table of Contents
 
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_GEMINI_API_KEY=your_gemini_api_key
+1. [Quick Start](#quick-start)
+2. [Deployment Methods](#deployment-methods)
+3. [Release Checklist](#release-checklist)
+4. [Android APK Build](#android-apk-build)
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- Git
+- Cloudflare account (for production deployment)
+- Supabase account (for backend)
+
+### One-Command Deployment
+
+```bash
+cd apps/web
+npm run deploy:cloudflare
 ```
 
-Set environment variables in Cloudflare Pages Dashboard → Settings → Environment Variables.
+Or use the deployment script:
 
-## Cloudflare Pages
+```bash
+cd apps/web
+./deploy-cloudflare.sh
+```
 
-### Automatic Deployment
+---
 
-Push to `main` branch triggers automatic deployment via GitHub integration.
+## Deployment Methods
 
-### Build Settings (Cloudflare Dashboard)
+### Cloudflare Pages (Recommended)
 
-- **Framework preset**: Vite
-- **Build command**: `cd apps/web && npm install && npm run build`
-- **Build output directory**: `apps/web/dist`
-- **Root directory**: (leave empty)
+Production deployment with automatic CI/CD. See **[Cloudflare Pages Guide](./deployment/cloudflare-pages.md)** for complete instructions.
+
+### Local Development
+
+For local development and testing. See **[Local Development Guide](./deployment/local-development.md)**.
+
+### Supabase Backend
+
+Database, edge functions, and RLS setup. See **[Supabase Setup Guide](./deployment/supabase-setup.md)**.
+
+### Troubleshooting
+
+Having issues? See **[Troubleshooting Guide](./deployment/troubleshooting.md)**.
+
+---
+
+## Detailed Guides
+
+For complete deployment documentation, see the [deployment documentation directory](./deployment/README.md):
+
+- **[Cloudflare Pages Deployment](./deployment/cloudflare-pages.md)** - Complete production deployment guide
+
+### Initial Setup
+
+1. **Install Wrangler CLI:**
+   ```bash
+   npm install -g wrangler
+   ```
+
+2. **Login to Cloudflare:**
+   ```bash
+   wrangler login
+   ```
+
+3. **Get Your Account ID:**
+   ```bash
+   wrangler whoami
+   ```
+   Or find it in Cloudflare Dashboard → Right sidebar → Account ID
+
+### Environment Variables
+
+Set these in Cloudflare Pages Dashboard → Settings → Environment Variables:
+
+**Required Variables:**
+- `VITE_SUPABASE_URL` - Your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+
+**Note:** GEMINI_API_KEY is only used server-side in Supabase edge functions, not in client builds.
+
+### Build Configuration
+
+**Recommended Settings:**
+
+- **Framework preset**: `Vite`
+- **Root directory**: `apps/web`
+- **Build command**: `npm ci --legacy-peer-deps && npm run build`
+- **Build output directory**: `dist`
+- **Node version**: `20`
+
+**Alternative Build Command** (if `npm ci` fails):
+```bash
+npm install --legacy-peer-deps && npm run build
+```
+
+### Automatic CI/CD
+
+The GitHub Actions workflow (`.github/workflows/cloudflare-pages.yml`) automatically deploys on every push to `main`.
+
+**Setup GitHub Secrets:**
+1. Go to GitHub repo → Settings → Secrets and variables → Actions
+2. Add these secrets:
+   - `CLOUDFLARE_API_TOKEN` - Your Cloudflare API token
+   - `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID
+   - `VITE_SUPABASE_URL` - Supabase URL
+   - `VITE_SUPABASE_ANON_KEY` - Supabase anon key
+
+**Manual Workflow Trigger:**
+- Go to GitHub repo → Actions → "Deploy to Cloudflare Pages" → Run workflow
+
+### Manual Deployment
+
+```bash
+cd apps/web
+
+# Install dependencies
+npm ci --legacy-peer-deps
+
+# Build
+npm run build
+
+# Deploy
+wrangler pages deploy dist --project-name=dinein-malta
+```
+
+### Preview Deployments
+
+All pull requests get automatic preview URLs in Cloudflare Pages. Preview branches use preview environment variables.
 
 ### SPA Routing
 
 The `_redirects` file in `apps/web/public/` handles SPA routing:
 
 ```
-/* /index.html 200
+/*    /index.html   200
 ```
 
-### Manual Deployment (via Wrangler)
+This is automatically handled by Cloudflare Pages for SPAs.
 
+### Custom Domain
+
+1. Go to Cloudflare Pages → Your Project → Custom domains
+2. Add your domain
+3. Update DNS records as instructed
+
+### Performance Optimization
+
+The `vite.config.ts` is optimized for Cloudflare Pages:
+
+- ✅ Code splitting (React, Framer Motion, Supabase)
+- ✅ Minification (esbuild)
+- ✅ Tree shaking
+- ✅ Asset optimization
+- ✅ Service worker caching
+
+**Bundle Size Targets:**
+- Main bundle: < 200KB
+- Total assets: < 1MB
+- Initial load: < 3 seconds
+
+Check bundle size:
 ```bash
 cd apps/web
 npm run build
-npx wrangler pages deploy dist --project-name=dinein-malta
+du -sh dist
 ```
 
-### Preview Deployments
-
-All pull requests get automatic preview URLs in Cloudflare Pages.
+---
 
 ## Android APK Build
+
+### Prerequisites
+
+- Android Studio
+- Java JDK 17+
+- Capacitor CLI
 
 ### Debug Build
 
@@ -96,11 +236,10 @@ npm run build
 npm run cap:sync
 ```
 
-## Firebase App Distribution
-
-### Distribute APK
+### Firebase App Distribution
 
 Using Firebase CLI:
+
 ```bash
 firebase appdistribution:distribute android/app/build/outputs/apk/release/app-release.apk \
   --app YOUR_FIREBASE_APP_ID \
@@ -108,55 +247,40 @@ firebase appdistribution:distribute android/app/build/outputs/apk/release/app-re
   --release-notes "New build"
 ```
 
-## Supabase Backend
+---
 
-### Database Migrations
+## Release Checklist
 
-Migrations are located in `supabase/migrations/`. Apply them using:
+### Pre-Deploy
 
-```bash
-supabase db push
-```
+- [ ] All tests pass (`npm run test:all`)
+- [ ] TypeScript compiles (`npm run typecheck`)
+- [ ] ESLint clean (`npm run lint`)
+- [ ] Build succeeds locally (`npm run build`)
+- [ ] Bundle size within targets (< 200KB main bundle)
+- [ ] Env vars verified in Cloudflare Dashboard (Production + Preview)
+- [ ] No secrets in `VITE_*` env vars
+- [ ] RLS policies verified (see [Supabase Setup](./deployment/supabase-setup.md))
 
-### Edge Functions
+### Deploy
 
-Deploy edge functions with:
+- [ ] Push to `main` branch (auto-deploys to Production)
+- [ ] Monitor Cloudflare Dashboard for build status
+- [ ] Build completes without errors
 
-```bash
-supabase functions deploy
-```
+### Post-Deploy Verification
 
-## Verification Checklist
+- [ ] Site loads at production URL
+- [ ] Hard refresh (`Cmd+Shift+R`) loads new bundle
+- [ ] Deep links work (e.g., `/vendor/dashboard` returns 200, not 404)
+- [ ] Service worker updates (check DevTools → Application → Service Workers)
+- [ ] API calls work (check browser console for errors)
+- [ ] Security headers present (check DevTools → Network → Response Headers)
+- [ ] PWA loads correctly
+- [ ] Venues load from Supabase
+- [ ] Service worker registers for offline support
+- [ ] Icons and manifest are properly served
 
-After deployment, verify:
+For detailed troubleshooting, see [Troubleshooting Guide](./deployment/troubleshooting.md).
 
-1. **PWA loads correctly** at the Cloudflare Pages URL
-2. **Venues load** from Supabase
-3. **Service worker** registers for offline support
-4. **Icons and manifest** are properly served
-5. **Android APK** installs and runs correctly
-
-## Troubleshooting
-
-### Build Errors
-
-If you encounter module errors during build:
-```bash
-rm -rf node_modules package-lock.json
-npm install
-npm run build
-```
-
-### Capacitor Sync Issues
-
-```bash
-npx cap doctor
-npx cap sync --inline
-```
-
-### Wrangler CLI Not Found
-
-```bash
-npm install -g wrangler
-wrangler login
-```
+---

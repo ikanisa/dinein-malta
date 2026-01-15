@@ -7,7 +7,6 @@
 import { supabase } from './supabase';
 
 const BUCKET_NAME = 'venue-images';
-const CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
 interface ImageCacheEntry {
   venueName: string;
@@ -55,7 +54,7 @@ async function uploadImageToStorage(
     const fileName = `${getCacheKey(venueName, weekKey)}.png`;
     const filePath = `${weekKey}/${fileName}`;
     
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(filePath, blob, {
         contentType: 'image/png',

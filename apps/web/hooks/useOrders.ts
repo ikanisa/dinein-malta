@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordersApi } from '../services/api';
-import { Order, OrderStatus } from '../types';
+import { OrderStatus } from '../types';
 import { hapticSuccess, hapticError } from '../utils/haptics';
 
 // Query keys for cache management

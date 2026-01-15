@@ -6,8 +6,8 @@
 // Route module factories for preloading
 const routeModules = {
     // Client routes
-    home: () => import('../pages/ClientHome'),
-    explore: () => import('../pages/ClientExplore'),
+    // home: () => import('../pages/ClientHome'), // No dedicated home page component
+    // explore: () => import('../pages/ClientExplore'), // Component doesn't exist yet
     menu: () => import('../pages/ClientMenu'),
     // ClientProfile removed - functionality merged into SettingsPage
     settings: () => import('../pages/SettingsPage'),
@@ -67,7 +67,7 @@ export const preloadRoutes = (routes: RouteName[]): Promise<void[]> => {
 export const preloadCriticalRoutes = (): void => {
     // Use requestIdleCallback for non-blocking preload
     const preload = () => {
-        preloadRoutes(['explore', 'menu', 'settings']);
+        preloadRoutes(['menu', 'settings']);
     };
 
     if ('requestIdleCallback' in window) {

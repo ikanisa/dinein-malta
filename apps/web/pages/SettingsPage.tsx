@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GlassCard } from '../components/GlassCard';
 import { ProfileSkeleton } from '../components/ProfileSkeleton';
@@ -15,8 +15,6 @@ import {
   registerPushSubscription,
   unregisterPushSubscription,
   getNotificationPermission,
-  savePushSubscriptionToBackend,
-  removePushSubscriptionFromBackend,
 } from '../services/pushNotificationService';
 import toast from 'react-hot-toast';
 

@@ -253,6 +253,61 @@ self.addEventListener('sync', (event) => {
   }
 });
 
+// Push notification handler
+self.addEventListener('push', (event) => {
+  let data = {};
+  
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'DineIn Malta', body: event.data.text() };
+    }
+  }
+
+  const options = {
+    title: data.title || 'DineIn Malta',
+    body: data.body || 'You have a new update',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    tag: data.tag || 'notification',
+    data: data.data || {},
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(options.title, options).then(() => {
+      // Notify clients about the push notification
+      return notifyClients({ type: 'PUSH_NOTIFICATION', data });
+    })
+  );
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const data = event.notification.data || {};
+  const urlToOpen = data.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Try to focus existing window
+      for (let i = 0; i < clientList.length; i++) {
+        const client = clientList[i];
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Open new window if none exists
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
 async function notifyClients(message) {
   const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
   clients.forEach((client) => client.postMessage(message));

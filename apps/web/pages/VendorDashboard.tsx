@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { VendorNavTabs } from '../components/vendor/VendorNavTabs';
 import { VendorOrdersTab } from '../components/vendor/VendorOrdersTab';

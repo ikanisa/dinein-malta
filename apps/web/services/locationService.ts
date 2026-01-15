@@ -215,7 +215,7 @@ class LocationService {
         this.storeLocation(location);
         this.notifyListeners();
       },
-      (error) => {
+      (_error) => {
         // On error, stop watching
         if (this.state.watchId !== null) {
           navigator.geolocation.clearWatch(this.state.watchId);

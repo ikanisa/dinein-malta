@@ -15,7 +15,7 @@ interface UseMenuResult {
  * Optimized hook for fetching menu data with caching and offline support
  * Fetches venue and menu in a single optimized query with React Query caching
  */
-export const useMenu = (venueSlugOrId: string | undefined, tableCode?: string): UseMenuResult => {
+export const useMenu = (venueSlugOrId: string | undefined, _tableCode?: string): UseMenuResult => {
   const [categories, setCategories] = useState<string[]>(['All']);
 
   const {

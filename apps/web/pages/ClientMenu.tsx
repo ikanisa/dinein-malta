@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GlassCard } from '../components/GlassCard';
 import { MenuListSkeleton } from '../components/Loading';
@@ -202,7 +202,7 @@ const ClientMenu = () => {
         items: cart.map(item => ({
           menu_item_id: item.item.id,
           quantity: item.quantity,
-          selectedOptions: item.selectedOptions,
+          selectedOptions: item.options,
         })),
         total: totalAmount,
       };
@@ -210,9 +210,9 @@ const ClientMenu = () => {
       const validation = validateOrder(orderInput);
       if (!validation.success) {
         const { toast } = await import('react-hot-toast');
-        const errorMessage = validation.errors.errors[0]?.message || 'Invalid order data';
+        const errorMessage = validation.error.issues[0]?.message || 'Invalid order data';
         toast.error(errorMessage);
-        console.error('Order validation failed:', validation.errors.errors);
+        console.error('Order validation failed:', validation.error.issues);
         return;
       }
 
@@ -492,14 +492,7 @@ const ClientMenu = () => {
       </nav>
 
       {/* Menu Grid */}
-      <section 
-        className="p-4 space-y-4 pb-24" 
-        aria-label={`Menu items in ${activeCategory} category`} 
-        id={`category-${activeCategory.toLowerCase().replace(/\s+/g, '-')}`} 
-        role="tabpanel"
-        aria-live="polite"
-        aria-atomic="false"
-      >
+      <section className="p-4 space-y-4 pb-24" aria-label={`Menu items in ${activeCategory} category`} id={`category-${activeCategory.toLowerCase().replace(/\s+/g, '-')}`} role="tabpanel" aria-live="polite" aria-atomic="false">
         {filteredItems.map(item => (
           <article 
             key={item.id} 
@@ -518,7 +511,6 @@ const ClientMenu = () => {
                 alt={`${item.name}${item.description ? ` - ${item.description}` : ''}`}
                 aspectRatio="1/1"
                 className="w-full h-full"
-                loading="lazy"
                 width={112}
                 height={112}
               />
@@ -600,7 +592,7 @@ const ClientMenu = () => {
             </React.Suspense>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Cart Bar - Always visible when not in modals */}
       {!isReviewOpen && !showPaymentModal && !currentOrder && (
@@ -716,7 +708,7 @@ const ClientMenu = () => {
           </div>
         </div>
       </BottomSheet>
-    </div>
+    </main>
   );
 };
 

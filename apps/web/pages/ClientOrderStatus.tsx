@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GlassCard } from '../components/GlassCard';
 import { Spinner } from '../components/Loading';
 import { getOrderById } from '../services/databaseService';
 import { Order, OrderStatus, PaymentStatus } from '../types';
-import { supabase } from '../services/supabase';
 import { toast } from 'react-hot-toast';
 
 const ClientOrderStatus = () => {
@@ -246,7 +245,7 @@ const ClientOrderStatus = () => {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 };
 

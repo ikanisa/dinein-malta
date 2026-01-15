@@ -120,8 +120,6 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = React.memo(({
     const webpSrcSet = generateSrcSet(src, 'webp');
     const avifSrcSet = generateSrcSet(src, 'avif');
     const fallbackSrcSet = generateSrcSet(src);
-    const webpSrc = generateModernFormatSrc(src, 'webp');
-    const avifSrc = generateModernFormatSrc(src, 'avif');
 
     return (
       <div className={`relative ${wrapperClassName}`} style={containerStyle}>
@@ -147,7 +145,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = React.memo(({
             src={src}
             alt={alt}
             className={`w-full h-full ${className}`}
-            style={imageStyle}
+            style={aspectRatio ? { ...imageStyle, aspectRatio } : imageStyle}
             loading="eager"
             decoding="async"
             fetchPriority="high"
@@ -157,8 +155,6 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = React.memo(({
             onError={handleError}
             width={width}
             height={height}
-            // Prevent layout shift
-            {...(aspectRatio ? { style: { ...imageStyle, aspectRatio } } : { style: imageStyle })}
           />
         </picture>
         {hasError && (

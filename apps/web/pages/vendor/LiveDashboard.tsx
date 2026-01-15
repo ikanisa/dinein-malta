@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendorDashboardData } from '../../hooks/useVendorDashboardData';
 import { useOrderQueue } from '../../hooks/vendor/useOrderQueue';
@@ -20,7 +20,6 @@ const LiveDashboard: React.FC = () => {
     venue,
     tables,
     loading: venueLoading,
-    refreshData,
   } = useVendorDashboardData({ tab: 'live' });
 
   // Use order queue for real-time order management

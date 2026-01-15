@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendorDashboardData } from '../../hooks/useVendorDashboardData';
 import { updateVenue } from '../../services/databaseService';
@@ -207,7 +207,7 @@ const VendorSettings: React.FC = () => {
           <h2 className="text-lg font-bold text-foreground mb-4">Account & Security</h2>
           <div className="space-y-3">
             <button
-              onClick={() => toast.info('Password change feature coming soon')}
+              onClick={() => toast('Password change feature coming soon')}
               className="w-full p-3 bg-surface hover:bg-surface-highlight border border-border rounded-lg font-semibold text-foreground transition-colors touch-target text-left"
             >
               🔒 Change Password

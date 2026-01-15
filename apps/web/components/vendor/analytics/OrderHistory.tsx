@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Order, OrderStatus } from '../../../types';
+import { Order } from '../../../types';
 import { StatusBadge } from '../shared/StatusBadge';
 
 interface OrderHistoryProps {

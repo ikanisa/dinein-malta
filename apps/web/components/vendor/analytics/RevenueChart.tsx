@@ -13,7 +13,6 @@ interface RevenueChartProps {
 
 export const RevenueChart: React.FC<RevenueChartProps> = ({ hourlyStats, className = '' }) => {
   const maxRevenue = Math.max(...hourlyStats.map((h) => h.revenue), 1);
-  const maxOrders = Math.max(...hourlyStats.map((h) => h.orders), 1);
 
   // Filter to show only hours with activity or key hours
   const activeHours = hourlyStats.filter((h) => h.revenue > 0 || h.orders > 0);
