@@ -12,7 +12,6 @@ import { useMenu } from '../hooks/useMenu';
 import { getOrdersForVenue, toOrderStatus, toPaymentStatus } from '../services/databaseService';
 import { Order, OrderStatus } from '../types';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 
 const EmptyState = React.lazy(() => import('../components/ui/EmptyState'));
@@ -21,7 +20,7 @@ const ClientMenu = () => {
   const { venueId, tableCode } = useParams();
   const navigate = useNavigate();
   const { cart, addToCart, removeFromCart, clearCart, totalAmount, totalItems, toggleFavorite, isFavorite, favorites } = useCart();
-  const { user, signInAnonymously } = useAuth();
+
 
   // Use optimized menu hook
   const { venue, menu: allMenuItems, categories, isLoading: menuLoading, error: menuError, refetch } = useMenu(venueId, tableCode);
@@ -199,19 +198,6 @@ const ClientMenu = () => {
         toast.error(tableValidation.error || 'Invalid table code');
         setTableError(true);
         return;
-      }
-
-      // Ensure user is authenticated before placing order
-      // If not authenticated, sign in anonymously
-      if (!user) {
-        try {
-          await signInAnonymously();
-        } catch (authError) {
-          const { toast } = await import('react-hot-toast');
-          toast.error('Failed to authenticate. Please try again.');
-          console.error('Anonymous auth error:', authError);
-          return;
-        }
       }
 
       const orderInput = {

@@ -78,6 +78,17 @@ export async function requireAuth(
 }
 
 /**
+ * Optional authentication - returns user if authenticated, null otherwise
+ * Use this for endpoints that work for both authenticated and unauthenticated users
+ */
+export async function optionalAuth(
+    req: Request,
+    logger?: Logger
+): Promise<{ user: User; supabaseUser: SupabaseClient } | null> {
+    return await getAuthenticatedUser(req, logger);
+}
+
+/**
  * Check if user is an admin
  */
 export async function isAdmin(

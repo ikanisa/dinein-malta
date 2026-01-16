@@ -5,14 +5,12 @@ import {
   jsonResponse,
   errorResponse,
   createAdminClient,
-  requireAuth,
-  checkRateLimit,
+  optionalAuth,
   createLogger,
   getOrCreateRequestId,
   createAuditLogger,
   AuditAction,
   EntityType,
-  RateLimitConfig,
 } from "../_lib/mod.ts";
 
 // --- Input Validation Schema ---
@@ -30,12 +28,6 @@ const createOrderSchema = z.object({
 });
 
 type CreateOrderInput = z.infer<typeof createOrderSchema>;
-
-const RATE_LIMIT: RateLimitConfig = {
-  maxRequests: 20,
-  window: "1 hour",
-  endpoint: "order_create",
-};
 
 Deno.serve(async (req) => {
   const startTime = Date.now();
@@ -56,10 +48,10 @@ Deno.serve(async (req) => {
     // Initialize admin client
     const supabaseAdmin = createAdminClient();
 
-    // Authenticate user
-    const authResult = await requireAuth(req, logger);
-    if (authResult instanceof Response) return authResult;
-    const { user, supabaseUser } = authResult;
+    // Optional authentication - works for both authenticated and public users
+    const authResult = await optionalAuth(req, logger);
+    const userId = authResult?.user?.id || null;
+    logger.info("Auth check", { authenticated: !!userId });
 
     // Parse + validate input
     const body = await req.json();
@@ -72,12 +64,8 @@ Deno.serve(async (req) => {
     const input: CreateOrderInput = parsed.data;
     logger.info("Processing order", { vendorId: input.vendor_id, itemCount: input.items.length });
 
-    // Rate limiting
-    const rateLimitResult = await checkRateLimit(supabaseAdmin, user.id, RATE_LIMIT, logger);
-    if (rateLimitResult instanceof Response) return rateLimitResult;
-
-    // Create audit logger for this request
-    const audit = createAuditLogger(supabaseAdmin, user.id, requestId, logger);
+    // Create audit logger for this request (use 'anonymous' for public orders)
+    const audit = createAuditLogger(supabaseAdmin, userId || 'anonymous', requestId, logger);
 
     // ========================================================================
     // STEP 1: Validate vendor exists and is active
@@ -233,7 +221,7 @@ Deno.serve(async (req) => {
       .insert({
         vendor_id: input.vendor_id,
         table_id: table.id,
-        client_auth_user_id: user.id,
+        client_auth_user_id: userId || null,
         order_code: orderCode,
         status: "received",
         payment_status: "unpaid",
