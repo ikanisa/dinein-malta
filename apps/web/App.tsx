@@ -259,7 +259,8 @@ const DevButton = () => {
   return (
     <button
       onClick={() => { navigate('/dev'); }}
-      className="fixed top-safe-top right-4 z-[70] bg-black/40 backdrop-blur-md border border-white/10 text-white/30 hover:text-white text-[10px] px-2 py-1 rounded-full hover:bg-black/60 transition-colors mt-2 touch-target"
+      className="fixed top-4 right-4 z-[9999] bg-primary-500/90 backdrop-blur-md border border-white/20 text-white font-bold text-xs px-3 py-1.5 rounded-full hover:bg-primary-400 transition-colors shadow-lg pointer-events-auto touch-target"
+      style={{ marginTop: 'var(--safe-top, 0px)' }}
     >
       DEV
     </button>
