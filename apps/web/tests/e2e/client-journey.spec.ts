@@ -22,6 +22,7 @@ test.describe('Client User Journey', () => {
         // Homepage should redirect to scan or a vendor page
         const url = page.url();
         const isValidRedirect = url.includes('/scan') || url.includes('/v/') || url.includes('/settings');
+        expect(isValidRedirect).toBeTruthy();
 
         // Check that the page has loaded properly (no blank screen)
         const hasContent = await page.locator('main, div, [class*="glass"]').first().isVisible();

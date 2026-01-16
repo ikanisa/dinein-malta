@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import { hapticButton } from '@/utils/haptics';
 
 interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'glass';
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'glass' | 'gradient';
     size?: 'sm' | 'md' | 'lg';
     loading?: boolean;
     hapticFeedback?: boolean;
@@ -37,6 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
         outline: 'border-2 border-border text-foreground hover:bg-surface-highlight focus-visible:ring-primary-500 backdrop-blur-sm hover:border-border-strong',
         ghost: 'text-foreground hover:bg-surface-highlight focus-visible:ring-primary-500',
         glass: 'bg-glass backdrop-blur-xl border border-glassBorder text-foreground hover:bg-glass-strong focus-visible:ring-primary-500 shadow-glass hover:shadow-glass-lg',
+        gradient: 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg shadow-primary-500/20 hover:shadow-xl hover:shadow-primary-500/30 border-none',
     };
 
     const sizeClasses = {
@@ -49,12 +51,12 @@ export const Button: React.FC<ButtonProps> = ({
         <motion.button
             whileTap={{ scale: disabled || loading ? 1 : 0.95 }}
             whileHover={{ scale: disabled || loading ? 1 : 1.02 }}
-            className={clsx(
+            className={twMerge(clsx(
                 baseClasses,
                 variantClasses[variant],
                 sizeClasses[size],
                 className
-            )}
+            ))}
             onClick={handleClick}
             disabled={disabled || loading}
             {...props}

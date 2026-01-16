@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/GlassCard';
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, className, onClick, whileTap, ...props }: any) => (
+        div: ({ children, className, onClick, whileTap: _whileTap, ...props }: any) => (
             <div className={className} onClick={onClick} data-testid={props['data-testid']} {...props}>
                 {children}
             </div>

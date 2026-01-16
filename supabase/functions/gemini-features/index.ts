@@ -11,8 +11,8 @@ const corsHeaders = {
 const geminiRequestSchema = z.object({
   action: z.enum([
     "search",
-    "enrich-profile",
     "generate-image",
+    "generate-asset",
     "parse-menu",
     "smart-description",
   ]),
@@ -39,6 +39,12 @@ const payloadSchemas = {
   "smart-description": z.object({
     name: z.string().min(1),
     category: z.string().min(1),
+  }),
+  "generate-asset": z.object({
+    prompt: z.string().min(1),
+    entityId: z.string().uuid(),
+    table: z.enum(["vendors", "menu_items"]),
+    column: z.string().default("ai_image_url"),
   }),
 } as const;
 
@@ -368,6 +374,67 @@ Return as JSON object with:
   return parsed.text || "";
 }
 
+// 6. GENERATE ASSET - Generate, Upload, and Save
+async function handleGenerateAsset(payload: {
+  prompt: string;
+  entityId: string;
+  table: "vendors" | "menu_items";
+  column: string;
+}) {
+  const { prompt, entityId, table, column } = payload;
+
+  // 1. Generate Image
+  const base64Data = await handleGenerateImage({ prompt, size: "2K" });
+
+  if (!base64Data) {
+    throw new Error("Failed to generate image");
+  }
+
+  // 2. Decode Base64
+  const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    throw new Error("Invalid base64 string");
+  }
+  const type = matches[1];
+  const buffer = Uint8Array.from(atob(matches[2]), c => c.charCodeAt(0));
+
+  // 3. Upload to Storage
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+  const extension = type.split("/")[1] || "png";
+  const filePath = `generated/${table}/${entityId}.${extension}`;
+
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from("venue-images")
+    .upload(filePath, buffer, {
+      contentType: type,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw new Error(`Storage upload failed: ${uploadError.message}`);
+  }
+
+  // 4. Get Public URL
+  const { data: { publicUrl } } = supabaseAdmin.storage
+    .from("venue-images")
+    .getPublicUrl(filePath);
+
+  // 5. Update Database
+  const { error: dbError } = await supabaseAdmin
+    .from(table)
+    .update({ [column]: publicUrl })
+    .eq("id", entityId);
+
+  if (dbError) {
+    throw new Error(`Database update failed: ${dbError.message}`);
+  }
+
+  return { success: true, url: publicUrl };
+}
+
 // ============================================================================
 // MAIN HANDLER
 // ============================================================================
@@ -501,6 +568,9 @@ Deno.serve(async (req) => {
         break;
       case "smart-description":
         result = await handleSmartDescription(validatedPayload);
+        break;
+      case "generate-asset":
+        result = await handleGenerateAsset(validatedPayload);
         break;
       default:
         return new Response(

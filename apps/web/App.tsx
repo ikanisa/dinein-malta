@@ -411,8 +411,18 @@ const AnimatedRoutes = () => {
 };
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+
+  // Routes that should be full bleed (no top safe area padding)
+  // These pages manage their own safe area padding for hero images
+  const isFullBleed =
+    location.pathname === '/' ||
+    location.pathname.startsWith('/v/') ||
+    location.pathname.startsWith('/order/') ||
+    location.pathname === '/bar/onboard';
+
   return (
-    <div className="min-h-screen flex flex-col bg-background" style={{ paddingTop: 'var(--safe-top, 0px)' }}>
+    <div className="min-h-screen flex flex-col bg-background" style={{ paddingTop: isFullBleed ? '0px' : 'var(--safe-top, 0px)' }}>
       <SkipLink />
       <OfflineIndicator />
       <Toaster position="top-right" />

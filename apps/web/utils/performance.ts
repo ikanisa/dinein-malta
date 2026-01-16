@@ -5,6 +5,22 @@
 
 import type { Metric } from 'web-vitals';
 
+declare global {
+    interface Window {
+        gtag?: (
+            command: string,
+            targetId: string,
+            config?: {
+                value?: number;
+                event_category?: string;
+                event_label?: string;
+                non_interaction?: boolean;
+                [key: string]: unknown;
+            }
+        ) => void;
+    }
+}
+
 // Track reported metrics to avoid duplicates
 const reportedMetrics = new Set<string>();
 
@@ -27,8 +43,8 @@ export const reportWebVitals = (metric: Metric): void => {
     }
 
     // Send to Google Analytics if available
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', metric.name, {
+    if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', metric.name, {
             value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
             event_category: 'Web Vitals',
             event_label: metric.id,

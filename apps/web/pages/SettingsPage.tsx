@@ -149,6 +149,14 @@ const SettingsPage = () => {
           </button>
           <h1 className="text-2xl font-bold text-foreground">{t('settings.title')}</h1>
         </div>
+        <button
+          onClick={() => navigate('/')}
+          className="w-10 h-10 rounded-full bg-surface-highlight flex items-center justify-center text-foreground active:scale-95 transition-transform absolute right-6 top-12"
+          aria-label="Go Home"
+        >
+          🏠
+        </button>
+
       </div>
 
       <div className="p-6 space-y-6">
@@ -189,10 +197,10 @@ const SettingsPage = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-bold text-foreground">Order {order.orderCode}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${order.status === OrderStatus.SERVED
-                          ? 'bg-green-500/20 text-green-600'
-                          : order.status === OrderStatus.CANCELLED
-                            ? 'bg-red-500/20 text-red-600'
-                            : 'bg-yellow-500/20 text-yellow-600'
+                        ? 'bg-green-500/20 text-green-600'
+                        : order.status === OrderStatus.CANCELLED
+                          ? 'bg-red-500/20 text-red-600'
+                          : 'bg-yellow-500/20 text-yellow-600'
                         }`}>
                         {t(`order.${order.status.toLowerCase()}`)}
                       </span>
@@ -263,8 +271,8 @@ const SettingsPage = () => {
                 onClick={toggleNotify}
                 disabled={!isPushNotificationSupported()}
                 className={`w-12 h-6 rounded-full p-1 transition-colors ${user.notificationsEnabled && isPushNotificationSupported()
-                    ? 'bg-green-500'
-                    : 'bg-gray-600'
+                  ? 'bg-green-500'
+                  : 'bg-gray-600'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 aria-label={t('settings.pushNotifications')}
               >
@@ -357,7 +365,7 @@ const SettingsPage = () => {
           </GlassCard>
         </section>
       </div>
-    </div>
+    </div >
   );
 };
 

@@ -111,7 +111,7 @@ test.describe('RBAC Security - Vendor Cannot Access Admin Routes', () => {
         // Evaluate in browser context with Supabase client
         const result = await page.evaluate(async () => {
             // Access supabase if available in window
-            const supabase = (window as any).__supabase__;
+            const supabase = (window as unknown as { __supabase__: any }).__supabase__;
             if (!supabase) {
                 // If supabase not exposed, we can't test this way
                 return { skipped: true, reason: 'Supabase client not available in window' };
@@ -124,8 +124,8 @@ test.describe('RBAC Security - Vendor Cannot Access Admin Routes', () => {
                     error: error?.message,
                     rowCount: data?.length || 0
                 };
-            } catch (e: any) {
-                return { error: e.message };
+            } catch (e: unknown) {
+                return { error: (e as Error).message };
             }
         });
 

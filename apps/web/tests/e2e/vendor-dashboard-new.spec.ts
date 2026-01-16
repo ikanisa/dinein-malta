@@ -89,7 +89,6 @@ test.describe('Manager Dashboard Interface', () => {
     // Get only primary action buttons (not all small utility buttons)
     const buttons = await page.locator('button:not([class*="text-xs"]):not([class*="p-1"]):not([class*="DEV"])').all();
 
-    let checkedCount = 0;
     for (const button of buttons.slice(0, 5)) { // Check first 5 major buttons only
       try {
         const box = await button.boundingBox({ timeout: 3000 });
@@ -98,7 +97,6 @@ test.describe('Manager Dashboard Interface', () => {
           if (!isTouchAccessible) {
             console.log(`[WARN] Button with size ${box.width}x${box.height} may be too small`);
           }
-          checkedCount++;
         }
       } catch {
         // Skip buttons that can't be measured (hidden, etc.)

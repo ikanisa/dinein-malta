@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GlassCard } from '../components/GlassCard';
+import Button from '../components/common/Button';
+import Input from '../components/ui/Input';
 import { useVendors } from '../hooks/useVendors';
 
 type ParsedVenue = {
@@ -79,7 +81,13 @@ const ClientLanding: React.FC = () => {
       <div className="max-w-md mx-auto py-6 space-y-8">
 
         {/* Header Section */}
-        <div className="text-center space-y-2">
+        <div
+          className="text-center space-y-2 cursor-pointer active:scale-95 transition-transform select-none"
+          onClick={() => window.location.reload()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && window.location.reload()}
+        >
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
             DineIn
           </h1>
@@ -98,33 +106,27 @@ const ClientLanding: React.FC = () => {
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label htmlFor="menu-input" className="text-xs font-medium text-muted uppercase tracking-wider">
-                Menu / Venue
-              </label>
-              <input
+            <div className="space-y-4">
+              <Input
                 id="menu-input"
+                label="Menu / Venue"
                 type="text"
                 value={menuInput}
                 onChange={(event) => setMenuInput(event.target.value)}
                 placeholder="Paste link or code"
-                className="w-full px-4 py-3 bg-surface-highlight border border-border rounded-xl text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                variant="filled"
                 autoComplete="off"
                 inputMode="url"
               />
-            </div>
 
-            <div className="space-y-2">
-              <label htmlFor="table-input" className="text-xs font-medium text-muted uppercase tracking-wider">
-                Table (Optional)
-              </label>
-              <input
+              <Input
                 id="table-input"
+                label="Table (Optional)"
                 type="text"
                 value={tableInput}
                 onChange={(event) => setTableInput(event.target.value)}
                 placeholder="e.g. 12"
-                className="w-full px-4 py-3 bg-surface-highlight border border-border rounded-xl text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                variant="filled"
                 autoComplete="off"
               />
             </div>
@@ -135,12 +137,13 @@ const ClientLanding: React.FC = () => {
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
-              className="w-full py-3.5 px-6 bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-bold rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-xl hover:shadow-primary-500/30 active:scale-[0.98] transition-all duration-200"
+              variant="gradient"
+              className="w-full py-3.5 font-bold"
             >
               Go to Menu
-            </button>
+            </Button>
           </form>
         </GlassCard>
 

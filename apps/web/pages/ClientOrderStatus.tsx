@@ -116,114 +116,29 @@ const ClientOrderStatus = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => navigate(-1)}
-            aria-label="Go back"
-            className="w-10 h-10 rounded-full bg-surface-highlight flex items-center justify-center text-foreground"
+            onClick={() => order?.venueId ? navigate(`/v/${order.venueId}`) : navigate('/')}
+            aria-label="Back to Menu"
+            className="w-10 h-10 rounded-full bg-surface-highlight flex items-center justify-center text-foreground hover:bg-surface-highlight/80 transition-colors"
           >
-            ←
+            ⬅
           </button>
           <h1 className="text-2xl font-bold text-foreground">Order Status</h1>
-          <div className="w-10" /> {/* Spacer */}
+          <button
+            onClick={() => navigate('/')}
+            aria-label="Home"
+            className="w-10 h-10 rounded-full bg-surface-highlight flex items-center justify-center text-foreground hover:bg-surface-highlight/80 transition-colors"
+          >
+            🏠
+          </button>
         </div>
 
-        {/* Order Code */}
-        <GlassCard className="p-6 text-center">
-          <div className="text-sm text-muted mb-2">Order Code</div>
-          <div className="text-3xl font-bold text-foreground font-mono">{order.orderCode}</div>
-        </GlassCard>
-
-        {/* Status */}
-        <GlassCard className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="text-sm text-muted mb-1">Status</div>
-              <div className={`text-2xl font-bold ${getStatusColor(order.status)}`}>
-                {getStatusIcon(order.status)} {order.status.toUpperCase()}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-muted mb-1">Payment</div>
-              <div className={`text-lg font-bold ${getPaymentStatusColor(order.paymentStatus)}`}>
-                {order.paymentStatus.toUpperCase()}
-              </div>
-            </div>
-          </div>
-
-          {/* Status Progress */}
-          <div className="mt-4 space-y-2">
-            <div className={`flex items-center gap-2 ${(order.status === OrderStatus.RECEIVED) ? 'text-secondary-600' : 'text-muted'}`}>
-              <span>{(order.status === OrderStatus.RECEIVED) ? '●' : '○'}</span>
-              <span className="text-sm">Order Received</span>
-            </div>
-            <div className={`flex items-center gap-2 ${(order.status === OrderStatus.SERVED) ? 'text-green-500' : 'text-muted'}`}>
-              <span>{(order.status === OrderStatus.SERVED) ? '●' : '○'}</span>
-              <span className="text-sm">Order Served</span>
-            </div>
-          </div>
-        </GlassCard>
-
-        {/* Order Items */}
-        <GlassCard className="p-6">
-          <h2 className="text-lg font-bold text-foreground mb-4">Order Items</h2>
-          <div className="space-y-3">
-            {order.items?.map((item, index) => {
-              // Handle both formats: { item: MenuItem, quantity, selectedOptions } and { name, price, quantity }
-              const itemName = typeof item === 'object' && 'item' in item ? item.item.name : (item as any).name || 'Item';
-              const itemPrice = typeof item === 'object' && 'item' in item ? item.item.price : (item as any).price || 0;
-              const itemQuantity = typeof item === 'object' && 'quantity' in item ? item.quantity : (item as any).quantity || 1;
-
-              return (
-                <div key={index} className="flex justify-between items-start pb-3 border-b border-border last:border-0">
-                  <div className="flex-1">
-                    <div className="font-medium text-foreground">{itemName}</div>
-                    {itemQuantity > 1 && (
-                      <div className="text-sm text-muted">Qty: {itemQuantity}</div>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-foreground">
-                      €{(itemPrice * itemQuantity).toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-            <div className="text-lg font-bold text-foreground">Total</div>
-            <div className="text-2xl font-bold text-foreground">€{order.totalAmount.toFixed(2)}</div>
-          </div>
-        </GlassCard>
-
-        {/* Order Details */}
-        <GlassCard className="p-6">
-          <h2 className="text-lg font-bold text-foreground mb-4">Order Details</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted">Table</span>
-              <span className="text-foreground font-medium">{order.tableNumber || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted">Placed</span>
-              <span className="text-foreground font-medium">
-                {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}
-              </span>
-            </div>
-            {order.customerNote && (
-              <div className="mt-3 pt-3 border-t border-border">
-                <div className="text-muted mb-1">Note</div>
-                <div className="text-foreground">{order.customerNote}</div>
-              </div>
-            )}
-          </div>
-        </GlassCard>
+        {/* ... existing code ... */}
 
         {/* Actions */}
         <div className="space-y-3">
           {(order.paymentStatus === PaymentStatus.UNPAID) && (
             <Button
               onClick={() => {
-                // Navigate to payment or show payment options
                 toast('Payment options coming soon', { icon: 'ℹ️' });
               }}
               variant="primary"
@@ -234,12 +149,13 @@ const ClientOrderStatus = () => {
             </Button>
           )}
           <Button
-            onClick={() => navigate('/')}
+            onClick={() => order?.venueId ? navigate(`/v/${order.venueId}`) : navigate('/')}
             variant="outline"
             size="lg"
             className="w-full"
           >
-            Back to Home
+            <span className="mr-2">🍽️</span>
+            Back to Menu
           </Button>
         </div>
 

@@ -11,6 +11,7 @@ interface UseMenuResult {
   isLoading: boolean;
   error: Error | null;
   isOffline: boolean;
+  refetch: () => void;
 }
 
 /**
@@ -27,6 +28,7 @@ export const useMenu = (venueSlugOrId: string | undefined, _tableCode?: string):
     data: venue,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['venue-menu', venueSlugOrId],
     queryFn: async () => {
@@ -85,5 +87,6 @@ export const useMenu = (venueSlugOrId: string | undefined, _tableCode?: string):
     isLoading,
     error: error as Error | null,
     isOffline,
+    refetch, // Return refetch function
   };
 };

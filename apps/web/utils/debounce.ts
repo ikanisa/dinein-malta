@@ -2,7 +2,7 @@
  * Debounce utility - delays function execution until after wait milliseconds
  * have elapsed since the last time the debounced function was invoked.
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: any[]) => void>(
     func: T,
     wait: number
 ): (...args: Parameters<T>) => void {
@@ -23,7 +23,7 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Throttle utility - limits function execution to at most once per wait milliseconds.
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: any[]) => void>(
     func: T,
     wait: number
 ): (...args: Parameters<T>) => void {

@@ -6,7 +6,7 @@ import { Venue, MenuItem, Order, OrderStatus, PaymentStatus, Table, Reservation,
 
 // --- HELPERS ---
 
-const handleSupabaseError = (error: any, context: string) => {
+const handleSupabaseError = (error: unknown, context: string) => {
   console.error(`DB Error [${context}]:`, JSON.stringify(error, null, 2));
   // specific error handling logic (e.g., toast notifications) could go here
   return null;
@@ -42,7 +42,7 @@ export const toPaymentStatus = (value?: string | null): PaymentStatus => {
   return normalized === PaymentStatus.PAID ? PaymentStatus.PAID : PaymentStatus.UNPAID;
 };
 
-const mapVenue = (row: any): Venue => ({
+const mapVenue = (row: Record<string, any>): Venue => ({
   id: row.id,
   name: row.name,
   address: row.address || '',
@@ -62,7 +62,7 @@ const mapVenue = (row: any): Venue => ({
   status: row.status || 'active'
 });
 
-const mapOrder = (row: any): Order => {
+const mapOrder = (row: Record<string, any>): Order => {
   const tableLabel = row.table?.label || row.table?.table_number?.toString() || row.table_number?.toString();
   return {
     id: row.id,
@@ -79,7 +79,7 @@ const mapOrder = (row: any): Order => {
   };
 };
 
-const mapTable = (row: any): Table => ({
+const mapTable = (row: Record<string, any>): Table => ({
   id: row.id,
   venueId: row.vendor_id || row.venue_id,
   label: row.label,
@@ -108,7 +108,7 @@ const mapReservationStatusToDb = (status: ReservationStatus): string => {
   }
 };
 
-const mapReservation = (row: any): Reservation => {
+const mapReservation = (row: Record<string, any>): Reservation => {
   return {
     id: row.id,
     venueId: row.vendor_id, // Note: DB uses vendor_id, not venue_id
@@ -121,7 +121,7 @@ const mapReservation = (row: any): Reservation => {
   };
 };
 
-const mapUser = (row: any): User => ({
+const mapUser = (row: Record<string, any>): User => ({
   id: row.id,
   name: row.name || 'Guest',
   role: (row.role as UserType) || UserType.CLIENT,
@@ -129,7 +129,7 @@ const mapUser = (row: any): User => ({
   notificationsEnabled: row.notifications_enabled ?? true
 });
 
-const mapMenuItem = (row: any): MenuItem => ({
+const mapMenuItem = (row: Record<string, any>): MenuItem => ({
   id: row.id,
   name: row.name,
   description: row.description || '',
@@ -280,8 +280,8 @@ export const createVendor = async (vendorData: {
   name: string;
   slug?: string;
   address?: string;
-  hours_json?: any;
-  photos_json?: any;
+  hours_json?: unknown;
+  photos_json?: unknown;
   website?: string;
   phone?: string;
   revolut_link?: string;
@@ -392,7 +392,7 @@ export const createMenuItem = async (vendorId: string, item: Omit<MenuItem, 'id'
 };
 
 export const updateMenuItem = async (itemId: string, updates: Partial<MenuItem>): Promise<MenuItem> => {
-  const dbUpdates: any = {};
+  const dbUpdates: Record<string, unknown> = {};
   if (updates.name) dbUpdates.name = updates.name;
   if (updates.description !== undefined) dbUpdates.description = updates.description;
   if (updates.price !== undefined) dbUpdates.price = updates.price;
@@ -438,7 +438,8 @@ export const updateVenueMenu = async (venueId: string, menu: MenuItem[]): Promis
   for (const item of menu) {
     if (item.id.startsWith('new-') || item.id.startsWith('temp-') || !currentIds.has(item.id)) {
       // Create new item (remove the temp id)
-      const { id, ...itemData } = item;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _id, ...itemData } = item;
       await createMenuItem(venueId, itemData);
     } else {
       // Update existing item
@@ -501,7 +502,7 @@ export const createOrder = async (orderData: {
 
   // Map order items back to frontend format (we need to fetch menu items for full details)
   // For now, use snapshot data from order_items
-  const mappedItems = orderItems.map((oi: any) => ({
+  const mappedItems = orderItems.map((oi: Record<string, any>) => ({
     item: {
       id: '', // Snapshot doesn't include menu_item_id, but we have name/price
       name: oi.name_snapshot,

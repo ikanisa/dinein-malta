@@ -11,11 +11,12 @@ test.describe('Vendor User Journey', () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Check for login form elements
-        const emailInput = page.locator('[name="email"], [type="email"], input[placeholder*="email" i]').first();
-        const passwordInput = page.locator('[name="password"], [type="password"]').first();
-        const loginButton = page.getByRole('button', { name: /login|sign in/i }).or(
+        // Check for login form elements
+        await expect(page.locator('[name="email"], [type="email"], input[placeholder*="email" i]').first()).toBeVisible();
+        await expect(page.locator('[name="password"], [type="password"]').first()).toBeVisible();
+        await expect(page.getByRole('button', { name: /login|sign in/i }).or(
             page.locator('[type="submit"]')
-        );
+        )).toBeVisible();
 
         // At least the page should load without error
         await expect(page).toHaveURL(/vendor/);
@@ -118,9 +119,10 @@ test.describe('Vendor Menu Management', () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Look for menu management UI elements
-        const addButton = page.locator('[data-testid="add-menu-item"]').or(
+        // Look for menu management UI elements
+        await expect(page.locator('[data-testid="add-menu-item"]').or(
             page.getByRole('button', { name: /add.*item|new.*item|\+/i })
-        );
+        )).toBeVisible();
 
         // Either shows add button or login required
         const pageHasUI = await page.locator('button, a, form').first().isVisible();
@@ -133,12 +135,13 @@ test.describe('Vendor Menu Management', () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Look for form elements
-        const nameInput = page.locator('[name="name"]').or(
+        // Look for form elements
+        await expect(page.locator('[name="name"]').or(
             page.locator('input[placeholder*="name" i]')
-        );
-        const priceInput = page.locator('[name="price"]').or(
+        )).toBeVisible();
+        await expect(page.locator('[name="price"]').or(
             page.locator('input[placeholder*="price" i], input[type="number"]')
-        );
+        )).toBeVisible();
 
         // Page should load
         const pageLoaded = await page.locator('body').isVisible();
@@ -153,10 +156,7 @@ test.describe('Vendor Order Management', () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Should show orders, empty state, or login required
-        const hasContent = await page.locator('[data-testid="order-card"], .order-item, [class*="empty"]').first().isVisible().catch(() => false);
-        const hasUI = await page.locator('main, div').first().isVisible();
-
-        expect(hasUI).toBeTruthy();
+        await expect(page.locator('[data-testid="order-card"], .order-item, [class*="empty"]').first().or(page.locator('main, div').first())).toBeVisible();
     });
 
     test('can filter orders by status', async ({ page }) => {
@@ -165,11 +165,12 @@ test.describe('Vendor Order Management', () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Look for filter buttons or dropdown
-        const filterUI = page.locator('[data-testid="status-filter"]').or(
+        // Look for filter buttons or dropdown
+        await expect(page.locator('[data-testid="status-filter"]').or(
             page.getByRole('combobox')
         ).or(
             page.locator('select, [role="listbox"]')
-        );
+        )).toBeVisible();
 
         // Page should load
         const pageLoaded = await page.locator('body').isVisible();

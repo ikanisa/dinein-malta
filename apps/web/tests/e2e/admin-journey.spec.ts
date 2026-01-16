@@ -64,14 +64,15 @@ test.describe('Admin Vendor Management', () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Look for create vendor button or vendor list
-        const createButton = page.locator('[data-testid="create-vendor"]').or(
+        // Look for create vendor button or vendor list
+        await expect(page.locator('[data-testid="create-vendor"]').or(
             page.getByRole('button', { name: /create|add|new/i })
         ).or(
             page.getByRole('link', { name: /create|add|new/i })
-        );
+        )).toBeVisible();
 
         // Page should have some UI
-        const hasUI = await page.locator('button, a, table, [class*="card"]').first().isVisible().catch(() => false);
+        await expect(page.locator('button, a, table, [class*="card"]').first()).toBeVisible();
         const pageLoaded = await page.locator('body').isVisible();
         expect(pageLoaded).toBeTruthy();
     });
@@ -82,9 +83,10 @@ test.describe('Admin Vendor Management', () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Look for form inputs
-        const nameInput = page.locator('[name="name"]').or(
+        // Look for form inputs
+        await expect(page.locator('[name="name"]').or(
             page.locator('input').first()
-        );
+        )).toBeVisible();
 
         // Page should load
         const pageLoaded = await page.locator('body').isVisible();
@@ -119,11 +121,12 @@ test.describe('Admin Analytics', () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Look for date picker or range selector
-        const dateFilter = page.locator('[data-testid="date-range"]').or(
+        // Look for date picker or range selector
+        await expect(page.locator('[data-testid="date-range"]').or(
             page.locator('input[type="date"]')
         ).or(
             page.getByRole('combobox')
-        );
+        )).toBeVisible();
 
         // Page should have loaded
         const pageLoaded = await page.locator('body').isVisible();

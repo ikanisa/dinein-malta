@@ -81,7 +81,7 @@ export const handlers = [
     http.get(`${SUPABASE_URL}/rest/v1/vendors`, ({ request }) => {
         const url = new URL(request.url);
         const slug = url.searchParams.get('slug');
-        const _select = url.searchParams.get('select');
+        // const _select = url.searchParams.get('select');
 
         if (slug) {
             const vendor = mockVendors.find((v) => v.slug === slug.replace('eq.', ''));

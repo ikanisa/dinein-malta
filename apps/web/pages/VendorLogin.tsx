@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserType } from '../types';
 import { GlassCard } from '../components/GlassCard';
+import Button from '../components/common/Button';
 import { useAuth } from '../context/AuthContext';
-import { Spinner } from '../components/Loading';
 import { toast } from 'react-hot-toast';
 import Input from '../components/ui/Input';
 
@@ -100,13 +100,14 @@ const VendorLogin = () => {
                             </div>
                         )}
 
-                        <button
+                        <Button
                             type="submit"
-                            disabled={loading}
-                            className="w-full py-4 bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-bold rounded-xl shadow-glow transition-all active:scale-[0.98] flex justify-center items-center gap-2"
+                            loading={loading}
+                            variant="gradient"
+                            className="w-full py-4 font-bold"
                         >
-                            {loading ? <Spinner className="w-4 h-4" /> : 'Sign In'}
-                        </button>
+                            Sign In
+                        </Button>
                     </form>
 
                     {/* Features Mini-Grid */}
