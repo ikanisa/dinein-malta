@@ -220,7 +220,7 @@ const BarOnboarding: React.FC = () => {
                                 <div className="text-center py-8">
                                     <div className="text-6xl mb-4">🎉</div>
                                     <h2 className="text-2xl font-bold text-foreground mb-2">
-                                        You're All Set!
+                                        You&apos;re All Set!
                                     </h2>
                                     <p className="text-muted">
                                         Your bar has been registered successfully
@@ -258,7 +258,7 @@ const BarOnboarding: React.FC = () => {
 
                                 {/* What's Next */}
                                 <GlassCard>
-                                    <h3 className="font-bold text-foreground mb-3">What's Next?</h3>
+                                    <h3 className="font-bold text-foreground mb-3">What&apos;s Next?</h3>
                                     <ul className="space-y-2 text-sm text-muted">
                                         <li className="flex items-start gap-2">
                                             <span>✅</span>
@@ -270,7 +270,7 @@ const BarOnboarding: React.FC = () => {
                                         </li>
                                         <li className="flex items-start gap-2">
                                             <span>🔔</span>
-                                            <span>You'll receive orders in your dashboard</span>
+                                            <span>You&apos;ll receive orders in your dashboard</span>
                                         </li>
                                     </ul>
                                 </GlassCard>

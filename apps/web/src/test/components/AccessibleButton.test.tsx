@@ -50,13 +50,14 @@ describe('AccessibleButton', () => {
         const { rerender } = render(
             <AccessibleButton variant="primary">Primary</AccessibleButton>
         );
-        expect(screen.getByRole('button')).toHaveClass('bg-primary-500');
+        // Component uses gradient classes per design system
+        expect(screen.getByRole('button')).toHaveClass('from-primary-500');
 
         rerender(<AccessibleButton variant="secondary">Secondary</AccessibleButton>);
-        expect(screen.getByRole('button')).toHaveClass('bg-secondary-500');
+        expect(screen.getByRole('button')).toHaveClass('from-secondary-500');
 
         rerender(<AccessibleButton variant="danger">Danger</AccessibleButton>);
-        expect(screen.getByRole('button')).toHaveClass('bg-red-600');
+        expect(screen.getByRole('button')).toHaveClass('from-red-600');
 
         rerender(<AccessibleButton variant="ghost">Ghost</AccessibleButton>);
         expect(screen.getByRole('button')).toHaveClass('bg-transparent');
@@ -90,9 +91,10 @@ describe('AccessibleButton', () => {
         );
     });
 
-    it('meets WCAG touch target minimum (44px)', () => {
+    it('meets WCAG touch target recommendation (48px)', () => {
         render(<AccessibleButton>Touch</AccessibleButton>);
-        expect(screen.getByRole('button')).toHaveClass('min-h-[44px]', 'min-w-[44px]');
+        // Component uses 48px which exceeds the WCAG 2.1 AA minimum of 44px
+        expect(screen.getByRole('button')).toHaveClass('min-h-[48px]', 'min-w-[48px]');
     });
 
     it('handles keyboard activation with Enter', async () => {

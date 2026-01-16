@@ -85,7 +85,7 @@ export const BarSearchStep: React.FC<BarSearchStepProps> = ({ onSelect, onAddNew
                                 <GlassCard
                                     key={venue.id}
                                     onClick={() => onSelect(venue)}
-                                    className="flex items-center gap-4 cursor-pointer active:scale-98 transition-transform"
+                                    className="flex items-center gap-4 cursor-pointer active:scale-95 transition-transform"
                                 >
                                     <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-2xl">
                                         🍺
@@ -103,7 +103,7 @@ export const BarSearchStep: React.FC<BarSearchStepProps> = ({ onSelect, onAddNew
                     ) : (
                         <GlassCard className="text-center py-8">
                             <div className="text-4xl mb-3">🤷</div>
-                            <p className="text-muted mb-1">No bars found matching "{query}"</p>
+                            <p className="text-muted mb-1">No bars found matching &ldquo;{query}&rdquo;</p>
                             <p className="text-sm text-muted">You can add it as a new bar below</p>
                         </GlassCard>
                     )}
@@ -120,7 +120,7 @@ export const BarSearchStep: React.FC<BarSearchStepProps> = ({ onSelect, onAddNew
 
             {/* Skip hint */}
             <p className="text-center text-xs text-muted">
-                Can't find your bar? Click "Add New Bar" to register it
+                Can&apos;t find your bar? Click &ldquo;Add New Bar&rdquo; to register it
             </p>
         </div>
     );

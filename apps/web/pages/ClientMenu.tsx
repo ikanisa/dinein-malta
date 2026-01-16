@@ -397,7 +397,7 @@ const ClientMenu = () => {
           sizes="100vw"
         />
 
-        <div className="absolute top-safe px-4 py-2 z-20 w-full flex justify-between items-start">
+        <div className="absolute top-safe-top px-4 py-2 z-20 w-full flex justify-between items-start">
           <button 
             onClick={() => {
               const lastVenueId = localStorage.getItem('last_venue_id');

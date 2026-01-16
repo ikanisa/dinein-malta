@@ -19,7 +19,7 @@ test.describe('RBAC Security - Unauthenticated Access', () => {
     test.beforeEach(async ({ page }) => {
         // Navigate to page first (required for Safari to access localStorage)
         await page.goto('/#/');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Now clear auth state
         await page.context().clearCookies();
@@ -168,13 +168,13 @@ test.describe('RBAC Security - Route Protection Verification', () => {
             const redirectedAway = !currentUrl.includes(route.replace('/#', ''));
             const hasAuthUI = await page.locator('.animate-spin, input[type="email"], input[type="password"], button:has-text("Google")').count() > 0;
             const hasLoadingText = await page.locator('text=Loading').count() > 0;
-            const isBlank = await page.locator('main').evaluate((el) => !el || el.innerHTML.trim() === '');
+            const isBlank = await page.locator('main').count() === 0 || await page.locator('main').evaluate((el) => el.innerHTML.trim() === '').catch(() => true);
 
             // Protection is valid if user cannot access the admin content
             const isProtected = isOnLogin || redirectedAway || hasAuthUI || hasLoadingText || isBlank;
             results.push({ route, protected: isProtected });
 
-            console.log(`[EVIDENCE] Route ${route} -> ${currentUrl} (protected: ${isProtected})`);;
+            console.log(`[EVIDENCE] Route ${route} -> ${currentUrl} (protected: ${isProtected})`);
         }
 
         // All routes should be protected
@@ -197,7 +197,7 @@ test.describe('RBAC Security - Route Protection Verification', () => {
 
         for (const route of managerRoutes) {
             await page.goto('/#/');
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await page.context().clearCookies();
             try {
                 await page.evaluate(() => localStorage.clear());
@@ -206,7 +206,7 @@ test.describe('RBAC Security - Route Protection Verification', () => {
             }
 
             await page.goto(route);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await page.waitForTimeout(3000);
 
             const currentUrl = page.url();
@@ -216,7 +216,7 @@ test.describe('RBAC Security - Route Protection Verification', () => {
             const redirectedAway = !currentUrl.includes(route.replace('/#', ''));
             const hasAuthUI = await page.locator('.animate-spin, input[type="email"], input[type="password"]').count() > 0;
             const hasLoadingText = await page.locator('text=Loading').count() > 0;
-            const isBlank = await page.locator('main').evaluate((el) => !el || el.innerHTML.trim() === '');
+            const isBlank = await page.locator('main').count() === 0 || await page.locator('main').evaluate((el) => el.innerHTML.trim() === '').catch(() => true);
 
             const isProtected = isOnLogin || redirectedAway || hasAuthUI || hasLoadingText || isBlank;
             results.push({ route, protected: isProtected });

@@ -8,7 +8,7 @@ test.describe('Vendor User Journey', () => {
     test('vendor login page loads', async ({ page }) => {
         await page.goto('/#/vendor/login');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Check for login form elements
         const emailInput = page.locator('[name="email"], [type="email"], input[placeholder*="email" i]').first();
@@ -24,7 +24,7 @@ test.describe('Vendor User Journey', () => {
     test('vendor login form has required fields', async ({ page }) => {
         await page.goto('/#/vendor/login');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Check for form structure
         const form = page.locator('form').first();
@@ -38,7 +38,7 @@ test.describe('Vendor User Journey', () => {
     test('vendor login shows error for invalid credentials', async ({ page }) => {
         await page.goto('/#/vendor/login');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         const emailInput = page.locator('[name="email"], [type="email"]').first();
         const passwordInput = page.locator('[name="password"], [type="password"]').first();
@@ -68,7 +68,7 @@ test.describe('Vendor User Journey', () => {
         // Try to access dashboard directly without auth
         await page.goto('/#/vendor/dashboard');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Should redirect to login or show auth required
         const currentUrl = page.url();
@@ -83,7 +83,7 @@ test.describe('Vendor User Journey', () => {
         // Navigate to menu management (may require auth)
         await page.goto('/#/vendor/menu');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should load without crashing
         const pageHasContent = await page.locator('main, div, form').first().isVisible();
@@ -93,7 +93,7 @@ test.describe('Vendor User Journey', () => {
     test('vendor orders page loads', async ({ page }) => {
         await page.goto('/#/vendor/orders');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should load
         const currentUrl = page.url();
@@ -103,7 +103,7 @@ test.describe('Vendor User Journey', () => {
     test('vendor settings page accessible', async ({ page }) => {
         await page.goto('/#/vendor/settings');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should load without error
         const pageLoaded = await page.locator('body').isVisible();
@@ -115,7 +115,7 @@ test.describe('Vendor Menu Management', () => {
     test('menu items list structure', async ({ page }) => {
         await page.goto('/#/vendor/menu');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for menu management UI elements
         const addButton = page.locator('[data-testid="add-menu-item"]').or(
@@ -130,7 +130,7 @@ test.describe('Vendor Menu Management', () => {
     test('add menu item form', async ({ page }) => {
         await page.goto('/#/vendor/menu/new');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for form elements
         const nameInput = page.locator('[name="name"]').or(
@@ -150,7 +150,7 @@ test.describe('Vendor Order Management', () => {
     test('orders page shows order list or empty state', async ({ page }) => {
         await page.goto('/#/vendor/orders');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Should show orders, empty state, or login required
         const hasContent = await page.locator('[data-testid="order-card"], .order-item, [class*="empty"]').first().isVisible().catch(() => false);
@@ -162,7 +162,7 @@ test.describe('Vendor Order Management', () => {
     test('can filter orders by status', async ({ page }) => {
         await page.goto('/#/vendor/orders');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for filter buttons or dropdown
         const filterUI = page.locator('[data-testid="status-filter"]').or(

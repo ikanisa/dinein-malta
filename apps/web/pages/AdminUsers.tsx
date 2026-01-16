@@ -134,7 +134,7 @@ const AdminUsers = () => {
         {!isLoading && !error && admins.length === 0 && (
           <div className="text-center text-muted py-10 animate-fade-in">
             <span className="text-4xl block mb-3">👤</span>
-            No admins found. Click "Add Admin" to get started.
+            No admins found. Click &ldquo;Add Admin&rdquo; to get started.
           </div>
         )}
 
@@ -148,8 +148,8 @@ const AdminUsers = () => {
                   {admin.role}
                 </span>
                 <span className={`text-xs px-2 py-0.5 rounded font-bold uppercase ${admin.is_active
-                    ? 'bg-green-500/20 text-green-500'
-                    : 'bg-red-500/20 text-red-500'
+                  ? 'bg-green-500/20 text-green-500'
+                  : 'bg-red-500/20 text-red-500'
                   }`}>
                   {admin.is_active ? 'Active' : 'Inactive'}
                 </span>
@@ -159,8 +159,8 @@ const AdminUsers = () => {
               onClick={() => handleToggleStatus(admin)}
               disabled={!!processing}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 ${admin.is_active
-                  ? 'bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30'
-                  : 'bg-green-500/20 text-green-500 border border-green-500/30 hover:bg-green-500/30'
+                ? 'bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30'
+                : 'bg-green-500/20 text-green-500 border border-green-500/30 hover:bg-green-500/30'
                 }`}
             >
               {processing === admin.id ? <Spinner className="w-4 h-4" /> : (admin.is_active ? 'Deactivate' : 'Activate')}

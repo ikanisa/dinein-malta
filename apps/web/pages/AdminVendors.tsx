@@ -302,7 +302,7 @@ const AdminVendors = () => {
                 {!isLoading && filtered.length === 0 && (
                     <div className="text-center text-muted py-10 animate-fade-in">
                         <span className="text-4xl block mb-3">🍺</span>
-                        No bars found. Click "Add Bar" to get started.
+                        No bars found. Click &ldquo;Add Bar&rdquo; to get started.
                     </div>
                 )}
 

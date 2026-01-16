@@ -10,6 +10,7 @@ import { lazy, Suspense } from 'react';
 const ClientMenu = lazy(() => import('./pages/ClientMenu'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ClientOrderStatus = lazy(() => import('./pages/ClientOrderStatus'));
+const ClientLanding = lazy(() => import('./pages/ClientLanding'));
 // ClientQRScanner removed - QR codes should link directly to menu
 // ClientProfile removed - functionality merged into SettingsPage
 // DeveloperSwitchboard removed - dev-only route
@@ -258,31 +259,10 @@ const DevButton = () => {
   return (
     <button
       onClick={() => { navigate('/dev'); }}
-      className="fixed top-safe right-4 z-[70] bg-black/40 backdrop-blur-md border border-white/10 text-white/30 hover:text-white text-[10px] px-2 py-1 rounded-full hover:bg-black/60 transition-colors mt-2 touch-target"
+      className="fixed top-safe-top right-4 z-[70] bg-black/40 backdrop-blur-md border border-white/10 text-white/30 hover:text-white text-[10px] px-2 py-1 rounded-full hover:bg-black/60 transition-colors mt-2 touch-target"
     >
       DEV
     </button>
-  );
-};
-
-// Root route redirect - show QR scanner landing
-const RootRedirect = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check if user has last venue, otherwise go to scanner
-    const lastVenueId = localStorage.getItem('last_venue_id');
-    if (lastVenueId) {
-      navigate(`/v/${lastVenueId}`, { replace: true });
-    } else {
-      navigate('/scan', { replace: true });
-    }
-  }, [navigate]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-muted">Loading...</div>
-    </div>
   );
 };
 
@@ -302,7 +282,7 @@ const AnimatedRoutes = () => {
         <Suspense fallback={<SuspenseFallback />}>
           <Routes location={location}>
             {/* Public Client Routes - Simplified to 3 core routes */}
-            <Route path="/" element={<RootRedirect />} />
+            <Route path="/" element={<ClientLanding />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/bar/onboard" element={<BarOnboarding />} />
             <Route path="/order/:id" element={<ClientOrderStatus />} />
@@ -310,8 +290,8 @@ const AnimatedRoutes = () => {
             <Route path="/v/:venueId" element={<ClientMenu />} />
             <Route path="/v/:venueId/t/:tableCode" element={<ClientMenu />} />
             {/* Legacy route redirects */}
-            <Route path="/scan" element={<RootRedirect />} />
-            <Route path="/profile" element={<RootRedirect />} />
+            <Route path="/scan" element={<ClientLanding />} />
+            <Route path="/profile" element={<Navigate to="/settings" replace />} />
             <Route path="/menu/:venueId" element={<ClientMenu />} />
             <Route path="/menu/:venueId/t/:tableCode" element={<ClientMenu />} />
 
@@ -432,7 +412,7 @@ const AnimatedRoutes = () => {
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="min-h-screen flex flex-col bg-background" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
+    <div className="min-h-screen flex flex-col bg-background" style={{ paddingTop: 'var(--safe-top, 0px)' }}>
       <SkipLink />
       <OfflineIndicator />
       <Toaster position="top-right" />
@@ -440,7 +420,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         id="main-content"
         className="flex-1 overflow-y-auto"
         style={{
-          paddingBottom: 'var(--safe-area-bottom, 0px)',
+          paddingBottom: 'var(--safe-bottom, 0px)',
           WebkitOverflowScrolling: 'touch'
         }}
         role="main"

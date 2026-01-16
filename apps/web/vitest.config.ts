@@ -8,6 +8,9 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['./src/test/setup.ts'],
+        typecheck: {
+            tsconfig: './tsconfig.test.json',
+        },
         css: true,
         include: ['src/**/*.{test,spec}.{ts,tsx}', '__tests__/**/*.{test,spec}.{ts,tsx}'],
         exclude: ['node_modules', 'dist', 'tests/e2e'],

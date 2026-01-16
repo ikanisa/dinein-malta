@@ -8,7 +8,7 @@ test.describe('Admin User Journey', () => {
     test('admin login page accessible', async ({ page }) => {
         await page.goto('/#/admin/login');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should load
         const pageLoaded = await page.locator('body').isVisible();
@@ -19,7 +19,7 @@ test.describe('Admin User Journey', () => {
         // Try to access admin dashboard without auth
         await page.goto('/#/admin/dashboard');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Should require authentication
         const currentUrl = page.url();
@@ -29,7 +29,7 @@ test.describe('Admin User Journey', () => {
     test('admin vendors page structure', async ({ page }) => {
         await page.goto('/#/admin/vendors');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should load
         const pageLoaded = await page.locator('body').isVisible();
@@ -39,7 +39,7 @@ test.describe('Admin User Journey', () => {
     test('admin users management page', async ({ page }) => {
         await page.goto('/#/admin/users');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should load
         const pageLoaded = await page.locator('body').isVisible();
@@ -49,7 +49,7 @@ test.describe('Admin User Journey', () => {
     test('admin settings page accessible', async ({ page }) => {
         await page.goto('/#/admin/settings');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should load
         const pageLoaded = await page.locator('body').isVisible();
@@ -61,7 +61,7 @@ test.describe('Admin Vendor Management', () => {
     test('vendor list page loads', async ({ page }) => {
         await page.goto('/#/admin/vendors');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for create vendor button or vendor list
         const createButton = page.locator('[data-testid="create-vendor"]').or(
@@ -79,7 +79,7 @@ test.describe('Admin Vendor Management', () => {
     test('create vendor form structure', async ({ page }) => {
         await page.goto('/#/admin/vendors/new');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for form inputs
         const nameInput = page.locator('[name="name"]').or(
@@ -94,7 +94,7 @@ test.describe('Admin Vendor Management', () => {
     test('vendor discovery page loads', async ({ page }) => {
         await page.goto('/#/admin/discovery');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should load
         const pageLoaded = await page.locator('body').isVisible();
@@ -106,7 +106,7 @@ test.describe('Admin Analytics', () => {
     test('analytics dashboard loads', async ({ page }) => {
         await page.goto('/#/admin/analytics');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should load
         const pageLoaded = await page.locator('body').isVisible();
@@ -116,7 +116,7 @@ test.describe('Admin Analytics', () => {
     test('can filter analytics by date range', async ({ page }) => {
         await page.goto('/#/admin/analytics');
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for date picker or range selector
         const dateFilter = page.locator('[data-testid="date-range"]').or(
