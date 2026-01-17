@@ -4,20 +4,39 @@
  */
 
 import React from 'react';
+import type { ListChildComponentProps } from 'react-window';
 
-// Using dynamic import to avoid type conflicts
-let FixedSizeList: any = null;
-let AutoSizer: any = null;
+// Types for dynamically loaded virtualization components
+interface FixedSizeListProps {
+    height: number;
+    width: number;
+    itemCount: number;
+    itemSize: number;
+    overscanCount?: number;
+    children: React.ComponentType<ListChildComponentProps>;
+}
+
+interface AutoSizerChildProps {
+    height: number;
+    width: number;
+}
+
+type FixedSizeListComponent = React.ComponentType<FixedSizeListProps>;
+type AutoSizerComponent = React.ComponentType<{ children: (size: AutoSizerChildProps) => React.ReactNode }>;
+
+// Using typed dynamic import to avoid type conflicts
+let FixedSizeList: FixedSizeListComponent | null = null;
+let AutoSizer: AutoSizerComponent | null = null;
 
 // Lazy load the windowing libraries
 const loadVirtualizationLibs = async () => {
     if (!FixedSizeList) {
-        const reactWindow = await import('react-window') as any;
-        FixedSizeList = reactWindow.FixedSizeList || reactWindow.default?.FixedSizeList;
+        const reactWindow = await import('react-window');
+        FixedSizeList = reactWindow.FixedSizeList as FixedSizeListComponent;
     }
     if (!AutoSizer) {
-        const autoSizer = await import('react-virtualized-auto-sizer') as any;
-        AutoSizer = autoSizer.default || autoSizer.AutoSizer || autoSizer;
+        const autoSizer = await import('react-virtualized-auto-sizer');
+        AutoSizer = (autoSizer.default || autoSizer) as AutoSizerComponent;
     }
 };
 

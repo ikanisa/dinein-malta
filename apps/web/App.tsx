@@ -6,6 +6,18 @@ import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Lazy load routes for code splitting for better performance
 
+// Type definitions for PWA install prompt
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+  prompt(): Promise<void>;
+}
+
+// Extend Navigator for iOS standalone detection
+interface NavigatorStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 const ClientMenu = lazy(() => import('./pages/ClientMenu'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ClientOrderStatus = lazy(() => import('./pages/ClientOrderStatus'));
@@ -141,7 +153,7 @@ const OfflineIndicator = () => {
 const InstallPrompt = () => {
   const [show, setShow] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     // 1. Robust iOS Check (handles iPads requesting desktop sites)
@@ -150,7 +162,8 @@ const InstallPrompt = () => {
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     // 2. Check if already standalone (installed)
-    const isStandalone = ('standalone' in window.navigator && (window.navigator as any).standalone) ||
+    const nav = window.navigator as NavigatorStandalone;
+    const isStandalone = nav.standalone === true ||
       window.matchMedia('(display-mode: standalone)').matches;
 
     if (isStandalone) return undefined;
@@ -164,14 +177,15 @@ const InstallPrompt = () => {
       return undefined;
     } else {
       // Android/Desktop standard mechanism
-      const handler = (e: any) => {
+      const handler = (e: Event) => {
+        const promptEvent = e as BeforeInstallPromptEvent;
         // Only intercept if we haven't dismissed the prompt before
         if (localStorage.getItem('pwa-prompt-dismissed')) {
           // Don't preventDefault - let browser handle it naturally
           return;
         }
         e.preventDefault();
-        setDeferredPrompt(e);
+        setDeferredPrompt(promptEvent);
         setShow(true);
       };
       window.addEventListener('beforeinstallprompt', handler);
@@ -179,20 +193,19 @@ const InstallPrompt = () => {
     }
   }, []);
 
-  const handleInstall = () => {
+  const handleInstall = async () => {
     if (isIOS) {
       // Just dismiss, we can't programmatically install on iOS.
       setShow(false);
       localStorage.setItem('pwa-prompt-dismissed', 'true');
     } else if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult: any) => {
-        if (choiceResult.outcome === 'accepted') {
-          localStorage.setItem('pwa-prompt-dismissed', 'true');
-        }
-        setDeferredPrompt(null);
-        setShow(false);
-      });
+      await deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
+      if (choiceResult.outcome === 'accepted') {
+        localStorage.setItem('pwa-prompt-dismissed', 'true');
+      }
+      setDeferredPrompt(null);
+      setShow(false);
     }
   };
 

@@ -230,7 +230,15 @@ const ClientLanding: React.FC = () => {
                   >
                     <div className="flex items-center p-3 gap-4">
                       {lastVenue.imageUrl ? (
-                        <img src={lastVenue.imageUrl} alt={lastVenue.name} className="w-12 h-12 rounded-lg object-cover bg-surface-base" />
+                        <img
+                          src={lastVenue.imageUrl}
+                          alt={lastVenue.name}
+                          width={48}
+                          height={48}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-12 h-12 rounded-lg object-cover bg-surface-base"
+                        />
                       ) : (
                         <div className="w-12 h-12 rounded-lg bg-surface-base flex items-center justify-center text-xl">
                           🍽️
@@ -284,7 +292,15 @@ const ClientLanding: React.FC = () => {
                       >
                         <div className="flex items-center p-4 gap-4">
                           {venue.imageUrl ? (
-                            <img src={venue.imageUrl} alt={venue.name} className="w-14 h-14 rounded-xl object-cover bg-surface-base shadow-sm" />
+                            <img
+                              src={venue.imageUrl}
+                              alt={venue.name}
+                              width={56}
+                              height={56}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-14 h-14 rounded-xl object-cover bg-surface-base shadow-sm"
+                            />
                           ) : (
                             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-surface-highlight to-surface-base flex items-center justify-center text-xl shadow-inner border border-white/5">
                               🏪
