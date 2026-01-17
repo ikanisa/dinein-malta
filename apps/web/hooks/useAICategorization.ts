@@ -1,107 +1,191 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../services/supabase';
-import { Venue } from '../types';
+import { useState, useEffect, useCallback } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import type { MenuItemData } from '@/components/menu/MenuItem';
 
-export interface AICategories {
+export type AIVenueCategories = {
     primary_category?: string;
     cuisine_types?: string[];
     ambiance_tags?: string[];
     price_range?: string;
     highlights?: string[];
     dietary_friendly?: string[];
-    menu_grouping?: Record<string, {
-        dietary_tags?: string[];
-        flavor_profile?: string[];
-        smart_category?: string;
-    }>;
+    popular_times?: string;
+    competitor_context?: string;
+};
+
+export type AIMenuCategories = Record<string, {
+    dietary_tags?: string[];
+    flavor_profile?: string;
+    smart_category?: string;
+    cuisine_style?: string;
+    meal_period?: string[];
+    pairing_suggestions?: string;
+}>;
+
+interface UseAICategorizationReturn {
+    venueCategories: AIVenueCategories | null;
+    menuCategories: AIMenuCategories | null;
+    isLoadingVenue: boolean;
+    isLoadingMenu: boolean;
+    error: string | null;
+    fetchVenueCategories: () => Promise<void>;
+    fetchMenuCategories: (items: MenuItemData[]) => Promise<void>;
 }
 
-const CACHE_KEY_PREFIX = 'ai_categories_v1_';
-
-export function useAICategorization(venue: Venue | undefined) {
-    const [categories, setCategories] = useState<AICategories | null>(null);
-    const [isCalculating, setIsCalculating] = useState(false);
+export function useAICategorization(venueId: string, venueName: string, venueAddress: string): UseAICategorizationReturn {
+    const [venueCategories, setVenueCategories] = useState<AIVenueCategories | null>(null);
+    const [menuCategories, setMenuCategories] = useState<AIMenuCategories | null>(null);
+    const [isLoadingVenue, setIsLoadingVenue] = useState(false);
+    const [isLoadingMenu, setIsLoadingMenu] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const supabase = createClient();
+
     useEffect(() => {
-        if (!venue?.id) return;
+        // Load from session storage on mount
+        if (!venueId) return;
 
-        const cacheKey = `${CACHE_KEY_PREFIX}${venue.id}`;
-        const cached = sessionStorage.getItem(cacheKey);
-
-        if (cached) {
-            try {
-                setCategories(JSON.parse(cached));
-                return;
-            } catch (e) {
-                sessionStorage.removeItem(cacheKey);
+        try {
+            const cachedVenue = sessionStorage.getItem(`venue_categories_${venueId}`);
+            if (cachedVenue) {
+                setVenueCategories(JSON.parse(cachedVenue));
             }
+
+            const cachedMenu = sessionStorage.getItem(`menu_categories_${venueId}`);
+            if (cachedMenu) {
+                setMenuCategories(JSON.parse(cachedMenu));
+            }
+        } catch (e) {
+            console.warn('Failed to load categories from session storage', e);
         }
+    }, [venueId]);
 
-        const fetchCategories = async () => {
-            setIsCalculating(true);
-            setError(null);
+    const fetchVenueCategories = useCallback(async () => {
+        if (isLoadingVenue || venueCategories) return;
 
+        // Check cache (sessionStorage)
+        try {
+            const cachedVenue = sessionStorage.getItem(`venue_categories_${venueId}`);
+            if (cachedVenue) {
+                setVenueCategories(JSON.parse(cachedVenue));
+                return;
+            }
+        } catch { /* ignore */ }
+
+        setIsLoadingVenue(true);
+        setError(null);
+
+        try {
+            // Strategy: Try Persistent API first (stores to DB), fallback to Ephemeral Edge Function
+            let resultData: AIVenueCategories | null = null;
+            let persistSuccess = false;
+
+            // 1. Try Persistent API (Next.js Route -> DB)
             try {
-                // 1. Venue Categorization
-                const { data: venueData, error: venueError } = await supabase.functions.invoke('gemini-features', {
+                const response = await fetch('/api/ai/categorize-venue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ venueId })
+                });
+
+                if (response.ok) {
+                    const json = await response.json();
+                    if (json.categories) {
+                        resultData = json.categories;
+                        persistSuccess = true;
+                    }
+                }
+            } catch (err) {
+                console.warn('Persistent categorization failed, falling back to ephemeral:', err);
+            }
+
+            // 2. Fallback to Ephemeral Edge Function if persistence failed
+            if (!persistSuccess || !resultData) {
+                const { data, error: apiError } = await supabase.functions.invoke('gemini-features', {
                     body: {
                         action: 'categorize-venue',
                         payload: {
-                            name: venue.name,
-                            address: venue.address,
-                            description: venue.description
+                            name: venueName,
+                            address: venueAddress,
                         }
                     }
                 });
 
-                if (venueError) throw venueError;
+                if (apiError) throw apiError;
+                resultData = data?.data;
+            }
 
-                // 2. Menu Categorization (only if menu items exist)
-                let menuData = {};
-                if (venue.menu && venue.menu.length > 0) {
-                    const { data: mData, error: mError } = await supabase.functions.invoke('gemini-features', {
-                        body: {
-                            action: 'categorize-menu',
-                            payload: {
-                                items: venue.menu.map(i => ({ id: i.id, name: i.name, description: i.description })),
-                                venueName: venue.name
-                            }
-                        }
-                    });
+            if (resultData) {
+                setVenueCategories(resultData);
+                try {
+                    sessionStorage.setItem(`venue_categories_${venueId}`, JSON.stringify(resultData));
+                } catch { /* ignore */ }
+            }
+        } catch (err: unknown) {
+            console.error('Error fetching venue categories:', err);
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+            setError(errorMessage);
+        } finally {
+            setIsLoadingVenue(false);
+        }
+    }, [venueId, venueName, venueAddress, isLoadingVenue, venueCategories, supabase]);
 
-                    if (!mError && mData?.data) {
-                        menuData = mData.data;
+    const fetchMenuCategories = useCallback(async (items: MenuItemData[]) => {
+        if (isLoadingMenu || menuCategories) return;
+
+        // Check cache again
+        try {
+            const cachedMenu = sessionStorage.getItem(`menu_categories_${venueId}`);
+            if (cachedMenu) {
+                setMenuCategories(JSON.parse(cachedMenu));
+                return;
+            }
+        } catch { /* ignore */ }
+
+        setIsLoadingMenu(true);
+        setError(null);
+
+        try {
+            // Small optimization: only send needed fields
+            const itemsPayload = items.map(item => ({
+                id: item.id,
+                name: item.name,
+                description: item.description
+            }));
+
+            const { data, error: apiError } = await supabase.functions.invoke('gemini-features', {
+                body: {
+                    action: 'categorize-menu',
+                    payload: {
+                        items: itemsPayload,
+                        venueName: venueName
                     }
                 }
+            });
 
-                const combined: AICategories = {
-                    ...(venueData?.data || {}),
-                    menu_grouping: menuData
-                };
-
-                setCategories(combined);
-                sessionStorage.setItem(cacheKey, JSON.stringify(combined));
-
-            } catch (err: any) {
-                console.error('AI Categorization failed:', err);
-                setError(err.message);
-                // Fallback to basic venue tags if available
-                if (venue.tags && venue.tags.length > 0) {
-                    setCategories({
-                        primary_category: venue.tags[0],
-                        highlights: venue.tags.slice(1)
-                    });
-                }
-            } finally {
-                setIsCalculating(false);
+            if (apiError) throw apiError;
+            if (data?.data) {
+                setMenuCategories(data.data);
+                try {
+                    sessionStorage.setItem(`menu_categories_${venueId}`, JSON.stringify(data.data));
+                } catch { /* ignore */ }
             }
-        };
+        } catch (err: unknown) {
+            console.error('Error fetching menu categories:', err);
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+            setError(errorMessage);
+        } finally {
+            setIsLoadingMenu(false);
+        }
+    }, [venueId, venueName, isLoadingMenu, menuCategories, supabase]);
 
-        fetchCategories();
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [venue?.id, venue?.name]); // Re-run if venue ID or name changes
-
-    return { categories, isCalculating, error };
+    return {
+        venueCategories,
+        menuCategories,
+        isLoadingVenue,
+        isLoadingMenu,
+        error,
+        fetchVenueCategories,
+        fetchMenuCategories
+    };
 }

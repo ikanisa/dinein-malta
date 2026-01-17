@@ -1,65 +1,33 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import Link from 'next/link'
+import { Button } from "@/components/ui/button"
 
-interface HeaderProps {
-  title?: string;
-  subtitle?: string;
-  showBack?: boolean;
-  showSettings?: boolean;
-  backPath?: string;
-  rightContent?: React.ReactNode;
+export function Header() {
+    return (
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-14 items-center justify-between px-4 md:px-6">
+                <Link className="flex items-center gap-2 font-bold text-xl" href="/">
+                    DineOrDash
+                </Link>
+                <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+                    <Link className="transition-colors hover:text-foreground/80 text-foreground/60" href="/venues">
+                        Venues
+                    </Link>
+                    <Link className="transition-colors hover:text-foreground/80 text-foreground/60" href="/about">
+                        About
+                    </Link>
+                    <Link className="transition-colors hover:text-foreground/80 text-foreground/60" href="/dashboard">
+                        Dashboard
+                    </Link>
+                </nav>
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" asChild>
+                        <Link href="/login">Login</Link>
+                    </Button>
+                    <Button asChild>
+                        <Link href="/signup">Sign Up</Link>
+                    </Button>
+                </div>
+            </div>
+        </header>
+    )
 }
-
-export const Header: React.FC<HeaderProps> = ({
-  title,
-  subtitle,
-  showBack = true,
-  showSettings = false,
-  backPath,
-  rightContent,
-}) => {
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    if (backPath) {
-      navigate(backPath);
-    } else {
-      navigate(-1);
-    }
-  };
-
-  return (
-    <div className="sticky top-0 z-40 px-6 pt-12 pb-4 bg-glass border-b border-glassBorder backdrop-blur-xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 flex-1 min-w-0">
-          {showBack && (
-            <button
-              onClick={handleBack}
-              className="w-10 h-10 rounded-full bg-surface-highlight flex items-center justify-center text-foreground active:scale-95 transition-transform flex-shrink-0"
-              aria-label="Go back"
-            >
-              ←
-            </button>
-          )}
-          <div className="flex-1 min-w-0">
-            {title && (
-              <h1 className="text-xl font-bold text-foreground truncate">{title}</h1>
-            )}
-            {subtitle && (
-              <p className="text-xs text-muted truncate">{subtitle}</p>
-            )}
-          </div>
-        </div>
-        {rightContent || (showSettings && (
-          <button
-            onClick={() => navigate('/settings')}
-            className="w-10 h-10 rounded-full bg-surface-highlight flex items-center justify-center text-foreground active:scale-95 transition-transform flex-shrink-0"
-            aria-label="Settings"
-          >
-            ⚙️
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};

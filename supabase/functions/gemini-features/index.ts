@@ -55,6 +55,13 @@ const geminiRequestSchema = z.object({
   payload: z.record(z.unknown()).optional(),
 });
 
+// ... (keep payloadSchemas as is)
+
+// ...
+
+
+
+// ...
 
 const payloadSchemas = {
   search: z.object({
@@ -68,6 +75,7 @@ const payloadSchemas = {
     prompt: z.string().min(1),
     size: z.enum(["1K", "2K", "4K"]).optional(),
     referenceImages: z.array(z.string()).optional(),
+    modelPreference: z.enum(["quality", "fast"]).optional(),
   }),
   "parse-menu": z.object({
     fileData: z.string().min(1),
@@ -87,6 +95,8 @@ const payloadSchemas = {
     name: z.string().min(1),
     address: z.string().min(1),
     description: z.string().optional(),
+    lat: z.number().optional(),
+    lng: z.number().optional(),
   }),
   "categorize-menu": z.object({
     items: z.array(z.object({
@@ -104,11 +114,15 @@ type GeminiAction = z.infer<typeof geminiRequestSchema>["action"];
 // Gemini API Configuration
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 const GEMINI_MODELS = {
-  text: "gemini-3.0-flash-exp", // Primary
-  textFallback: "gemini-2.5-pro-exp", // Fallback
-  vision: "gemini-3.0-flash-exp", // Primary for vision
-  visionFallback: "gemini-2.5-pro-exp", // Fallback for vision
-  imagePro: "gemini-2.5-flash-thinking-exp", // Nano Banana Pro (2K)
+  text: "gemini-2.5-flash", // Primary (Stable)
+  textFallback: "gemini-2.5-pro", // Fallback
+  vision: "gemini-2.5-flash", // Primary for vision
+  visionFallback: "gemini-2.5-pro", // Fallback for vision
+  imagePro: "nano-banana-pro-preview", // Validated
+  imageFast: "imagen-4.0-fast-generate-001",
+  // Specific models for tasks
+  categorizeVenue: "gemini-2.0-flash-001", // Try 2.0 for tool compatibility
+  categorizeMenu: "gemini-2.5-flash",
 };
 
 /**
@@ -133,6 +147,7 @@ async function callGemini(
     maxTokens?: number;
     imageData?: string;
     mimeType?: string;
+    responseMimeType?: string;
   } = {}
 ) {
   const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("API_KEY");
@@ -166,37 +181,77 @@ async function callGemini(
     generationConfig: {
       temperature: options.temperature ?? 0.7,
       maxOutputTokens: options.maxTokens ?? 2048,
+      responseMimeType: options.responseMimeType,
     },
   };
 
   if (options.tools?.length) requestBody.tools = options.tools;
   if (options.toolConfig) requestBody.toolConfig = options.toolConfig;
 
-  // Try primary model first
-  let url = `${GEMINI_API_URL}/models/${primaryModel}:generateContent?key=${apiKey}`;
-  let response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
+  // Retry logic configuration
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1s initial delay with exponential backoff
 
-  // Fallback to secondary model on error
-  if (!response.ok && fallbackModel) {
-    console.warn(`Primary model ${primaryModel} failed, trying fallback ${fallbackModel}`);
-    url = `${GEMINI_API_URL}/models/${fallbackModel}:generateContent?key=${apiKey}`;
-    response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
+  async function fetchWithRetry(model: string, isFallback = false): Promise<any> {
+    let attempt = 0;
+    while (attempt < MAX_RETRIES) {
+      try {
+        const url = `${GEMINI_API_URL}/models/${model}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        // If rate limited (429) or server error (5xx), retry
+        if (!response.ok && (response.status === 429 || response.status >= 500)) {
+          if (attempt < MAX_RETRIES - 1) {
+            const delay = RETRY_DELAY * Math.pow(2, attempt);
+            console.warn(`Attempt ${attempt + 1} failed for ${model} (${response.status}), retrying in ${delay}ms...`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            attempt++;
+            continue;
+          }
+        }
+
+        // Ensure hard fail on client errors (4xx) except 429, or if retries exhausted
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`${response.status} - ${text.substring(0, 200)}`);
+        }
+
+        return await response.json();
+      } catch (err) {
+        // If it's a network error, retry
+        if (attempt < MAX_RETRIES - 1) {
+          const delay = RETRY_DELAY * Math.pow(2, attempt);
+          console.warn(`Network error on ${model}, retrying in ${delay}ms...`, err);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          attempt++;
+          continue;
+        }
+        throw err;
+      }
+    }
   }
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini API error: ${response.status} - ${errorText.substring(0, 200)}`);
+  let data;
+  try {
+    // Try primary model
+    data = await fetchWithRetry(primaryModel);
+    console.log("Gemini Raw Response:", JSON.stringify(data).substring(0, 2000)); // Log first 2000 chars
+  } catch (error) {
+    if (fallbackModel) {
+      console.warn(`Primary model ${primaryModel} failed after retries, trying fallback ${fallbackModel}`, error);
+      try {
+        data = await fetchWithRetry(fallbackModel, true);
+      } catch (fallbackError) {
+        throw new Error(`Gemini API failed on primary and fallback: ${fallbackError}`);
+      }
+    } else {
+      throw new Error(`Gemini API failed: ${error}`);
+    }
   }
-
-  const data = await response.json();
 
   // Extract text content
   if (data.candidates?.[0]?.content?.parts) {
@@ -222,6 +277,7 @@ function parseJSON(text: string | undefined, fallback: any = []): any {
     return JSON.parse(jsonText);
   } catch (e) {
     console.error("JSON parse error:", e);
+    console.warn("Failed JSON text:", text?.substring(0, 1000));
     return fallback;
   }
 }
@@ -307,24 +363,36 @@ Return as JSON object with:
   return enriched;
 }
 
-// 3. GENERATE IMAGE - Generate images using Nano Banana Pro
+// 3. GENERATE IMAGE - Generate images using Nano Banana Pro (Quality) or Imagen 4 Fast (Speed)
 async function handleGenerateImage(payload: {
   prompt: string;
   size?: "1K" | "2K" | "4K";
   referenceImages?: string[];
+  modelPreference?: "quality" | "fast";
 }) {
-  const { prompt, referenceImages } = payload;
+  const { prompt, referenceImages, modelPreference } = payload;
   const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("API_KEY");
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY not configured");
   }
 
+  // Determine model based on preference
+  // Default to 'quality' for backward compatibility if not specified
+  const modelToUse = modelPreference === "fast" ? GEMINI_MODELS.imageFast : GEMINI_MODELS.imagePro;
+
   // Enhance prompt
   let enhancedPrompt = prompt;
 
-  // Add reference images if provided
+  // Add reference images if provided (Only supported on some models, checking logic)
+  // Gemini 3 Pro supports multimodal, Imagen 4 might just take text or specific reference params.
+  // For now, attaching inline data for Gemini models, checking docs for Imagen 4 later if needed.
+  // Assuming consistent interface for generateContent for now since we are using the unified API endpoint structure
+  // Note: Imagen 4 on Vertex AI might have different params, but via AI Studio/Gemini API it might standardization.
+  // If Imagen 4 is text-to-image only via this endpoint, we might skip reference images for "fast" mode.
+
   const parts: any[] = [{ text: enhancedPrompt }];
-  if (referenceImages?.length) {
+
+  if (modelPreference !== "fast" && referenceImages?.length) {
     for (const refImage of referenceImages.slice(0, 5)) {
       try {
         if (refImage.startsWith('data:')) {
@@ -342,22 +410,31 @@ async function handleGenerateImage(payload: {
     }
   }
 
-  const url = `${GEMINI_API_URL}/models/${GEMINI_MODELS.imagePro}:generateContent?key=${apiKey}`;
+  const url = `${GEMINI_API_URL}/models/${modelToUse}:generateContent?key=${apiKey}`;
+
+  const requestBody: any = {
+    contents: [{ role: "user", parts }],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 4096,
+    },
+  };
+
+  // Add specific image config if using image model
+  // Note: API parameters might vary slightly between models, keeping it generic for now
+  // For Imagen 4 Fast or Gemini 3 Pro Image, they often accept image generation params.
+  // If this endpoint is purely generateContent (multimodal), it returns base64 in parts.
+
+  // Basic config for compatibility
+  // Only add imageConfig if relevant (some text models might error if present, but these are image models)
+  requestBody.generationConfig.responseMimeType = "image/jpeg";
+  // Force 4:3 for standardized look
+  // requestBody.imageConfig = { aspectRatio: "4:3" }; // Not all models support this validly in the same field
 
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 4096,
-      },
-      imageConfig: {
-        aspectRatio: "4:3",
-        imageSize: "2K",
-      },
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -429,7 +506,13 @@ async function handleGenerateAsset(payload: {
   const { prompt, entityId, table, column } = payload;
 
   // 1. Generate Image
-  const base64Data = await handleGenerateImage({ prompt, size: "2K" });
+  // Use "quality" for venues (vendors) and "fast" for menu items to save costs/time
+  const modelPreference = table === "vendors" ? "quality" : "fast";
+  const base64Data = await handleGenerateImage({
+    prompt,
+    size: "2K",
+    modelPreference
+  });
 
   if (!base64Data) {
     throw new Error("Failed to generate image");
@@ -481,25 +564,43 @@ async function handleGenerateAsset(payload: {
 }
 
 // 7. CATEGORIZE VENUE - AI categorization using Maps/Search grounding
-async function handleCategorizeVenue(payload: { name: string; address: string; description?: string }) {
-  const { name, address, description } = payload;
+async function handleCategorizeVenue(payload: { name: string; address: string; description?: string; lat?: number; lng?: number }) {
+  const { name, address, description, lat, lng } = payload;
 
   const prompt = `Analyze the venue "${name}" located at "${address}".
 ${description ? `Description context: ${description}` : ""}
 
-Using Google Search/Maps data, provide categorical tags for this venue.
-Return JSON with:
-- primary_category (e.g., Italian, Sports Bar, Cafe)
-- cuisine_types (array of strings)
-- ambiance_tags (array of strings, e.g., "Romantic", "Lively")
-- price_range ($, $$, $$$, or $$$$)
-- highlights (array of strings, e.g., "Outdoor Seating", "Live Music")
-- dietary_friendly (array of strings, e.g., "Vegetarian", "Vegan Options")`;
+Using Google Search and Google Maps data, provide comprehensive categorical tags and insights for this venue.
+If location data is provided, use it to ground the response in the actual venue details.
 
-  const result = await callGemini(GEMINI_MODELS.text, prompt, {
-    tools: [{ googleSearch: {} }],
-    temperature: 0.4,
-    maxTokens: 1000,
+Return JSON with:
+- primary_category (Most specific category, e.g., "Neapolitan Pizzeria", "Craft Cocktail Bar")
+- cuisine_types (array of strings, e.g., "Italian", "Wood-fired Pizza")
+- ambiance_tags (array of strings, e.g., "Romantic", "Industrial Chic", "Family-Friendly")
+- price_range ($, $$, $$$, or $$$$)
+- highlights (array of strings, e.g., "Rooftop View", "Happy Hour", "Live Jazz")
+- dietary_friendly (array of strings, e.g., "Vegetarian Options", "Gluten-Free Available")
+- popular_times (string description of busy hours if available)
+- competitor_context (brief string comparing to local similar venues)`;
+
+  const tools: any[] = [{ googleSearch: {} }];
+
+  // Add Google Maps Grounding if coordinates are available
+  if (lat && lng) {
+    tools.push({
+      google_maps_grounding: {
+        user_location: {
+          latitude: lat,
+          longitude: lng
+        }
+      }
+    });
+  }
+
+  const result = await callGemini(GEMINI_MODELS.categorizeVenue, prompt, {
+    tools,
+    temperature: 0.3, // Lower temperature for more factual categorization
+    maxTokens: 1024,
   });
 
   return parseJSON(result.text, {});
@@ -518,15 +619,19 @@ async function handleCategorizeMenu(payload: { items: any[]; venueName?: string 
 Items: ${JSON.stringify(itemsLite)}
 
 For each item, provide:
-1. dietary_tags (e.g., Vegetarian, Vegan, GF, Spicy)
-2. flavor_profile (e.g., Savory, Sweet, Sour)
-3. smart_category (A broad group: Appetizer, Main, Dessert, Drink, or Side)
+1. dietary_tags (e.g., Vegetarian, Vegan, Gluten-Free, Dairy-Free, Nut-Free, Halal, Kosher)
+2. flavor_profile (e.g., Spicy, Savory, Sweet, Sour, Umami, Smoky)
+3. smart_category (A broad group: Appetizers, Mains, Desserts, Beverages, Sides, Kids)
+4. cuisine_style (e.g., Italian, Mexican, Fusion)
+5. meal_period (array: Breakfast, Lunch, Dinner, Late Night)
+6. pairing_suggestions (short string)
 
 Return a JSON Object where keys are the item IDs (or names if ID missing) and values are the classification objects.`;
 
-  const result = await callGemini(GEMINI_MODELS.text, prompt, {
+  const result = await callGemini(GEMINI_MODELS.categorizeMenu, prompt, {
     temperature: 0.3,
     maxTokens: 4096,
+    responseMimeType: "application/json",
   });
 
   return parseJSON(result.text, {});
@@ -583,7 +688,7 @@ Deno.serve(async (req) => {
     logger.info("Processing action", { action });
 
     // Actions that can be called anonymously (public discovery)
-    const anonymousActions = ["search"];
+    const anonymousActions = ["search", "categorize-venue", "categorize-menu"];
     const isAnonymousAllowed = anonymousActions.includes(action);
 
     // Use shared admin client
