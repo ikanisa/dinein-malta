@@ -12,29 +12,12 @@
 
 import React, { useCallback, useRef } from 'react';
 import { MenuItem } from '@/types';
-import type { ListChildComponentProps } from 'react-window';
 
-// Types for dynamically loaded virtualization components
-interface FixedSizeListProps {
-    height: number;
-    width: number;
-    itemCount: number;
-    itemSize: number;
-    overscanCount?: number;
-    children: React.ComponentType<ListChildComponentProps>;
-}
-
-interface AutoSizerChildProps {
-    height: number;
-    width: number;
-}
-
-type FixedSizeListComponent = React.ComponentType<FixedSizeListProps>;
-type AutoSizerComponent = React.ComponentType<{ children: (size: AutoSizerChildProps) => React.ReactNode }>;
-
-// Dynamic import for virtualization libs
-let FixedSizeList: FixedSizeListComponent | null = null;
-let AutoSizer: AutoSizerComponent | null = null;
+// Using dynamic import with relaxed typing to avoid type conflicts with react-window
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let FixedSizeList: React.ComponentType<any> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let AutoSizer: React.ComponentType<any> | null = null;
 let libsLoaded = false;
 
 const loadVirtualizationLibs = async () => {
@@ -44,8 +27,10 @@ const loadVirtualizationLibs = async () => {
             import('react-window'),
             import('react-virtualized-auto-sizer'),
         ]);
-        FixedSizeList = reactWindow.FixedSizeList as FixedSizeListComponent;
-        AutoSizer = (autoSizer.default || autoSizer) as AutoSizerComponent;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        FixedSizeList = (reactWindow as any).FixedSizeList;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        AutoSizer = (autoSizer as any).default || autoSizer;
         libsLoaded = true;
     } catch (err) {
         console.warn('[VirtualMenuList] Failed to load virtualization libs:', err);

@@ -2,6 +2,7 @@
  * Unit tests for api.ts
  * Tests for vendorsApi, menuItemsApi, ordersApi, and APIError
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
 import { APIError, vendorsApi, menuItemsApi, ordersApi } from '../../services/api';
 

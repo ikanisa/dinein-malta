@@ -1,323 +1,367 @@
 ---
-description: Multi-agent orchestration template (UI / Backend / QA / Integrator)
+description: Multi-agent orchestration template
 ---
 
-# Parallel Split Workflow
+bash -lc 'set -euo pipefail
+DIR="$HOME/.gemini/antigravity/global_workflows"
+mkdir -p "$DIR"
 
-Use this workflow to coordinate large features across multiple work streams. Each stream has a virtual "agent" role with distinct responsibilities.
+# Helper: write file
+w(){ f="$1"; shift; cat > "$DIR/$f" <<EOF
+$*
+EOF
+}
 
-## When to Use
+# =========================
+# 1) INTEGRATOR / MANAGER
+# =========================
+w agent-integrator.md "---
+description: Agent brief — Integrator/Manager for /parallel-split (merge order, gates, final walkthrough)
+---
+# ROLE: INTEGRATOR (Single Source of Truth)
 
-- Large features spanning UI, backend, and tests
-- Major refactors affecting many files
-- Production hardening with multiple parallel tracks
-- Sprint-style work with clear deliverables
+## Mission
+Coordinate parallel agents to ship a world-class fullstack PWA safely: consistent UX, enforced RBAC, no endless loading, deploy-ready, verified.
 
-## Work Stream Definitions
+## Non-negotiables
+- Small diffs; phased; no drive-by refactors.
+- RBAC enforced in UI + Server/Edge + DB/RLS (if used). Never UI-only.
+- Every screen: loading + empty + error + retry (no blank screens).
+- Client apps: mobile-first, thumb-friendly, touch targets >=44px, smooth.
+- DONE requires: Plan + Task List + Walkthrough (verify + risks + rollback).
 
-### 🎨 UI Agent
-**Focus**: Frontend components, pages, styling, animations
+## Inputs (collect fast; otherwise assume + state assumptions)
+- App type: Portal (Staff/Admin) or Client mobile-first or Both
+- App path(s) in monorepo
+- URLs: local/preview/prod
+- Role matrix: Staff vs Admin capabilities
+- Supabase usage? (schema/RLS/Edge) + deploy target (Cloudflare Pages)
 
-Responsibilities:
-- Create/update React components
-- Apply design system (Soft Liquid Glass)
-- Ensure responsive layout (mobile-first)
-- Loading, empty, and error states
-- Accessibility (ARIA, keyboard nav, focus states)
+## Outputs (Integrator must produce)
+1) Consolidated Plan (ordered, low-risk)
+2) Task board: who does what + merge order
+3) Conflict-avoidance: shared contracts/types first
+4) Final Walkthrough: verify steps + evidence + risks + rollback
 
-Outputs:
-- Component files in `apps/web/src/components/`
-- Page files in `apps/web/src/pages/`
-- CSS/Tailwind updates
-- Before/after screenshots
+## Agent roster (choose)
+Always: UI System, Frontend, Backend/Edge, QA/Browser, Deploy.
+If Supabase: DB/RLS.
+If Client-facing: Mobile Experience + Performance (mandatory).
+If risky: Security.
+If shipping polish: Docs/Runbook.
 
+## Merge order (default)
+Contracts/Types → DB/RLS → Backend/Edge → UI System → Frontend wiring → Perf/Sec → QA → Deploy.
+
+## Gates (must run before DONE)
+- lint, typecheck, tests (if exist), build
+- Browser smoke: Staff flow + Admin flow
+- RBAC attack sim: Staff tries admin URL + admin action via API replay → must fail
+- Deep-link refresh works
+- Client apps: mobile viewports + slow network sanity
+
+## Rollback readiness
+- Code: revert/rollback deploy
+- DB: rollback migration or mitigation steps
+- PWA/SW: avoid stale bundle traps; update strategy documented
+"
+
+# =========================
+# 2) UI SYSTEM / DESIGN
+# =========================
+w agent-ui-system.md "---
+description: Agent brief — UI System (tokens + components) for world-class PWA portals & mobile apps
 ---
 
-### ⚙️ Backend Agent
-**Focus**: Database, Edge Functions, API, RLS
+# ROLE: UI SYSTEM
 
-Responsibilities:
-- Schema migrations
-- Supabase Edge Functions
-- RLS policies (Staff vs Admin enforcement)
-- API service layer (`apps/web/src/services/`)
-- Input validation, rate limiting
+## Mission
+Deliver a consistent minimalist UI system (Soft Liquid Glass when appropriate) that is readable, accessible, and fast.
 
-Outputs:
-- Migration files in `supabase/migrations/`
-- Edge functions in `supabase/functions/`
-- RLS policy updates
-- Service files in `apps/web/src/services/`
+## Non-negotiables
+- Tokens first (spacing/type/radius/blur/shadow/color/motion).
+- Glass never reduces readability (contrast first; fewer layers).
+- Components include loading/disabled/error states.
+- Motion uses transform/opacity; respects prefers-reduced-motion.
 
+## Deliverables
+1) Token spec + where stored
+2) Component set or consolidation plan:
+   - Button/IconButton, Input/Select/Textarea, Card/Badge
+   - Modal + Drawer/Sheet, Toast/Alert/InlineError
+   - Skeleton (preferred) + Spinner (small)
+   - Tabs/Menu/Tooltip
+   - Table primitives (portal) or List primitives (client)
+3) Usage rules: portal density vs client comfort
+4) Evidence: screenshots showing consistency
+
+## DoD checks
+- Focus visible + keyboard usable
+- Tap targets padded (>=44px)
+- Dark mode (if present) readable
+- Skeleton → content has no jarring shift
+"
+
+# =========================
+# 3) FRONTEND WIRING
+# =========================
+w agent-frontend-wiring.md "---
+description: Agent brief — Frontend wiring (routing/state/data/errors/RBAC) for fullstack PWA
 ---
 
-### 🧪 QA Agent
-**Focus**: Testing, verification, regression protection
+# ROLE: FRONTEND WIRING
 
-Responsibilities:
-- Unit tests (Vitest)
-- Integration tests
-- E2E tests (Playwright)
-- RBAC verification (Staff/Admin)
-- Manual test checklists
-- Bug reproduction
+## Mission
+Implement robust UX flows: routing, auth boot, data fetching, UI states, error boundaries, and Staff/Admin route guards aligned with backend + RLS.
 
-Outputs:
-- Test files in `apps/web/__tests__/` or `apps/web/src/test/`
-- E2E specs in `apps/web/e2e/`
-- UAT checklist updates
-- Bug reports with evidence
+## Non-negotiables
+- No infinite loading: every async has timeout/error + retry.
+- Every screen has loading/empty/error/success states.
+- RBAC: guard routes + hide forbidden controls (still enforced server-side).
+- One consistent data-fetching pattern (don’t mix chaos).
 
+## Deliverables
+1) Route map + guards (Staff/Admin)
+2) Data layer standard: caching, retries, error format surfaced
+3) Error boundaries: app-level + route containment
+4) Fix/wire scoped pages (remove mocks in scope)
+5) Evidence: recordings + console/network sanity notes
+
+## Verification
+- Staff login → staff core flow
+- Admin login → admin-only action
+- Staff direct URL to admin route blocked
+- Deep-link refresh works
+- Mobile viewport sanity (no horizontal scroll; input/keyboard OK)
+"
+
+# =========================
+# 4) BACKEND / EDGE
+# =========================
+w agent-backend-edge.md "---
+description: Agent brief — Backend/API/Edge (authz, validation, contracts, logs) for fullstack PWA
 ---
 
-### 🔗 Integrator Agent
-**Focus**: Coordination, merge, deploy, docs
+# ROLE: BACKEND / EDGE
 
-Responsibilities:
-- Merge work from all streams
-- Resolve conflicts
-- Run full verification suite
-- Update documentation
-- Deploy to staging/production
-- Create walkthrough
+## Mission
+Deliver correct server behavior with strict authorization, validation, consistent errors, and logs/auditability.
 
-Outputs:
-- Updated `README.md`, docs
-- Deployment verification
-- Final walkthrough with proof
-- Git commits/PRs
+## Non-negotiables
+- Authorization on server/edge (never trust client).
+- Validate inputs; return consistent error shape.
+- Idempotency for critical ops where relevant.
+- Log privileged actions; avoid silent failures.
 
+## Deliverables
+1) Contract(s): request/response + error format
+2) Implement/fix endpoints/Edge Functions
+3) Authz notes: Staff vs Admin (and tenant scoping if any)
+4) Observability: logs + key audit events (if feasible)
+5) Verification steps (curl or app flow + expected results)
+
+## Verification
+- Staff cannot call admin ops (403)
+- Failure cases are user-actionable
+- DB mutations match expectations
+"
+
+# =========================
+# 5) DB / SUPABASE / RLS
+# =========================
+w agent-db-rls.md "---
+description: Agent brief — Supabase DB/RLS (schema, migrations, policies, seeds) aligned with Staff/Admin
 ---
 
-### 📱 Mobile Experience Agent (Client-Facing PWA: Discovery/DineIn)
-**Focus**: Deliver a native mobile app experience — touch-first, fast, smooth, delightful, robust on real phones
+# ROLE: DB / RLS (Supabase)
 
-> **Mission**: Maximum native mobile app experience without breaking the minimalist design system.
+## Mission
+Keep the database clean and safe: schema integrity, least-privilege RLS, migration safety, and idempotent seeds for demos/UAT.
 
-#### Non-negotiables
+## Non-negotiables
+- Migrations have rollback or mitigation.
+- RLS matches role matrix (no overly-broad policies).
+- Avoid duplicates; extend existing schema where possible.
+- RLS denials must not masquerade as “endless loading” (surface errors).
 
-- **Mobile-first**: Design starts at 360×800, expands upward
-- **"Native feel"**: Thumb ergonomics, transitions, feedback, performance
-- **Zero blank screens**: Loading/empty/error states everywhere
-- **Offline/weak network**: Behavior is intentional and user-friendly
-- **Respect `prefers-reduced-motion`**
+## Deliverables
+1) Migration list + rollback/mitigation notes
+2) RLS matrix: role × table × operation
+3) Verification queries/checklist
+4) Seed plan (idempotent) if needed
+5) Index notes for hot queries
 
-#### Primary Focus Areas
+## Verification
+- Staff sees only allowed rows/actions
+- Admin has intended elevation
+- No surprise denies in core flows
+"
 
-**Navigation Architecture**
-- Bottom navigation (or thumb-reachable primary nav) for core sections
-- Clear back behavior and deep-link handling
-- Avoid drawer-heavy navigation as primary on client apps unless justified
-
-**Touch UX & Ergonomics**
-- Touch targets ≥ 44px
-- No hover-only affordances
-- Gestures where appropriate (swipe-to-close modals, pull-to-refresh if safe)
-- Key actions always reachable with one hand
-
-**Perceived Performance**
-- Skeletons instead of spinners for content loads
-- Optimistic UI for safe actions (with rollback on failure)
-- Route-level code splitting + prefetch only critical routes
-- Virtualize long lists (feeds, menus, vendors) to avoid jank
-
-**Motion Design**
-- Subtle transitions: screen enter/exit, bottom-sheet open/close, list item feedback
-- No heavy animations on low-end devices
-- Must degrade gracefully under reduced-motion
-
-**Mobile PWA Polish**
-- Correct manifest + icons + theme color
-- Installability works
-- Service worker strategy does not cause "stale JS" bugs
-- "Slow network" and "offline" states are handled with clear UX
-
-**Device Realities**
-Test at least:
-- Small Android (360×800)
-- iPhone-ish (390×844)
-- Tablet-ish (768×1024)
-- Keyboard overlays: inputs must not hide behind the keyboard
-
-#### Deliverables
-
-- Mini Plan + Mini Task List
-- Specific changes to:
-  - Navigation layout
-  - Mobile component variants (bottom sheets, drawers, full-screen dialogs)
-  - Loading/empty/error states
-  - Performance fixes (virtualization, lazy loading)
-- Verification evidence:
-  - Mobile viewport walkthrough recording
-  - Screenshots for 3–6 core flows
-  - "Slow network" check notes (no infinite loading)
-
-#### Handoff Format (must be explicit)
-
-- Changed files list
-- Mobile flows tested (with expected results)
-- Any remaining mobile UX debt
-- Risks + rollback notes
-
+# =========================
+# 6) QA / BROWSER
+# =========================
+w agent-qa-browser.md "---
+description: Agent brief — QA/Browser testing (fullstack smoke, evidence, regressions, RBAC attack sim)
 ---
 
-## Orchestration Template
+# ROLE: QA / BROWSER
 
-### Phase 1: Planning (All Agents)
+## Mission
+Prove the system works end-to-end. Capture evidence, file issues with repro + root cause guess, verify fixes, and protect against regressions.
 
-1. **Define scope** – What's the feature/change?
-2. **Create task breakdown** – Split by agent
-3. **Identify dependencies** – What blocks what?
-4. **Agree on contracts** – API shapes, component props, test scenarios
+## Non-negotiables
+- Evidence-driven: screenshot/recording + console + network proof.
+- Track each issue: repro → cause → fix → verified.
+- RBAC attack simulation is mandatory.
 
-```
-┌─────────────────────────────────────────────┐
-│              PLANNING PHASE                 │
-├─────────────────────────────────────────────┤
-│  UI: Design mockups, component list         │
-│  Backend: Schema, API contracts             │
-│  QA: Test plan, scenarios                   │
-│  Integrator: Timeline, dependencies         │
-└─────────────────────────────────────────────┘
-```
+## Deliverables
+1) Smoke plan (short): Staff flow, Admin flow, RBAC negatives, deep-link refresh, mobile sanity
+2) Issue log (table): severity, repro, evidence, suspected cause, owner
+3) Verified fixes with before/after evidence
+4) Regression protection: e2e smoke OR deterministic manual checklist
 
-### Phase 2: Parallel Execution
+## Verification (minimum)
+- Staff core flow works
+- Admin core action works
+- Staff blocked on admin URL and admin API replay
+- Deep-link refresh works
+- Mobile viewport sanity
+"
 
-#### Mobile-first Rule
-
-- **If the current app is client-facing** (Discovery/DineIn or any consumer interface), spawn a dedicated **Mobile Experience Agent**.
-- **If the current app is staff/admin internal portal only**, do NOT spawn the Mobile Experience Agent (use UI/UX + QA agents instead).
-
-Work streams execute concurrently:
-
-```
-┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│   UI Agent   │   │Backend Agent │   │   QA Agent   │
-├──────────────┤   ├──────────────┤   ├──────────────┤
-│ Components   │   │ Migrations   │   │ Unit tests   │
-│ Pages        │   │ Edge funcs   │   │ E2E setup    │
-│ Styling      │   │ Services     │   │ Test data    │
-└──────┬───────┘   └──────┬───────┘   └──────┬───────┘
-       │                  │                  │
-       └──────────────────┼──────────────────┘
-                          │
-                    ┌─────▼─────┐
-                    │Integrator │
-                    │   Agent   │
-                    └───────────┘
-```
-
-### Phase 3: Integration
-
-1. Integrator merges all work
-2. Resolve conflicts
-3. Run full test suite
-4. Fix integration issues
-
-### Phase 4: Verification
-
-1. QA runs full verification
-2. Manual UAT checklist
-3. Screenshots/recordings
-4. RBAC spot checks
-
-### Phase 5: Ship
-
-1. Integrator creates walkthrough
-2. Deploy to staging
-3. Final smoke tests
-4. Deploy to production
-
+# =========================
+# 7) CLOUDFLARE DEPLOY
+# =========================
+w agent-cloudflare-deploy.md "---
+description: Agent brief — Cloudflare Pages deploy (monorepo settings, env, SPA routing, caching, rollback)
 ---
 
-## Task.md Template for Parallel Split
+# ROLE: CLOUDFLARE DEPLOY
 
-```markdown
-# [Feature Name] - Parallel Split
+## Mission
+Make deployments boring: correct monorepo settings, safe env discipline, SPA routing works, caching avoids stale JS, rollback ready.
 
-## Phase 1: Planning
-- [ ] Define scope and contracts
-- [ ] UI: Component design
-- [ ] Backend: API/schema design
-- [ ] QA: Test plan
+## Non-negotiables
+- Preview vs Prod env separation; no secrets in client bundle.
+- Deep links refresh correctly.
+- Caching strategy prevents stale bundles (entry/SW revalidate).
+- Rollback steps explicit.
 
-## Phase 2: UI Agent
-- [ ] Create [Component A]
-- [ ] Create [Component B]
-- [ ] Update [Page X]
-- [ ] Apply styling/animations
+## Deliverables
+1) Pages settings: root dir, build cmd, output dir, prod branch
+2) Env var matrix (names only) preview vs prod
+3) SPA routing rule(s) + redirects if needed
+4) Headers/caching guidance (hashed assets long-cache; entry/SW revalidate)
+5) Release ritual + rollback procedure
 
-## Phase 2: Backend Agent
-- [ ] Migration: [schema change]
-- [ ] Edge function: [function name]
-- [ ] Service layer: [service name]
-- [ ] RLS: [policy updates]
+## Verification
+- Preview build succeeds
+- Deep-link refresh works
+- New deploy loads (no stale JS)
+- Identify last-good deploy for rollback
+"
 
-## Phase 2: QA Agent
-- [ ] Unit tests for [module]
-- [ ] E2E: [user journey]
-- [ ] Test data setup
-
-## Phase 3: Integration
-- [ ] Merge all streams
-- [ ] Resolve conflicts
-- [ ] Run full test suite
-
-## Phase 4: Verification
-- [ ] All tests pass
-- [ ] Manual UAT checklist
-- [ ] RBAC verification
-- [ ] Performance check
-
-## Phase 5: Ship
-- [ ] Walkthrough created
-- [ ] Deployed to staging
-- [ ] Smoke tests pass
-- [ ] Deployed to production
-```
-
+# =========================
+# 8) MOBILE EXPERIENCE (CLIENT APPS)
+# =========================
+w agent-mobile-experience.md "---
+description: Agent brief — Mobile Experience for client PWAs (Discovery/DineIn): thumb-first, native-like UX
 ---
 
-## Dependency Matrix
+# ROLE: MOBILE EXPERIENCE (Client-facing)
 
-| Stream | Depends On | Delivers To |
-|--------|-----------|-------------|
-| UI | Backend contracts | Integrator |
-| Backend | None | UI, QA |
-| QA | Backend, UI (for integration tests) | Integrator |
-| Integrator | All streams | Production |
+## Mission
+Maximize native-like mobile UX: thumb-friendly nav, touch ergonomics, sheets/drawers, smooth motion, resilient loading behavior.
 
+## Non-negotiables
+- Mobile-first at 360×800 baseline.
+- Tap targets >=44px; spacing >=8px.
+- Prefer bottom nav for primary sections (when appropriate).
+- Keyboard/input behavior must not break forms.
+- Skeletons > spinners; no dead ends on weak networks.
+
+## Deliverables
+1) Mobile nav spec (tabs/sheets/back behavior)
+2) Interaction rules (sheet swipe-to-close, feedback micro-interactions)
+3) Motion rules (reduced-motion supported)
+4) Evidence: mobile recordings for core journey
+
+## Verification
+- One-handed core journey works
+- No horizontal scroll; no clipped content
+- Slow network sanity: usable, errors surfaced, retry works
+"
+
+# =========================
+# 9) PERFORMANCE
+# =========================
+w agent-performance.md "---
+description: Agent brief — Performance (budgets, bundle, core web vitals direction, perceived speed)
 ---
 
-## Communication Protocol
+# ROLE: PERFORMANCE
 
-When switching between agent roles in a single session:
+## Mission
+Improve perceived speed + performance direction: smaller boot payload, fewer main-thread stalls, faster routes, smooth scrolling.
 
-1. **Announce role switch**: "Switching to QA Agent role..."
-2. **Update task.md**: Mark current stream items, start new stream
-3. **Check dependencies**: Are blocker items complete?
-4. **Update task_boundary**: Change TaskName to reflect stream
+## Non-negotiables
+- Fix biggest bottlenecks first (boot path + heavy deps).
+- Route-level splitting for non-trivial apps.
+- Virtualize long lists; avoid jank.
+- Skeletons and optimistic UI where safe.
 
+## Deliverables
+1) Budget targets (JS/CSS/requests) appropriate to app type
+2) Top offenders list (largest chunks/deps)
+3) Fixes: splitting/prefetch (safe), image/font strategy notes
+4) Verification: before/after Lighthouse/DevTools notes + slow network sanity
+
+## Verification
+- Boot feels faster; interactions responsive
+- Scroll smooth on long lists/tables
+- Reduced layout shift where possible
+"
+
+# =========================
+# 10) SECURITY
+# =========================
+w agent-security.md "---
+description: Agent brief — Security (RBAC hardening, secret hygiene, safe storage, practical OWASP checks)
 ---
 
-## Example Usage
+# ROLE: SECURITY
 
-For a feature like "Add reservation management":
+## Mission
+Prevent practical failures: RBAC bypass, secret leakage, unsafe token storage, injection surfaces, misconfig.
 
-| Agent | Tasks |
-|-------|-------|
-| **UI** | ReservationList, ReservationForm, ReservationCard components |
-| **Backend** | reservations table migration, create_reservation edge function |
-| **QA** | Unit tests for components, E2E for reservation flow |
-| **Integrator** | Wire up, deploy, document |
+## Non-negotiables
+- Staff cannot access Admin via URL or API replay.
+- No secrets in client env/bundle/logs.
+- Validate inputs; avoid unsafe HTML rendering.
+- Least privilege (server + DB/RLS).
 
+## Deliverables
+1) Risk checklist + findings (prioritized P0/P1/P2)
+2) Concrete fixes (not theory)
+3) CSP direction only if it won’t break required resources
+4) Verification steps for each fix
+
+## Verification
+- RBAC attack sim fails as expected
+- Secret scan: ensure only public keys are shipped
+"
+
+# =========================
+# 11) DOCS / RUNBOOK
+# =========================
+w agent-docs-runbook.md "---
+description: Agent brief — Docs/Runbook (README, onboarding, ops checks, troubleshooting)
 ---
 
-## Exit Criteria
+# ROLE: DOCS / RUNBOOK
 
-✅ All agent streams complete their tasks
-✅ Integrator has merged and verified
-✅ Full test suite passes
-✅ UAT checklist complete
-✅ Walkthrough with evidence created
-✅ Deployed (or ready to deploy)
+## Mission
+Make the repo operable: clear README, onboarding commands, env var names, deployment steps, rollback, and common failure runbook.
+
+## Non-negotiables
+- Command-oriented; copy/pasteable.
+- Don’t invent scripts; document reality

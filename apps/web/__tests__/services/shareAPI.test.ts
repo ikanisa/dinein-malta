@@ -1,6 +1,7 @@
 /**
  * Tests for Share API service
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { isShareSupported, share, shareVenue, shareOrder } from '../../services/shareAPI';
 

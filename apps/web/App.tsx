@@ -39,7 +39,7 @@ const AdminVendors = lazy(() => import('./pages/AdminVendors'));
 const AdminOrders = lazy(() => import('./pages/AdminOrders'));
 const AdminSystem = lazy(() => import('./pages/AdminSystem'));
 import { ThemeProvider } from './context/ThemeContext';
-import { CartProvider } from './context/CartContext';
+import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { RequireAuth } from './components/RequireAuth';
 import { GlassCard } from './components/GlassCard';
@@ -47,6 +47,8 @@ import { SuspenseFallback } from './components/SuspenseFallback';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { SkipLink } from './components/AccessibleSkipLink';
+import { BottomTabBar } from './components/BottomTabBar';
+import { LiveAnnouncerProvider } from './components/accessibility/LiveAnnouncer';
 import { initQueueProcessor } from './services/offlineQueue';
 import { errorTracker } from './services/errorTracking';
 import { analytics } from './services/analytics';
@@ -445,6 +447,7 @@ const AnimatedRoutes = () => {
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const { totalItems } = useCart();
 
   // Routes that should be full bleed (no top safe area padding)
   // These pages manage their own safe area padding for hero images
@@ -453,6 +456,17 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     location.pathname.startsWith('/v/') ||
     location.pathname.startsWith('/order/') ||
     location.pathname === '/bar/onboard';
+
+  // Show bottom tab bar only on client-facing routes (not manager/admin)
+  const showBottomTabs = !location.pathname.startsWith('/manager') &&
+    !location.pathname.startsWith('/admin') &&
+    !location.pathname.includes('/login');
+
+  // Extract venueId from path for cart navigation
+  const venueMatch = location.pathname.match(/\/v\/([^/]+)/);
+  const venueId = venueMatch ? venueMatch[1] : undefined;
+
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background" style={{ paddingTop: isFullBleed ? '0px' : 'var(--safe-top, 0px)' }}>
@@ -463,7 +477,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         id="main-content"
         className="flex-1 overflow-y-auto"
         style={{
-          paddingBottom: 'var(--safe-bottom, 0px)',
+          paddingBottom: showBottomTabs ? '80px' : 'var(--safe-bottom, 0px)',
           WebkitOverflowScrolling: 'touch'
         }}
         role="main"
@@ -471,9 +485,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {children}
       </main>
 
+      {showBottomTabs && <BottomTabBar venueId={venueId} cartCount={totalItems} />}
+
       <InstallPrompt />
       <UpdatePrompt />
-      <DevButton />
+      {import.meta.env.DEV && <DevButton />}
     </div>
   );
 };
@@ -484,13 +500,15 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <CartProvider>
-            <Router>
-              <ErrorBoundary>
-                <Layout>
-                  <AnimatedRoutes />
-                </Layout>
-              </ErrorBoundary>
-            </Router>
+            <LiveAnnouncerProvider>
+              <Router>
+                <ErrorBoundary>
+                  <Layout>
+                    <AnimatedRoutes />
+                  </Layout>
+                </ErrorBoundary>
+              </Router>
+            </LiveAnnouncerProvider>
           </CartProvider>
         </AuthProvider>
       </ThemeProvider>

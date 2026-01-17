@@ -80,7 +80,8 @@ test.describe('Vendor User Journey', () => {
         await page.goto('/#/manager/live');
 
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000); // Wait for async auth check
+        // Wait for auth check and redirect (condition-based, not fixed timeout)
+        await expect(page).toHaveURL(/login/, { timeout: 5000 }).catch(() => { });
 
         // Should redirect to login
         const currentUrl = page.url();
@@ -94,7 +95,7 @@ test.describe('Vendor User Journey', () => {
         await page.goto('/#/manager/menu');
 
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000);
+        await expect(page).toHaveURL(/login/, { timeout: 5000 }).catch(() => { });
 
         // Should redirect to login when not authenticated
         const currentUrl = page.url();
@@ -106,7 +107,7 @@ test.describe('Vendor User Journey', () => {
         await page.goto('/#/manager/history');
 
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000);
+        await expect(page).toHaveURL(/login/, { timeout: 5000 }).catch(() => { });
 
         // Should redirect to login when not authenticated
         const currentUrl = page.url();
@@ -118,7 +119,7 @@ test.describe('Vendor User Journey', () => {
         await page.goto('/#/manager/settings');
 
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000);
+        await expect(page).toHaveURL(/login/, { timeout: 5000 }).catch(() => { });
 
         // Should redirect to login when not authenticated
         const currentUrl = page.url();
@@ -132,7 +133,7 @@ test.describe('Vendor Menu Management (Protected)', () => {
         await page.goto('/#/manager/menu');
 
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000);
+        await expect(page).toHaveURL(/login/, { timeout: 5000 }).catch(() => { });
 
         // Should redirect to login
         const currentUrl = page.url();
@@ -164,7 +165,7 @@ test.describe('Vendor Order Management (Protected)', () => {
         await page.goto('/#/manager/history');
 
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000);
+        await expect(page).toHaveURL(/login/, { timeout: 5000 }).catch(() => { });
 
         // Should redirect to login
         const currentUrl = page.url();
@@ -176,7 +177,7 @@ test.describe('Vendor Order Management (Protected)', () => {
         await page.goto('/#/manager/live');
 
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000);
+        await expect(page).toHaveURL(/login/, { timeout: 5000 }).catch(() => { });
 
         // Should redirect to login when not authenticated
         const currentUrl = page.url();

@@ -1,6 +1,7 @@
 /**
  * Tests for Badge API service
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setBadge, clearBadge, isBadgeAPISupported } from '../../services/badgeAPI';
 

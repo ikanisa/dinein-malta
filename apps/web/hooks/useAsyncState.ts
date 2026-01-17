@@ -6,7 +6,7 @@ interface UseAsyncStateOptions<T> {
     /** Timeout in milliseconds (default 15000ms) */
     timeout?: number;
     /** Dependencies array - refetch when these change */
-    deps?: any[];
+    deps?: readonly unknown[];
     /** Whether to fetch immediately (default true) */
     immediate?: boolean;
 }

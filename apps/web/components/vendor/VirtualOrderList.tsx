@@ -4,39 +4,24 @@
  */
 
 import React from 'react';
-import type { ListChildComponentProps } from 'react-window';
 
-// Types for dynamically loaded virtualization components
-interface FixedSizeListProps {
-    height: number;
-    width: number;
-    itemCount: number;
-    itemSize: number;
-    overscanCount?: number;
-    children: React.ComponentType<ListChildComponentProps>;
-}
-
-interface AutoSizerChildProps {
-    height: number;
-    width: number;
-}
-
-type FixedSizeListComponent = React.ComponentType<FixedSizeListProps>;
-type AutoSizerComponent = React.ComponentType<{ children: (size: AutoSizerChildProps) => React.ReactNode }>;
-
-// Using typed dynamic import to avoid type conflicts
-let FixedSizeList: FixedSizeListComponent | null = null;
-let AutoSizer: AutoSizerComponent | null = null;
+// Using dynamic import with relaxed typing to avoid type conflicts
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let FixedSizeList: React.ComponentType<any> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let AutoSizer: React.ComponentType<any> | null = null;
 
 // Lazy load the windowing libraries
 const loadVirtualizationLibs = async () => {
     if (!FixedSizeList) {
         const reactWindow = await import('react-window');
-        FixedSizeList = reactWindow.FixedSizeList as FixedSizeListComponent;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        FixedSizeList = (reactWindow as any).FixedSizeList;
     }
     if (!AutoSizer) {
         const autoSizer = await import('react-virtualized-auto-sizer');
-        AutoSizer = (autoSizer.default || autoSizer) as AutoSizerComponent;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        AutoSizer = (autoSizer as any).default || autoSizer;
     }
 };
 
@@ -159,11 +144,15 @@ export const VirtualOrderList: React.FC<VirtualOrderListProps> = ({
         );
     };
 
+    // Assign to local constants after null guard passes
+    const List = FixedSizeList;
+    const Sizer = AutoSizer;
+
     return (
         <div className="h-full min-h-[400px]">
-            <AutoSizer>
+            <Sizer>
                 {({ height, width }: { height: number; width: number }) => (
-                    <FixedSizeList
+                    <List
                         height={height}
                         itemCount={orders.length}
                         itemSize={itemHeight}
@@ -171,9 +160,9 @@ export const VirtualOrderList: React.FC<VirtualOrderListProps> = ({
                         overscanCount={5}
                     >
                         {Row}
-                    </FixedSizeList>
+                    </List>
                 )}
-            </AutoSizer>
+            </Sizer>
         </div>
     );
 };

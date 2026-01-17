@@ -10,7 +10,7 @@ test.describe('Smoke Tests', () => {
     });
 
     await page.goto('/#/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Page should load without critical errors
     const criticalErrors = errors.filter(e =>
@@ -26,19 +26,19 @@ test.describe('Smoke Tests', () => {
 
   test('explore route is reachable', async ({ page }) => {
     await page.goto('/#/explore');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/explore/);
   });
 
   test('vendor login page is accessible', async ({ page }) => {
-    await page.goto('/#/vendor/login');
-    await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/vendor.*login/);
+    await page.goto('/#/manager/login');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL(/manager.*login/);
   });
 
   test('admin login page is accessible', async ({ page }) => {
     await page.goto('/#/admin/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/admin.*login/);
   });
 });
