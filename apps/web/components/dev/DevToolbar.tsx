@@ -8,20 +8,13 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
-import { Shield, User, Settings, Minimize2, Maximize2, LogOut, Save } from 'lucide-react'
+import { Shield, Settings, Minimize2, LogOut, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 type Role = 'client' | 'manager' | 'admin'
 
@@ -33,7 +26,7 @@ interface RoleCredentials {
 export function DevToolbar() {
     const [isOpen, setIsOpen] = useState(false)
     const [isConfigOpen, setIsConfigOpen] = useState(false)
-    const [currentUser, setCurrentUser] = useState<any>(null)
+    const [currentUser, setCurrentUser] = useState<SupabaseUser | null>(null)
     const [loading, setLoading] = useState(false)
     const [creds, setCreds] = useState<Record<Role, RoleCredentials>>({
         client: { email: '', password: '' },
@@ -76,6 +69,7 @@ export function DevToolbar() {
         return () => {
             subscription.unsubscribe()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const handleSaveCreds = () => {
@@ -102,8 +96,9 @@ export function DevToolbar() {
             })
             if (error) throw error
             router.refresh()
-        } catch (error: any) {
-            alert(`Login failed: ${error.message}`)
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error'
+            alert(`Login failed: ${message}`)
         } finally {
             setLoading(false)
         }
@@ -199,7 +194,7 @@ export function DevToolbar() {
                         <DialogTitle>Configure Test Credentials</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                        {(['client', 'manager', 'admin'] as Role[]).forEach && (['client', 'manager', 'admin'] as Role[]).map((role) => (
+                        {(['client', 'manager', 'admin'] as Role[]).map((role) => (
                             <div key={role} className="space-y-2">
                                 <Label className="capitalize">{role} Account</Label>
                                 <div className="grid grid-cols-2 gap-2">

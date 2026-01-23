@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import Image from 'next/image'
+import { FluidGradient } from "@/components/ui/fluid-gradient"
 
 export interface VenueCardProps {
     venue: {
@@ -23,16 +24,27 @@ export function VenueCard({ venue }: VenueCardProps) {
         <Link href={`/venues/${venue.slug}`}>
             <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
                 <div className="w-full">
-                    <AspectRatio ratio={16 / 9}>
-                        {/* Use a valid src even if empty to avoid next/image error, or handle null */}
-                        <Image
-                            src={venue.image_url || '/images/placeholder-venue.jpg'}
-                            alt={venue.name}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                    </AspectRatio>
+                    <div className="aspect-video w-full relative">
+                        {venue.image_url ? (
+                            <Image
+                                src={venue.image_url}
+                                alt={venue.name}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                        ) : (
+                            <div className="w-full h-full relative">
+                                {/* @ts-ignore */}
+                                <FluidGradient seed={venue.name} className="w-full h-full" />
+                                <div className="absolute inset-0 flex items-center justify-center p-4">
+                                    <h3 className="text-2xl font-bold text-black/20 mix-blend-overlay text-center line-clamp-2 select-none">
+                                        {venue.name.charAt(0)}
+                                    </h3>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <CardHeader className="p-4 space-y-2">
                     <div className="flex justify-between items-start">

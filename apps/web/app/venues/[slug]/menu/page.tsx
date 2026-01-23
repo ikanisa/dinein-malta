@@ -14,7 +14,7 @@ export default async function VenueMenuPage({ params }: PageProps) {
 
     // Get venue first
     const { data: venue } = await supabase
-        .from("venues")
+        .from("vendors")
         .select("id, name, slug")
         .eq("slug", slug)
         .single()
@@ -30,7 +30,7 @@ export default async function VenueMenuPage({ params }: PageProps) {
     const { data: items } = await supabase
         .from("menu_items")
         .select("*")
-        .eq("venue_id", typedVenue.id)
+        .eq("vendor_id", typedVenue.id)
         .eq("is_available", true)
         .order("category")
 
@@ -45,8 +45,6 @@ export default async function VenueMenuPage({ params }: PageProps) {
 
             <MenuGrid
                 items={items || []}
-                venueId={typedVenue.id}
-                venueName={typedVenue.name}
             />
         </div>
     )

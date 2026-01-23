@@ -1,16 +1,11 @@
 'use client';
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+
 import Image from 'next/image'
-import Link from 'next/link'
-import { DynamicVenueCategories } from './DynamicVenueCategories';
-import { useAICategorization } from "@/hooks/useAICategorization"
-import { ImageGenerationProgress } from '@/components/ai/ImageGenerationProgress';
-import { useAIImageGeneration } from '@/hooks/useAIImageGeneration';
-import { ImageIcon } from 'lucide-react';
-import { useState } from 'react';
-import { useEffect } from "react"
+import { FluidGradient } from "@/components/ui/fluid-gradient"
+
+import { VenueInfoWidget } from './VenueInfoWidget'
 
 interface VenueDetailsProps {
     venue: {
@@ -31,121 +26,73 @@ interface VenueDetailsProps {
 }
 
 export function VenueDetails({ venue }: VenueDetailsProps) {
-    const { fetchVenueCategories } = useAICategorization(venue.id, venue.name, venue.address || '');
-    const { generateImage, isGenerating, error: genError } = useAIImageGeneration();
-    const [imageGenSuccess, setImageGenSuccess] = useState(false);
-
-    useEffect(() => {
-        fetchVenueCategories();
-    }, [venue.id, fetchVenueCategories]);
-
-    const handleGenerateImage = async () => {
-        setImageGenSuccess(false);
-        const url = await generateImage({
-            prompt: `Professional interior photography of ${venue.name}. High-end, atmospheric, architectural shot.`,
-            entityId: venue.id,
-            type: 'venue'
-        });
-        if (url) {
-            setImageGenSuccess(true);
-            // Simple reload to fetch new image from DB (since page is server rendered for initial data)
-            // In a full app, we'd invalidate the router cache
-            window.location.reload();
-        }
-    };
-
     return (
         <div className="space-y-6">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg group">
-                <Image
-                    src={venue.cover_image_url || venue.image_url || '/images/placeholder-venue.jpg'}
-                    alt={venue.name}
-                    fill
-                    className="object-cover"
-                    priority
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-end p-6">
+            <div className="relative h-[400px] w-full overflow-hidden rounded-2xl group shadow-lg">
+                {venue.cover_image_url || venue.image_url ? (
+                    <Image
+                        src={venue.cover_image_url || venue.image_url!}
+                        alt={venue.name}
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                ) : (
+                    // @ts-ignore
+                    <FluidGradient seed={venue.name} variant="vibrant" className="w-full h-full" />
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-8">
                     <div className="text-white w-full">
                         <div className="flex justify-between items-start">
-                            <h1 className="text-3xl font-bold mb-2">{venue.name}</h1>
-                            {/* Admin/Demo Action: Generate Image */}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="bg-black/50 border-white/20 hover:bg-black/70 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={handleGenerateImage}
-                                disabled={isGenerating}
-                            >
-                                <ImageIcon className="w-4 h-4 mr-2" />
-                                {isGenerating ? 'Generating...' : 'Regenerate AI Image'}
-                            </Button>
+                            <h1 className="text-4xl md:text-5xl font-bold mb-3 drop-shadow-md">{venue.name}</h1>
                         </div>
-                        <p className="text-lg opacity-90">{venue.address}</p>
+                        <p className="text-lg md:text-xl text-white/90 drop-shadow-sm max-w-2xl">{venue.address}</p>
 
-                        {/* Rich Dynamic Categories */}
-                        <div className="mt-4">
-                            <DynamicVenueCategories
-                                venueId={venue.id}
-                                venueName={venue.name}
-                                venueAddress={venue.address || ''}
-                                className="max-w-3xl"
-                            />
+                        {/* Static Categories from DB */}
+                        <div className="mt-6 flex flex-wrap gap-2">
+                            {/* Primary Category Badge */}
+                            {venue.cuisine_types && venue.cuisine_types.length > 0 && (
+                                <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground border-primary/20 backdrop-blur-md shadow-sm h-7 px-3 text-sm">
+                                    {venue.cuisine_types[0]}
+                                </Badge>
+                            )}
+                            {/* Other cuisine types */}
+                            {venue.cuisine_types?.slice(1).map(type => (
+                                <Badge key={type} variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-md shadow-sm h-7 px-3 text-sm">
+                                    {type}
+                                </Badge>
+                            ))}
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Generation Progress Feedback */}
-            {(isGenerating || genError || imageGenSuccess) && (
-                <ImageGenerationProgress
-                    isGenerating={isGenerating}
-                    error={genError}
-                    onRetry={handleGenerateImage}
-                    label={imageGenSuccess ? "Image generated successfully! Reloading..." : "Generating custom AI venue photography..."}
-                />
-            )}
 
             <div className="grid md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">
                     <section>
                         <h2 className="text-2xl font-semibold mb-4">About</h2>
                         <p className="text-muted-foreground whitespace-pre-line">
-                            {venue.description}
+                            {venue.description || "No description available."}
                         </p>
                     </section>
 
-                    <section>
-                        <h2 className="text-2xl font-semibold mb-4">Features</h2>
-                        <div className="flex flex-wrap gap-2">
-                            {venue.features?.map(feature => (
-                                <Badge key={feature} variant="secondary">
-                                    {feature.replace(/_/g, ' ')}
-                                </Badge>
-                            ))}
-                        </div>
-                    </section>
+                    {venue.features && venue.features.length > 0 && (
+                        <section>
+                            <h2 className="text-2xl font-semibold mb-4">Features</h2>
+                            <div className="flex flex-wrap gap-2">
+                                {venue.features.map(feature => (
+                                    <Badge key={feature} variant="secondary">
+                                        {feature.replace(/_/g, ' ')}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </section>
+                    )}
                 </div>
 
                 <div className="space-y-6">
-                    <div className="p-6 border rounded-lg space-y-4">
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold">Price Range</span>
-                            <span className="text-muted-foreground">{venue.price_range}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold">Rating</span>
-                            <span className="text-muted-foreground">★ {venue.rating?.toFixed(1) || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between items-start">
-                            <span className="font-semibold">Address</span>
-                            <span className="text-muted-foreground text-right">{venue.address}</span>
-                        </div>
-                        <Link href={`/venues/${venue.slug}/menu`} className="w-full block">
-                            <Button className="w-full">
-                                View Menu
-                            </Button>
-                        </Link>
-                    </div>
+                    <VenueInfoWidget venue={venue} />
                 </div>
             </div>
         </div>
