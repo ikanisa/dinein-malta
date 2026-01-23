@@ -23,7 +23,7 @@ export function Favorites() {
                 .eq('user_id', session.user.id);
 
             if (data) {
-                setFavorites(data.map(f => f.venue));
+                setFavorites(data.map((f: any) => f.venue));
             }
         } catch (err) {
             console.error(err);

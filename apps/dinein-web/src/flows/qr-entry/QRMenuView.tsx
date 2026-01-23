@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/shared/services/supabase';
 
 // Mock data for development
 const MOCK_MENU = [
@@ -7,8 +8,45 @@ const MOCK_MENU = [
     { id: 3, name: 'Cisk Lager', price: 3.50, description: 'Local Maltese beer (0.5L)' },
 ];
 
-export function QRMenuView({ venueSlug: _venueSlug, tableCode }: { venueSlug: string; tableCode: string }) {
+export function QRMenuView({ venueSlug, tableCode }: { venueSlug: string; tableCode: string }) {
     const [cart, setCart] = useState<{ item: any, qty: number }[]>([]);
+    const [venue, setVenue] = useState<any>(null);
+
+    // Fetch venue and set user country preference
+    useEffect(() => {
+        // Skip if using mock slug during dev/test if needed, but here we assume real usage
+        if (!venueSlug) return;
+
+        async function loadVenue() {
+            // 1. Fetch Venue Details
+            const { data: venueData } = await supabase
+                .from('vendors')
+                .select('id, name, country')
+                .eq('slug', venueSlug)
+                .single();
+
+            if (venueData) {
+                setVenue(venueData);
+
+                // 2. Set User Country Preference
+                const countryCode = venueData.country || 'MLT';
+
+                // Check auth
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    await supabase
+                        .from('profiles')
+                        .update({ country_code: countryCode })
+                        .eq('auth_user_id', session.user.id);
+                } else {
+                    localStorage.setItem('dinein_country_code', countryCode);
+                }
+            }
+        }
+        loadVenue(); // Only run once on mount per venue
+    }, [venueSlug]);
+
+
 
     const addToCart = (item: any) => {
         setCart(prev => {
@@ -26,7 +64,7 @@ export function QRMenuView({ venueSlug: _venueSlug, tableCode }: { venueSlug: st
         <div className="min-h-screen bg-white pb-24 font-sans text-gray-900">
             {/* Header */}
             <div className="px-4 py-6 border-b border-gray-100">
-                <h1 className="text-xl font-bold tracking-tight">Ta' Kris Restaurant</h1>
+                <h1 className="text-xl font-bold tracking-tight">{venue?.name || "Loading..."}</h1>
                 <p className="text-sm text-gray-500">Table {tableCode}</p>
             </div>
 

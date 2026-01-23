@@ -119,60 +119,7 @@ export class GeminiService {
         }
     }
 
-    /**
-     * Generate venue image (via Edge Function)
-     */
-    async generateVenueImage(venue: {
-        name: string
-        primary_category: string
-        ambiance_tags: string[]
-        special_features: string[]
-    }): Promise<string> {
-        // Construct a rich prompt for the edge function
-        const prompt = `Create a professional, photorealistic image of ${venue.name}, a ${venue.primary_category}.
-Atmosphere: ${venue.ambiance_tags.join(', ')}
-Features: ${venue.special_features.join(', ')}`
 
-        try {
-            // Use 'generate-image' action which creates base64
-            // OR 'generate-asset' if we wanted to save to DB, but existing signature returns string (base64)
-            // The Edge Function 'generate-image' returns data URI directly if checking Step 456 line 450
-
-            const result = await this.invoke<string>('generate-image', {
-                prompt,
-                modelPreference: 'quality'
-            })
-
-            return result
-        } catch (error) {
-            console.error('Image generation error:', error)
-            throw new Error('Failed to generate venue image')
-        }
-    }
-
-    /**
-     * Generate menu item image (via Edge Function)
-     */
-    async generateMenuItemImage(item: {
-        name: string
-        description: string
-        cuisine_style: string
-        ingredients?: string[]
-    }): Promise<string> {
-        const prompt = `Professional food photography of ${item.name}. ${item.description}. Cuisine: ${item.cuisine_style}.`
-
-        try {
-            const result = await this.invoke<string>('generate-image', {
-                prompt,
-                modelPreference: 'fast' // Use fast model for menu items
-            })
-
-            return result
-        } catch (error) {
-            console.error('Menu image generation error:', error)
-            throw new Error('Failed to generate menu item image')
-        }
-    }
 }
 
 export const geminiService = new GeminiService()

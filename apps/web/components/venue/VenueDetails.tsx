@@ -6,10 +6,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { DynamicVenueCategories } from './DynamicVenueCategories';
 import { useAICategorization } from "@/hooks/useAICategorization"
-import { ImageGenerationProgress } from '@/components/ai/ImageGenerationProgress';
-import { useAIImageGeneration } from '@/hooks/useAIImageGeneration';
-import { ImageIcon } from 'lucide-react';
-import { useState } from 'react';
 import { useEffect } from "react"
 
 interface VenueDetailsProps {
@@ -32,31 +28,14 @@ interface VenueDetailsProps {
 
 export function VenueDetails({ venue }: VenueDetailsProps) {
     const { fetchVenueCategories } = useAICategorization(venue.id, venue.name, venue.address || '');
-    const { generateImage, isGenerating, error: genError } = useAIImageGeneration();
-    const [imageGenSuccess, setImageGenSuccess] = useState(false);
 
     useEffect(() => {
         fetchVenueCategories();
     }, [venue.id, fetchVenueCategories]);
 
-    const handleGenerateImage = async () => {
-        setImageGenSuccess(false);
-        const url = await generateImage({
-            prompt: `Professional interior photography of ${venue.name}. High-end, atmospheric, architectural shot.`,
-            entityId: venue.id,
-            type: 'venue'
-        });
-        if (url) {
-            setImageGenSuccess(true);
-            // Simple reload to fetch new image from DB (since page is server rendered for initial data)
-            // In a full app, we'd invalidate the router cache
-            window.location.reload();
-        }
-    };
-
     return (
         <div className="space-y-6">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg group">
+            <div className="relative h-[400px] w-full overflow-hidden rounded-2xl group shadow-lg">
                 <Image
                     src={venue.cover_image_url || venue.image_url || '/images/placeholder-venue.jpg'}
                     alt={venue.name}
@@ -64,46 +43,24 @@ export function VenueDetails({ venue }: VenueDetailsProps) {
                     className="object-cover"
                     priority
                 />
-                <div className="absolute inset-0 bg-black/40 flex items-end p-6">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-8">
                     <div className="text-white w-full">
                         <div className="flex justify-between items-start">
                             <h1 className="text-3xl font-bold mb-2">{venue.name}</h1>
-                            {/* Admin/Demo Action: Generate Image */}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="bg-black/50 border-white/20 hover:bg-black/70 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={handleGenerateImage}
-                                disabled={isGenerating}
-                            >
-                                <ImageIcon className="w-4 h-4 mr-2" />
-                                {isGenerating ? 'Generating...' : 'Regenerate AI Image'}
-                            </Button>
+                            {/* Rich Dynamic Categories */}
+                            <div className="mt-4">
+                                <DynamicVenueCategories
+                                    venueId={venue.id}
+                                    venueName={venue.name}
+                                    venueAddress={venue.address || ''}
+                                    className="max-w-3xl"
+                                />
+                            </div>
                         </div>
                         <p className="text-lg opacity-90">{venue.address}</p>
-
-                        {/* Rich Dynamic Categories */}
-                        <div className="mt-4">
-                            <DynamicVenueCategories
-                                venueId={venue.id}
-                                venueName={venue.name}
-                                venueAddress={venue.address || ''}
-                                className="max-w-3xl"
-                            />
-                        </div>
                     </div>
                 </div>
             </div>
-
-            {/* Generation Progress Feedback */}
-            {(isGenerating || genError || imageGenSuccess) && (
-                <ImageGenerationProgress
-                    isGenerating={isGenerating}
-                    error={genError}
-                    onRetry={handleGenerateImage}
-                    label={imageGenSuccess ? "Image generated successfully! Reloading..." : "Generating custom AI venue photography..."}
-                />
-            )}
 
             <div className="grid md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">

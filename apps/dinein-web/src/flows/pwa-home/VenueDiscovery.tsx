@@ -29,11 +29,28 @@ export function VenueDiscovery() {
 
     async function fetchVenues(lat: number, lng: number) {
         try {
-            // Use the RPC function we created in Phase 2
+            // Get user country preference
+            let countryFilter = localStorage.getItem('dinein_country_code');
+
+            // If logged in, prioritize profile
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('country_code')
+                    .eq('auth_user_id', session.user.id)
+                    .single();
+                if (profile?.country_code) {
+                    countryFilter = profile.country_code;
+                }
+            }
+
+            // Use the RPC function we created in Phase 2/6
             const { data, error } = await supabase.rpc('search_nearby_venues', {
                 lat,
-                long: lng, // Note: my RPC parameter was 'long' in the migration file tool call
-                radius_meters: 5000
+                long: lng,
+                radius_meters: 5000,
+                filter_country_code: countryFilter || undefined
             });
 
             if (error) throw error;
