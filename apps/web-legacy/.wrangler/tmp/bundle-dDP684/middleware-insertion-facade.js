@@ -1,0 +1,11 @@
+				import worker, * as OTHER_EXPORTS from "/Users/jeanbosco/workspace/dinein/apps/web/.wrangler/tmp/pages-3zqDrU/884ceiq9qtu.js";
+				import * as __MIDDLEWARE_0__ from "/Volumes/PRO-G40/Temp/caches/npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts";
+import * as __MIDDLEWARE_1__ from "/Volumes/PRO-G40/Temp/caches/npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/middleware-miniflare3-json-error.ts";
+
+				export * from "/Users/jeanbosco/workspace/dinein/apps/web/.wrangler/tmp/pages-3zqDrU/884ceiq9qtu.js";
+				const MIDDLEWARE_TEST_INJECT = "__INJECT_FOR_TESTING_WRANGLER_MIDDLEWARE__";
+				export const __INTERNAL_WRANGLER_MIDDLEWARE__ = [
+					
+					__MIDDLEWARE_0__.default,__MIDDLEWARE_1__.default
+				]
+				export default worker;

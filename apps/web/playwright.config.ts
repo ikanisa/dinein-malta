@@ -8,13 +8,14 @@ export default defineConfig({
     workers: process.env.CI ? 1 : undefined,
     reporter: 'html',
     use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: 'http://localhost:8788',
         trace: 'on-first-retry',
     },
     webServer: {
-        command: 'npx wrangler pages dev .vercel/output/static --port 3000 --compatibility-flag=nodejs_compat',
-        url: 'http://localhost:3000',
+        command: 'npx wrangler pages dev .vercel/output/static --port 8788 --compatibility-flag=nodejs_compat',
+        url: 'http://localhost:8788',
         reuseExistingServer: !process.env.CI,
+        timeout: 120 * 1000,
         cwd: '.',
     },
     projects: [

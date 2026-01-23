@@ -2,5 +2,5 @@ import { test, expect } from '@playwright/test';
 
 test('smoke test', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/DineOrDash/i);
+    await expect(page).toHaveTitle(/DineIn/i);
 });

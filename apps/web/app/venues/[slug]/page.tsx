@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: PageProps) {
 
     const supabase = await createClient()
     const { data: venue } = await supabase
-        .from("vendors")
+        .from("venues")
         .select("name, description")
         .eq("slug", slug)
         .single()
@@ -34,7 +34,7 @@ export default async function VenuePage({ params }: PageProps) {
     const supabase = await createClient()
 
     const { data: venue, error } = await supabase
-        .from("vendors")
+        .from("venues")
         .select("*")
         .eq("slug", slug)
         .single()

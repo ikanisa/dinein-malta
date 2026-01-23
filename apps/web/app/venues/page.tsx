@@ -4,9 +4,9 @@ import { VenueGrid } from "@/components/venue/VenueGrid"
 export default async function VenuesPage() {
     const supabase = await createClient()
     const { data: venues } = await supabase
-        .from("vendors")
+        .from("venues")
         .select("*")
-        .eq("status", "active")
+        .eq("is_published", true)
         .order("created_at", { ascending: false })
 
     return (

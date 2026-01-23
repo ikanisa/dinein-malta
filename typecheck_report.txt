@@ -1,0 +1,21 @@
+
+> web@0.1.0 typecheck
+> tsc --noEmit
+
+.next/dev/types/validator.ts(116,39): error TS2307: Cannot find module '../../../app/api/ai/categorize-item/route.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(125,39): error TS2307: Cannot find module '../../../app/api/ai/categorize-venue/route.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(134,39): error TS2307: Cannot find module '../../../app/api/ai/generate-venue-image/route.js' or its corresponding type declarations.
+components/venue/CategoryBadges.tsx(4,35): error TS2307: Cannot find module '@/hooks/useAICategorization' or its corresponding type declarations.
+components/venue/CategoryBadges.tsx(65,45): error TS7006: Parameter 'cuisine' implicitly has an 'any' type.
+components/venue/CategoryBadges.tsx(65,54): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+components/venue/VenueCategories.tsx(5,36): error TS2307: Cannot find module '@/hooks/useAICategories' or its corresponding type declarations.
+components/venue/VenueCategories.tsx(52,60): error TS7006: Parameter 'cuisine' implicitly has an 'any' type.
+components/venue/VenueCategories.tsx(68,60): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+components/venue/VenueCategories.tsx(82,67): error TS7006: Parameter 'feature' implicitly has an 'any' type.
+npm error Lifecycle script `typecheck` failed with error:
+npm error code 2
+npm error path /Users/jeanbosco/workspace/dinein/apps/web
+npm error workspace web@0.1.0
+npm error location /Users/jeanbosco/workspace/dinein/apps/web
+npm error command failed
+npm error command sh -c tsc --noEmit
