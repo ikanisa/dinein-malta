@@ -18,9 +18,10 @@ export function useCountry() {
         // But type is CountryCode. Let's default to RW if we MUST, but ideally we handle "unknown".
         // The spec says: "fallback = unknown (then show minimal chooser ONLY if required)"
         // Since we typed CountryCode as 'RW' | 'MT', we might need to extend it or handle null.
-        // For type safety, let's assume 'RW' as safe default if completely unknown, BUT 
-        // we expose a way to check if it was actually set.
-        return 'RW';
+        // 2. Default to MT (Malta) - this is where our initial venue data is
+        // Per spec: country is auto-derived from Venue when entering via deep link
+        // For home screen, we default to MT
+        return 'MT';
     });
 
     const [isSet, setIsSet] = useState(false);
