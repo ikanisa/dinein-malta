@@ -1,6 +1,0 @@
-name = "dinein-order-client"
-compatibility_date = "2024-01-01"
-pages_build_output_dir = "dist"
-
-[vars]
-# Environment variables will be set in Cloudflare dashboard

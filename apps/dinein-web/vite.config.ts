@@ -8,11 +8,15 @@ export default defineConfig({
     plugins: [
         react(),
         VitePWA({
+            strategies: 'injectManifest',
+            srcDir: 'src',
+            filename: 'sw.ts',
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+            includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'offline.html'],
             manifest: false, // We use manual manifest
-            workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+            devOptions: {
+                enabled: true,
+                type: 'module',
             }
         })
     ],
