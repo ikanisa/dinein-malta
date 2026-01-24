@@ -152,4 +152,196 @@ EOF
 
 echo "Updated: $FILE"
 wc -c "$FILE" | awk "{print \"Chars:\", \$1}"
+
+---
+name: /kickoff
+description: Universal kickoff for DineIn monorepo work. Produces a scope-locked plan, tasks, acceptance criteria, and verification gates before any edits.
+---
+
+# /kickoff (DineIn Monorepo)
+
+## 0) Purpose
+This workflow runs at the start of EVERY request. It prevents scope creep, enforces dine-in constraints, and makes execution verifiable.
+
+---
+
+## 1) Inputs
+- User request (plain language)
+- Target area(s): customer | venue | admin | packages/*
+- Any URLs/routes/figma references (if provided)
+
+If any required input is missing, make a best effort assumption and proceed with the smallest safe scope.
+
+---
+
+## 2) Triage (classify in 30 seconds)
+Pick exactly ONE primary type:
+- FEATURE | BUGFIX | REFACTOR | AUDIT | UX-POLISH | PERF | SECURITY | DEPLOY
+
+Then set size:
+- XS (≤1 file) | S (≤5 files) | M (≤15 files) | L (>15 files)
+
+If size is L: split into phases and complete Phase 1 end-to-end first.
+
+---
+
+## 3) Scope Lock (hard law check)
+Restate the request in 5 lines max and explicitly confirm the NON-negotiables:
+- No delivery features
+- No maps/location
+- No payment APIs/verification
+- No in-app scanner
+- Statuses only: Placed → Received → Served | Cancelled
+- Country derived from venue deep link
+
+If the request conflicts with these, propose the smallest compliant alternative and stop.
+
+---
+
+## 4) Plan (numbered, checkpointed)
+Produce a plan with:
+- Steps (1..N)
+- For each step: output artifact + checkpoint
+- Keep steps small and testable
+
+Example checkpoint forms:
+- “Route /v/:slug loads menu and sets activeCountry”
+- “Cart pill appears when cart > 0”
+- “Owner can set order to Served”
+
+---
+
+## 5) Task List (micro-tasks with Definition of Done)
+Convert plan into tasks:
+- Each task must have:
+  - files touched (expected)
+  - definition of done (DoD)
+  - quick verification method (how to prove it)
+
+Rules:
+- Prefer ≤60 minutes of work per task.
+- Never start Task 2 before Task 1 is complete and verified.
+
+---
+
+## 6) Acceptance Criteria (measurable)
+Define criteria that can be checked:
+- Tap budget preserved (≤4 taps to place order from menu)
+- No permission prompts
+- Works on mobile viewport
+- Loading/empty/error states exist
+- RLS protections (if backend change)
+- E2E path still passes
+
+---
+
+## 7) Verification Plan (evidence required)
+Pick appropriate tests:
+- Unit tests (core logic)
+- Integration tests (db helpers)
+- E2E tests (happy paths)
+
+Evidence required:
+- commands run
+- screenshots or short recording for UI changes
+- brief note of edge cases checked
+
+---
+
+## 8) Execution Gate
+STOP after producing:
+- Scope Lock
+- Plan
+- Task List
+- Acceptance Criteria
+- Verification Plan
+
+Do NOT edit files until user approves OR the repo rules allow autonomous edits for XS tasks.
+
+(If autonomous execution is allowed for XS tasks, still produce this output, then proceed.)
+
 '
+---
+name: /scope-guard
+description: Runs before merging or finalizing any feature to ensure dine-in constraints are not violated.
+---
+
+# /scope-guard (DineIn)
+
+## 1) Re-check banned features
+Confirm none of these exist in code, UI, copy, or routes:
+- Delivery, couriers, driver tracking
+- Maps integration, location permission prompts
+- Payment verification, payment APIs, webhooks
+- In-app QR scanning UI/camera permissions
+- Non-allowed order statuses
+
+## 2) Confirm entry behavior
+- /v/{venueSlug} opens directly to venue menu
+- activeCountry derived from venue
+- No onboarding flow blocks ordering
+
+## 3) Tap budget audit
+From menu screen: Add → Cart → Checkout → Place order
+If >4 taps, redesign required.
+
+## 4) Public vs auth gating
+- Venue edit and order management require auth
+- Public is view-only
+
+## 5) Output
+Return a pass/fail checklist and list any violations with exact file paths and fixes.
+Stop the merge if any violation exists.
+
+---
+name: /ui-spec
+description: Produces a complete screen-by-screen UI spec with components, states, and navigation for a given scope.
+---
+
+# /ui-spec
+
+## Inputs
+- Target app(s): customer | venue | admin
+- Feature scope: e.g., "customer ordering flow"
+
+## Output structure (must follow)
+For EACH screen:
+1) Screen name + route
+2) Purpose (1 sentence)
+3) Components (bulleted)
+4) States: loading | empty | error | success
+5) Primary actions (max 2)
+6) Tap count impact (must not break budgets)
+7) Analytics events (optional, minimal)
+
+Also produce:
+- Navigation graph (text)
+- Shared widgets list (what goes into packages/ui)
+- Copy rules (short, neutral, no fluff)
+
+---
+name: /build-slice
+description: Implements one vertical slice end-to-end (UI + data + RLS + tests) before moving to the next slice.
+---
+
+# /build-slice
+
+## Rule
+Build slices, not layers. Each slice must be demonstrable in the browser.
+
+## Steps
+1) Run /kickoff for the slice.
+2) Generate /ui-spec for included screens.
+3) Implement UI with states.
+4) Implement data access + types.
+5) Apply/verify RLS if needed.
+6) Add tests (unit/integration/e2e).
+7) Produce evidence (screenshots/recording + commands).
+
+## Output
+- What changed (paths)
+- What works (demo steps)
+- What was tested (commands + results)
+- What remains (next slice)
+ 
+

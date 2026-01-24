@@ -1,0 +1,233 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import {
+    handleCors,
+    jsonResponse,
+    errorResponse,
+    createAdminClient,
+    requireAuth,
+    requireAdmin,
+    createLogger,
+    getOrCreateRequestId,
+    createAuditLogger,
+    AuditAction,
+    EntityType,
+} from "../_lib/mod.ts";
+
+// --- Input Validation Schema ---
+const approvalSchema = z.object({
+    request_id: z.string().uuid(),
+    action: z.enum(["approve", "reject"]),
+    notes: z.string().max(500).optional().nullable(),
+});
+
+type ApprovalInput = z.infer<typeof approvalSchema>;
+
+Deno.serve(async (req) => {
+    const startTime = Date.now();
+    const requestId = getOrCreateRequestId(req);
+    const logger = createLogger({ requestId, action: "admin_approve_onboarding" });
+
+    // Handle CORS preflight
+    const corsResponse = handleCors(req);
+    if (corsResponse) return corsResponse;
+
+    if (req.method !== "POST") {
+        return errorResponse("Method not allowed", 405);
+    }
+
+    try {
+        logger.requestStart(req.method, "/admin_approve_onboarding");
+
+        const supabaseAdmin = createAdminClient();
+
+        // Authenticate user
+        const authResult = await requireAuth(req, logger);
+        if (authResult instanceof Response) return authResult;
+        const { user } = authResult;
+
+        // Require admin access
+        const adminResult = await requireAdmin(supabaseAdmin, user.id, logger);
+        if (adminResult instanceof Response) return adminResult;
+
+        // Parse + validate input
+        const body = await req.json();
+        const parsed = approvalSchema.safeParse(body);
+        if (!parsed.success) {
+            logger.warn("Validation failed", { errors: parsed.error.issues });
+            return errorResponse("Invalid request data", 400, parsed.error.issues);
+        }
+
+        const input: ApprovalInput = parsed.data;
+        logger.info("Processing approval action", {
+            requestId: input.request_id,
+            action: input.action
+        });
+
+        // ========================================================================
+        // STEP 1: Get the onboarding request
+        // ========================================================================
+        const { data: request, error: requestError } = await supabaseAdmin
+            .from("onboarding_requests")
+            .select("*, vendors(*)")
+            .eq("id", input.request_id)
+            .single();
+
+        if (requestError || !request) {
+            logger.warn("Onboarding request not found", { requestId: input.request_id });
+            return errorResponse("Onboarding request not found", 404);
+        }
+
+        if (request.status !== "pending") {
+            logger.warn("Request already processed", {
+                requestId: input.request_id,
+                status: request.status
+            });
+            return errorResponse(`Request already ${request.status}`, 400);
+        }
+
+        const audit = createAuditLogger(supabaseAdmin, user.id, requestId, logger);
+
+        // ========================================================================
+        // STEP 2: Process based on action
+        // ========================================================================
+        if (input.action === "approve") {
+            // ================================================================
+            // APPROVE: Update vendor, activate user, add menu items
+            // ================================================================
+
+            // Update vendor with submitted details
+            const vendorUpdates: any = {
+                status: "active",
+            };
+            if (request.whatsapp) vendorUpdates.whatsapp = request.whatsapp;
+            if (request.revolut_link) vendorUpdates.revolut_link = request.revolut_link;
+            if (request.momo_code) vendorUpdates.momo_code = request.momo_code;
+
+            const { error: vendorUpdateError } = await supabaseAdmin
+                .from("vendors")
+                .update(vendorUpdates)
+                .eq("id", request.vendor_id);
+
+            if (vendorUpdateError) {
+                logger.error("Failed to update vendor", { error: vendorUpdateError.message });
+                return errorResponse("Failed to update bar", 500, vendorUpdateError.message);
+            }
+
+            // Activate the vendor user
+            const { error: userUpdateError } = await supabaseAdmin
+                .from("vendor_users")
+                .update({ is_active: true })
+                .eq("vendor_id", request.vendor_id)
+                .eq("auth_user_id", request.submitted_by);
+
+            if (userUpdateError) {
+                logger.error("Failed to activate vendor user", { error: userUpdateError.message });
+                return errorResponse("Failed to activate user", 500, userUpdateError.message);
+            }
+
+            // Add menu items if provided
+            if (request.menu_items_json && Array.isArray(request.menu_items_json)) {
+                const menuItems = request.menu_items_json.map((item: any) => ({
+                    vendor_id: request.vendor_id,
+                    name: item.name,
+                    description: item.description || null,
+                    price: item.price,
+                    category: item.category || null,
+                    is_available: true,
+                }));
+
+                if (menuItems.length > 0) {
+                    const { error: menuError } = await supabaseAdmin
+                        .from("menu_items")
+                        .insert(menuItems);
+
+                    if (menuError) {
+                        logger.warn("Failed to add menu items", { error: menuError.message });
+                        // Don't fail the approval, just log the error
+                    } else {
+                        logger.info("Added menu items", { count: menuItems.length });
+                    }
+                }
+            }
+
+            // Update request status
+            await supabaseAdmin
+                .from("onboarding_requests")
+                .update({
+                    status: "approved",
+                    admin_notes: input.notes || null,
+                    reviewed_by: user.id,
+                    reviewed_at: new Date().toISOString(),
+                })
+                .eq("id", input.request_id);
+
+            // Audit log
+            await audit.log(AuditAction.UPDATE, EntityType.VENDOR, request.vendor_id, {
+                action: "onboarding_approved",
+                requestId: input.request_id,
+                approvedBy: user.id,
+            });
+
+            logger.info("Onboarding approved successfully", {
+                vendorId: request.vendor_id,
+                email: request.email
+            });
+
+        } else {
+            // ================================================================
+            // REJECT: Update status, optionally delete user
+            // ================================================================
+
+            // Update request status
+            await supabaseAdmin
+                .from("onboarding_requests")
+                .update({
+                    status: "rejected",
+                    admin_notes: input.notes || null,
+                    reviewed_by: user.id,
+                    reviewed_at: new Date().toISOString(),
+                })
+                .eq("id", input.request_id);
+
+            // Deactivate the vendor user (keep for audit trail)
+            await supabaseAdmin
+                .from("vendor_users")
+                .update({ is_active: false })
+                .eq("vendor_id", request.vendor_id)
+                .eq("auth_user_id", request.submitted_by);
+
+            // Audit log
+            await audit.log(AuditAction.UPDATE, EntityType.VENDOR, request.vendor_id, {
+                action: "onboarding_rejected",
+                requestId: input.request_id,
+                rejectedBy: user.id,
+                reason: input.notes || "No reason provided",
+            });
+
+            logger.info("Onboarding rejected", {
+                vendorId: request.vendor_id,
+                email: request.email
+            });
+        }
+
+        // ========================================================================
+        // STEP 3: Return success
+        // ========================================================================
+        const durationMs = Date.now() - startTime;
+        logger.requestEnd(200, durationMs);
+
+        return jsonResponse({
+            success: true,
+            requestId,
+            action: input.action,
+            message: input.action === "approve"
+                ? "Bar onboarding approved. The owner can now log in."
+                : "Bar onboarding rejected.",
+        });
+    } catch (error) {
+        const durationMs = Date.now() - startTime;
+        logger.error("Approval error", { error: String(error), durationMs });
+        return errorResponse("Internal server error", 500, String(error));
+    }
+});

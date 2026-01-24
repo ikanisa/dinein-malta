@@ -1,0 +1,24 @@
+{
+    "name": "@dinein/db",
+    "version": "0.1.0",
+    "private": true,
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "type": "module",
+    "scripts": {
+        "lint": "eslint . --max-warnings 0",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@supabase/supabase-js": "^2.39.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.2",
+        "eslint": "^9.39.2",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^17.1.0",
+        "typescript": "^5.2.0",
+        "typescript-eslint": "^8.53.1",
+        "vitest": "^1.0.0"
+    }
+}

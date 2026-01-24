@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 40 50% 97.6%;
+    --bg2: 37 44.8% 94.3%;
+    --surface: 0 0% 100%;
+    --surface2: 35 100% 96.7%;
+    --surface3: 38 29.7% 92.7%;
+    --text: 252 11.6% 8.4%;
+    --textMuted: 255 7.4% 31.8%;
+    --textSubtle: 256 6% 49.2%;
+    --border: 37 26.5% 86.7%;
+    --divider: 35 37.3% 90%;
+    --primary: 25 100% 50%;
+    --primaryHover: 24 100% 57.1%;
+    --primaryActive: 24 100% 45.7%;
+    --gold: 43 54% 53.9%;
+    --success: 142 76.2% 36.3%;
+    --warning: 32 94.6% 43.7%;
+    --danger: 0 72.2% 50.6%;
+    --info: 221 83.2% 53.3%;
+    --focusRing: 27 100% 64.5%;
+    --scrim: rgba(20,19,24,0.28);
+    --overlay: rgba(255,255,255,0.75);
+    --glassBg: rgba(255,255,255,0.65);
+    --glassBorder: rgba(20,19,24,0.10);
+    --glassHighlight: rgba(255,106,0,0.10);
+    --rwAccent: rgba(46,204,113,0.18);
+    --mtAccent: rgba(59,167,255,0.18);
+
+    --background: var(--bg);
+    --foreground: var(--text);
+    --card: var(--surface);
+    --card-foreground: var(--text);
+    --popover: var(--surface);
+    --popover-foreground: var(--text);
+    --primary: var(--primary);
+    --primary-foreground: var(--surface);
+    --secondary: var(--bg2);
+    --secondary-foreground: var(--text);
+    --muted: var(--surface2);
+    --muted-foreground: var(--textMuted);
+    --accent: var(--gold);
+    --accent-foreground: var(--text);
+    --destructive: var(--danger);
+    --destructive-foreground: var(--bg);
+    --border: var(--border);
+    --input: var(--border);
+    --ring: var(--focusRing);
+    --radius: 0.5rem;
+      }
+
+  .dark {
+    --bg: 240 12% 4.9%;
+    --bg2: 230 16.7% 7.1%;
+    --surface: 233 18.2% 8.6%;
+    --surface2: 232 25.4% 11.6%;
+    --surface3: 227 26% 14.3%;
+    --text: 42 31.3% 93.7%;
+    --textMuted: 43 11.4% 69%;
+    --textSubtle: 260 8.2% 56.9%;
+    --border: 234 20.8% 18.8%;
+    --divider: 233 23.1% 15.3%;
+    --primary: 25 100% 55.1%;
+    --primaryHover: 26 100% 61.4%;
+    --primaryActive: 24 88.2% 50.2%;
+    --gold: 43 61% 59.8%;
+    --success: 145 63.2% 49%;
+    --warning: 37 91.3% 55.1%;
+    --danger: 359 100% 65.1%;
+    --info: 207 100% 61.6%;
+    --focusRing: 31 100% 68%;
+    --scrim: rgba(0,0,0,0.55);
+    --overlay: rgba(18,19,26,0.72);
+    --glassBg: rgba(18,19,26,0.62);
+    --glassBorder: rgba(255,255,255,0.08);
+    --glassHighlight: rgba(255,122,26,0.12);
+    --rwAccent: rgba(46,204,113,0.18);
+    --mtAccent: rgba(59,167,255,0.18);
+
+    --background: var(--bg);
+    --foreground: var(--text);
+    --card: var(--surface);
+    --card-foreground: var(--text);
+    --popover: var(--surface);
+    --popover-foreground: var(--text);
+    --primary: var(--primary);
+    --primary-foreground: var(--text);
+    --secondary: var(--bg2);
+    --secondary-foreground: var(--text);
+    --muted: var(--surface2);
+    --muted-foreground: var(--textMuted);
+    --accent: var(--gold);
+    --accent-foreground: var(--bg);
+    --destructive: var(--danger);
+    --destructive-foreground: var(--text);
+    --border: var(--border);
+    --input: var(--border);
+    --ring: var(--focusRing);
+      }
+}
+

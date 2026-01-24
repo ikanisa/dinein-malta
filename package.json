@@ -2,14 +2,32 @@
   "name": "dinein-malta-monorepo",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w apps/dinein-web",
-    "dev": "npm run dev -w apps/dinein-web",
-    "lint": "npm run lint -w apps/dinein-web"
+    "build": "pnpm -r build",
+    "build:customer": "pnpm --filter dinein-customer build",
+    "build:venue": "pnpm --filter dinein-venue build",
+    "build:admin": "pnpm --filter dinein-admin build",
+    "dev:customer": "pnpm --filter dinein-customer dev",
+    "dev:venue": "pnpm --filter dinein-venue dev",
+    "dev:admin": "pnpm --filter dinein-admin dev",
+    "lint": "pnpm -r lint",
+    "deploy:customer": "pnpm build:customer && cd apps/customer && npx wrangler pages deploy dist --project-name dinein-customer",
+    "deploy:venue": "pnpm build:venue && cd apps/venue && npx wrangler pages deploy dist --project-name dinein-venue",
+    "deploy:admin": "pnpm build:admin && cd apps/admin && npx wrangler pages deploy dist --project-name dinein-admin",
+    "deploy:all": "pnpm build && pnpm deploy:customer && pnpm deploy:venue && pnpm deploy:admin"
   },
   "devDependencies": {
-    "tinyglobby": "^0.2.15"
+    "@types/serviceworker": "^0.0.180",
+    "tinyglobby": "^0.2.15",
+    "workbox-background-sync": "^7.4.0",
+    "workbox-cacheable-response": "^7.4.0",
+    "workbox-core": "^7.4.0",
+    "workbox-expiration": "^7.4.0",
+    "workbox-precaching": "^7.4.0",
+    "workbox-routing": "^7.4.0",
+    "workbox-strategies": "^7.4.0"
   }
 }

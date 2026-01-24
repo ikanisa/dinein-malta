@@ -1,164 +1,315 @@
-# DineIn Architecture Overview
+# DineIn Architecture
 
-> System architecture and component diagrams for the DineIn Malta PWA.
+This document describes the system architecture of the DineIn monorepo.
 
 ---
 
-## System Architecture
+## System Overview
 
 ```mermaid
-graph TD
-    subgraph "Frontend (Cloudflare Pages)"
-        PWA[React PWA]
-        SW[Service Worker]
-        PWA --> SW
+graph TB
+    subgraph "Cloudflare Pages"
+        Customer["Customer PWA<br/>apps/customer"]
+        Venue["Venue Portal<br/>apps/venue"]
+        Admin["Admin Portal<br/>apps/admin"]
     end
 
-    subgraph "Backend (Supabase)"
-        Auth[GoTrue Auth]
-        DB[(PostgreSQL)]
-        Realtime[Realtime Engine]
+    subgraph "Shared Packages"
+        Core["@dinein/core<br/>Types, Constants"]
+        DB["@dinein/db<br/>Query Helpers"]
+        UI["@dinein/ui<br/>Components"]
+    end
+
+    subgraph "Supabase"
+        Postgres[(PostgreSQL<br/>+ RLS)]
+        Auth[Auth Service]
         Edge[Edge Functions]
-        Storage[Object Storage]
+        Realtime[Realtime]
     end
 
-    subgraph "External Services"
-        Gemini[Google Gemini AI]
-        GA4[Google Analytics]
-        Sentry[Sentry Error Tracking]
-    end
+    Customer --> Core
+    Customer --> DB
+    Customer --> UI
+    Venue --> Core
+    Venue --> DB
+    Venue --> UI
+    Admin --> Core
+    Admin --> DB
+    Admin --> UI
 
-    PWA -->|Auth| Auth
-    PWA -->|REST API| DB
-    PWA -->|WebSocket| Realtime
-    PWA -->|Functions| Edge
-    Edge --> Gemini
-    Edge --> DB
-    Edge --> Storage
-    PWA --> GA4
-    PWA --> Sentry
+    DB --> Postgres
+    DB --> Auth
+    DB --> Edge
+    Customer --> Realtime
+    Venue --> Realtime
 ```
+
+---
+
+## Monorepo Structure
+
+```mermaid
+graph LR
+    subgraph "apps/"
+        A1[customer] --> P1
+        A2[venue] --> P1
+        A3[admin] --> P1
+    end
+
+    subgraph "packages/"
+        P1[core]
+        P2[db]
+        P3[ui]
+        P4[commons]
+    end
+
+    P3 --> P1
+    P2 --> P1
+```
+
+### Package Responsibilities
+
+| Package | Purpose | Exports |
+|---------|---------|---------|
+| `@dinein/core` | Domain types, constants, utils | `OrderStatus`, `PaymentMethod`, `Country`, formatters |
+| `@dinein/db` | Supabase query helpers | `getVenueBySlug`, `getMenuItems`, `placeOrder` |
+| `@dinein/ui` | React component library | `Button`, `Card`, `Badge`, `BottomSheet` |
+| `@dinein/commons` | Shared utilities | Common helpers |
+
+---
+
+## Application Architecture
+
+### Customer App (apps/customer)
+
+```mermaid
+flowchart LR
+    QR[QR Code Scan] --> Entry["/v/{slug}"]
+    Entry --> Menu[Menu Screen]
+    Menu --> Cart[Cart]
+    Cart --> Checkout[Checkout]
+    Checkout --> Order[Order Status]
+
+    subgraph "Navigation"
+        Home[Home Tab]
+        Settings[Settings Tab]
+    end
+```
+
+**Key Features:**
+- QR deep link entry (`/v/{venueSlug}`)
+- Menu browsing with categories
+- Cart management (Zustand)
+- Order placement
+- Order status tracking (Realtime)
+
+### Venue Portal (apps/venue)
+
+```mermaid
+flowchart LR
+    Login[Login] --> Dashboard
+    Claim[Claim Venue] --> Dashboard
+
+    subgraph Dashboard
+        Orders[Order Management]
+        MenuMgmt[Menu Management]
+        VenueSettings[Venue Settings]
+    end
+```
+
+**Key Features:**
+- Venue owner authentication
+- Venue claim flow
+- Order status updates (Placed → Received → Served)
+- Menu CRUD operations
+- Real-time order notifications
+
+### Admin Portal (apps/admin)
+
+```mermaid
+flowchart LR
+    Login[Login] --> Dashboard
+
+    subgraph Dashboard
+        Claims[Venue Claims]
+        Venues[Venue List]
+        Users[User Management]
+        Audit[Audit Logs]
+    end
+```
+
+**Key Features:**
+- Admin-only authentication
+- Approve/reject venue claims
+- View all venues
+- User management
+- System audit logs
 
 ---
 
 ## Data Flow
 
-### Order Lifecycle
+### Customer Order Flow
 
 ```mermaid
 sequenceDiagram
-    participant C as Client
-    participant E as Edge Function
-    participant DB as Database
-    participant R as Realtime
-    participant V as Vendor
+    participant C as Customer
+    participant App as Customer PWA
+    participant SB as Supabase
+    participant V as Venue Portal
 
-    C->>E: POST order_create
-    E->>DB: INSERT order
-    E->>DB: INSERT order_items
-    E-->>C: 201 { order }
-    
-    DB->>R: Broadcast change
-    R->>V: New order event
-    
-    V->>E: POST order_update_status
-    E->>DB: UPDATE order
-    E-->>V: 200 { order }
-    
-    DB->>R: Broadcast change
-    R->>C: Status update
+    C->>App: Scan QR / Open /v/{slug}
+    App->>SB: getVenueBySlug()
+    SB-->>App: Venue + Menu
+    C->>App: Add items to cart
+    C->>App: Place order
+    App->>SB: INSERT orders + order_items
+    SB-->>App: Order confirmation
+    SB->>V: Realtime: new order
+    V->>SB: UPDATE order status
+    SB->>App: Realtime: status update
+    App-->>C: Order ready!
 ```
+
+### Order Status Flow
+
+```mermaid
+stateDiagram-v2
+    [*] --> Placed: Customer places order
+    Placed --> Received: Venue acknowledges
+    Received --> Served: Venue serves order
+    Served --> [*]
+    
+    Placed --> Cancelled: Customer/Venue cancels
+    Received --> Cancelled: Venue cancels
+    Cancelled --> [*]
+```
+
+**Allowed Statuses:** `Placed` | `Received` | `Served` | `Cancelled`
 
 ---
 
-## Component Structure
+## Tech Stack
 
-```
-apps/web/
-├── App.tsx                 # Root component, routing
-├── pages/                  # Route components
-│   ├── ClientMenu.tsx      # Customer menu view
-│   ├── ClientOrderStatus.tsx
-│   ├── VendorLogin.tsx
-│   ├── vendor/             # Vendor dashboard
-│   ├── Admin*.tsx          # Admin portal
-│   └── SettingsPage.tsx
-├── components/
-│   ├── common/             # Shared components
-│   ├── menu/               # Menu components
-│   ├── ui/                 # Design system
-│   └── shared/             # Layout components
-├── hooks/                  # React hooks
-├── services/               # API & external services
-├── context/                # React context providers
-└── utils/                  # Utility functions
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React 18, TypeScript, Vite |
+| **Styling** | Tailwind CSS 4, Radix UI, Framer Motion |
+| **State** | Zustand (cart), React Context (auth) |
+| **Backend** | Supabase (Postgres, Auth, Edge Functions) |
+| **Realtime** | Supabase Realtime |
+| **Deployment** | Cloudflare Pages |
+| **PWA** | vite-plugin-pwa, Workbox |
+| **Testing** | Playwright (E2E), Vitest (unit) |
+
+---
+
+## Database Schema
+
+```mermaid
+erDiagram
+    vendors {
+        uuid id PK
+        string name
+        string slug UK
+        string country
+        boolean claimed
+        timestamp created_at
+    }
+
+    menu_categories {
+        uuid id PK
+        uuid vendor_id FK
+        string name
+        int sort_order
+    }
+
+    menu_items {
+        uuid id PK
+        uuid category_id FK
+        string name
+        int price
+        boolean available
+    }
+
+    orders {
+        uuid id PK
+        uuid vendor_id FK
+        string status
+        string payment_method
+        int total
+        timestamp created_at
+    }
+
+    order_items {
+        uuid id PK
+        uuid order_id FK
+        uuid item_id FK
+        int quantity
+        int price
+    }
+
+    profiles {
+        uuid id PK
+        string email
+        string role
+    }
+
+    vendors ||--o{ menu_categories : has
+    menu_categories ||--o{ menu_items : contains
+    vendors ||--o{ orders : receives
+    orders ||--o{ order_items : contains
+    menu_items ||--o{ order_items : referenced
 ```
 
 ---
 
 ## Security Model
 
-### Authentication Layers
+### Row Level Security (RLS)
 
-| Layer | Implementation | Purpose |
-|-------|---------------|---------|
-| Frontend | Route guards | UI access control |
-| API | Bearer token | Request authentication |
-| Database | RLS policies | Row-level security |
-| Edge Functions | Auth middleware | Function authorization |
+| Table | Public Read | Auth Write | Admin Only |
+|-------|-------------|------------|------------|
+| `vendors` | ✅ (active) | Owner only | ✅ |
+| `menu_categories` | ✅ | Owner only | ✅ |
+| `menu_items` | ✅ (available) | Owner only | ✅ |
+| `orders` | Own only | Own only | ✅ |
+| `profiles` | ❌ | Own only | ✅ |
+| `audit_logs` | ❌ | ❌ | ✅ |
 
-### Role-Based Access
+### RBAC Enforcement
 
-```mermaid
-graph LR
-    subgraph Roles
-        Client[Anonymous Client]
-        Vendor[Vendor Staff]
-        Admin[Administrator]
-    end
-
-    subgraph Access
-        Menu[Browse Menu]
-        Order[Place Order]
-        Dashboard[Vendor Dashboard]
-        Management[Admin Management]
-    end
-
-    Client --> Menu
-    Client --> Order
-    Vendor --> Dashboard
-    Vendor --> Menu
-    Vendor --> Order
-    Admin --> Management
-    Admin --> Dashboard
-    Admin --> Menu
+```
+┌─────────────────────────────────────────────────┐
+│                    UI Layer                     │
+│  Route guards, conditional rendering            │
+├─────────────────────────────────────────────────┤
+│                 Context Layer                   │
+│  useOwner, useAdmin hooks                       │
+├─────────────────────────────────────────────────┤
+│                   API Layer                     │
+│  Edge Functions with auth checks                │
+├─────────────────────────────────────────────────┤
+│                  Database Layer                 │
+│  RLS policies on every table                    │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Technology Stack
+## Country Mode
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **Frontend** | React 18 + TypeScript | UI framework |
-| **Styling** | Tailwind CSS + Custom Tokens | Design system |
-| **Build** | Vite | Development & bundling |
-| **State** | React Context + TanStack Query | State management |
-| **Backend** | Supabase (Postgres + GoTrue) | BaaS |
-| **AI** | Google Gemini | Search & image generation |
-| **Hosting** | Cloudflare Pages | CDN + edge hosting |
-| **Monitoring** | Sentry + GA4 | Error tracking + analytics |
+| Country | Currency | Payment Method | Handoff Type |
+|---------|----------|----------------|--------------|
+| **Rwanda (RW)** | RWF | MoMo | USSD code (no API) |
+| **Malta (MT)** | EUR | Revolut | External link (no API) |
 
----
+**How it works:**
+1. Customer scans QR → opens `/v/{venueSlug}`
+2. App loads venue → reads `venue.country`
+3. Sets `activeCountry` in app state
+4. Checkout shows appropriate payment option
+5. Payment is a handoff (opens external app/link)
 
-## Database Schema
-
-See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for full table definitions.
-
-Key tables:
-- `vendors` - Restaurant/bar profiles
-- `menu_items` - Menu entries
-- `orders` - Customer orders
-- `order_items` - Order line items
-- `vendor_users` - Staff accounts
-- `admin_users` - Admin accounts
+> [!IMPORTANT]
+> DineIn does NOT integrate with payment APIs. Payments are handled externally.
