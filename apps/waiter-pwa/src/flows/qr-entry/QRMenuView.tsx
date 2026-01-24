@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Plus, Bot } from 'lucide-react';
+import { ChevronLeft, Plus } from 'lucide-react';
 import { supabase } from '@/shared/services/supabase';
 import { ProductModal } from '@/components/widgets/ProductModal';
 
@@ -169,15 +169,6 @@ export function QRMenuView({ venueSlug, tableCode, cart, onAddToCart }: QRMenuVi
                     onAddToCart(item, quantity, options);
                 }}
             />
-            <div className="fixed bottom-6 right-6 z-50 animate-bounce-in">
-                <button
-                    onClick={() => window.location.pathname = '/chat'}
-                    className="bg-indigo-600 text-white px-5 py-3 rounded-full shadow-lg hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2"
-                >
-                    <Bot className="w-5 h-5" />
-                    <span className="font-bold">Ask AI</span>
-                </button>
-            </div>
         </div>
     );
 }

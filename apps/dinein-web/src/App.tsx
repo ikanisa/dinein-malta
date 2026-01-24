@@ -7,6 +7,7 @@ const QREntryFlow = lazy(() => import('./flows/qr-entry'))
 const PWAHomeFlow = lazy(() => import('./flows/pwa-home'))
 const VendorPortalFlow = lazy(() => import('./flows/vendor-portal'))
 const AdminPortalFlow = lazy(() => import('./flows/admin-portal'))
+const ChatScreenFlow = lazy(() => import('./flows/ai-waiter'))
 
 function App() {
     // Simple router based on URL
@@ -15,7 +16,10 @@ function App() {
     const isVendor = path.startsWith('/vendor');
     const isAdmin = path.startsWith('/admin');
 
+    const isChat = path.startsWith('/chat');
+
     const renderFlow = () => {
+        if (isChat) return <ChatScreenFlow />;
         if (isQREntry) return <QREntryFlow />;
         if (isVendor) return <VendorPortalFlow />;
         if (isAdmin) return <AdminPortalFlow />;
