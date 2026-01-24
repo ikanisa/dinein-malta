@@ -1,9 +1,9 @@
 import type { Config } from 'tailwindcss';
-import { colors } from './src/design-system/tokens/colors';
-import { typography } from './src/design-system/tokens/typography';
-import { animations } from './src/design-system/tokens/animations';
-import { spacing } from './src/design-system/tokens/spacing';
-import { shadows } from './src/design-system/tokens/shadows';
+import { colors } from '../../packages/ui/src/tokens/colors';
+import { typography } from '../../packages/ui/src/tokens/typography';
+import { animations } from '../../packages/ui/src/tokens/animations';
+import { spacing } from '../../packages/ui/src/tokens/spacing';
+import { shadows } from '../../packages/ui/src/tokens/shadows';
 
 export default {
     darkMode: 'class',
