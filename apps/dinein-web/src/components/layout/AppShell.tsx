@@ -15,6 +15,7 @@ interface AppShellProps {
     showHeader?: boolean;
     title?: string;
     subtitle?: string;
+    bottomNav?: React.ReactNode;
 }
 
 export const AppShell: React.FC<AppShellProps> = ({
@@ -23,7 +24,8 @@ export const AppShell: React.FC<AppShellProps> = ({
     showBottomNav = true,
     showHeader = true,
     title,
-    subtitle
+    subtitle,
+    bottomNav
 }) => {
     return (
         <div className="min-h-screen relative overflow-x-hidden bg-slate-50 selection:bg-indigo-100 selection:text-indigo-900">
@@ -49,7 +51,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 className={cn(
                     "w-full max-w-md mx-auto min-h-screen relative z-10",
                     "flex flex-col",
-                    showBottomNav ? "pb-[90px]" : "pb-safe", // Space for bottom nav + extra
+                    showBottomNav ? "pb-safe-nav" : "pb-safe", // Use new consistent utility
                     !showHeader && "pt-safe", // If no header, ensure safe area top
                     className
                 )}
@@ -60,8 +62,12 @@ export const AppShell: React.FC<AppShellProps> = ({
             </main>
 
 
-            {/* Bottom Navigation (Rendered by children if needed) */}
-            {/* We just provide the padding via 'showBottomNav' prop */}
+            {/* Bottom Navigation */}
+            {showBottomNav && bottomNav && (
+                <div className="w-full max-w-md mx-auto relative z-50">
+                    {bottomNav}
+                </div>
+            )}
         </div>
     );
 };

@@ -1,0 +1,88 @@
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/e2e/qr-flow.spec.ts
+  28:15  warning  'isErrorVisible' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/e2e/screenshot-gallery.spec.ts
+  1:16  warning  'expect' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/components/Toast.tsx
+  21:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/components/ui/Badge.tsx
+  39:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/components/ui/BottomSheet.tsx
+  24:30  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/components/ui/BottomSheet.tsx:24:30
+  22 |     useEffect(() => {
+  23 |         if (isOpen) {
+> 24 |             if (!isRendered) setIsRendered(true);
+     |                              ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  25 |             document.body.style.overflow = 'hidden';
+  26 |         } else {
+  27 |             const timer = setTimeout(() => setIsRendered(false), 300); // Wait for transition  react-hooks/set-state-in-effect
+  31:8   warning  React Hook useEffect has a missing dependency: 'isRendered'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/components/ui/Button.tsx
+  87:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/context/ThemeContext.tsx
+  35:48  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/context/ThemeContext.tsx:35:48
+  33 |                 ? 'dark'
+  34 |                 : 'light';
+> 35 |             if (resolvedTheme !== systemTheme) setResolvedTheme(systemTheme);
+     |                                                ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |             root.classList.toggle('dark', systemTheme === 'dark');
+  37 |         } else {
+  38 |             if (resolvedTheme !== theme) setResolvedTheme(theme);  react-hooks/set-state-in-effect
+  43:8   warning  React Hook useEffect has a missing dependency: 'resolvedTheme'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+  67:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-refresh/only-export-components
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/design-system/components/Button.tsx
+   4:18  warning  'HTMLMotionProps' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+  47:13  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free             @typescript-eslint/ban-ts-comment
+  64:20  warning  Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  67:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/design-system/components/Input.tsx
+  4:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/design-system/design-tokens.ts
+  19:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/flows/pwa-home/index.tsx
+  26:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/flows/vendor-portal/VendorLogin.tsx
+  34:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/hooks/useOfflineCart.ts
+  69:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  78:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/layouts/AdminLayout.tsx
+  42:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/jeanbosco/workspace/dinein/apps/dinein-web/src/lib/chatkit/ChatKitContext.tsx
+  23:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+✖ 22 problems (4 errors, 18 warnings)
+
+undefined
+/Users/jeanbosco/workspace/dinein/apps/dinein-web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: eslint .

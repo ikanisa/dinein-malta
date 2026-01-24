@@ -7,15 +7,13 @@ function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-interface StatusHeaderProps {
+interface StatusHeaderProps extends React.HTMLAttributes<HTMLElement> {
     title?: string;
     subtitle?: string;
     showCart?: boolean;
     cartCount?: number;
     showLocation?: boolean;
     locationName?: string;
-    className?: string;
-    children?: React.ReactNode;
     notificationCount?: number;
     onNotificationClick?: () => void;
 }

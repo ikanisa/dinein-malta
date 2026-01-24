@@ -1,8 +1,9 @@
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
 import { registerRoute, NavigationRoute } from 'workbox-routing'
-import { NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies'
+import { NetworkFirst, StaleWhileRevalidate, NetworkOnly } from 'workbox-strategies'
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 import { ExpirationPlugin } from 'workbox-expiration'
+import { BackgroundSyncPlugin } from 'workbox-background-sync'
 
 declare let self: ServiceWorkerGlobalScope & {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,6 +28,42 @@ registerRoute(
         ]
     })
 )
+
+// ... imports
+
+// ... imports
+
+// Sync pending orders (Background Sync)
+const bgSyncPlugin = new BackgroundSyncPlugin('dinein-offline-orders', {
+    maxRetentionTime: 24 * 60 // Retry for max 24 Hours (specified in minutes)
+});
+
+// Cache Supabase API requests (Network Only + Background Sync)
+registerRoute(
+    ({ url }) => url.hostname.includes('supabase.co') && url.pathname.includes('/rest/v1/orders'),
+    new NetworkOnly({
+        plugins: [bgSyncPlugin]
+    }),
+    'POST'
+);
+
+// General Supabase Caching (GET)
+registerRoute(
+    ({ url }) => url.hostname.includes('supabase.co') && url.pathname.includes('/rest/v1/'),
+    new NetworkFirst({
+        cacheName: 'supabase-api-cache',
+        plugins: [
+            new CacheableResponsePlugin({
+                statuses: [0, 200]
+            }),
+            new ExpirationPlugin({
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+            })
+        ]
+    }),
+    'GET'
+);
 
 // API Caching (Menu, Products) - Network First, fall back to cache
 registerRoute(

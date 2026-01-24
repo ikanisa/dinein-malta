@@ -1,49 +1,94 @@
-import React from 'react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+import { motion } from "framer-motion"
+import { cn } from "@/lib/utils"
+import { useHaptics } from "@/hooks/useHaptics"
 
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
+const buttonVariants = cva(
+    "inline-flex items-center justify-center whitespace-nowrap rounded-2xl text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none",
+    {
+        variants: {
+            variant: {
+                default: "btn-primary", // mapped from index.css
+                destructive:
+                    "bg-red-500 text-destructive-foreground hover:bg-red-500/90",
+                outline:
+                    "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                secondary:
+                    "btn-secondary", // mapped from index.css
+                ghost: "hover:bg-accent hover:text-accent-foreground",
+                link: "text-primary underline-offset-4 hover:underline",
+                coral: "btn-coral text-white", // Custom variant
+                glass: "bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 shadow-sm", // Glass variant
+            },
+            size: {
+                default: "h-11 px-6 py-2", // Min 44px
+                sm: "h-9 rounded-xl px-3",
+                lg: "h-14 rounded-2xl px-10 text-base",
+                icon: "h-11 w-11",
+            },
+            fullWidth: {
+                true: "w-full",
+            }
+        },
+        defaultVariants: {
+            variant: "default",
+            size: "default",
+            fullWidth: false,
+        },
+    }
+)
+
+export interface ButtonProps
+    extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+    asChild?: boolean
+    loading?: boolean
+    // Allow broader props for motion compatibility if needed, though HTMLButtonElement covers most
 }
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'ghost' | 'coral' | 'outline';
-    size?: 'sm' | 'md' | 'lg' | 'icon';
-    fullWidth?: boolean;
-    loading?: boolean;
-}
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+    ({ className, variant, size, fullWidth, asChild = false, loading = false, onClick, children, ...props }, ref) => {
+        // If asChild is true, we use Slash (Radix), otherwise we use motion.button
+        // Note: asChild with motion is complex, we prioritize asChild behavior if present, losing motion on that specific element wrapper
+        // but typically we want motion. If asChild is essential (e.g. TooltipTrigger), we skip motion for safety or wrap it.
+        // For this design system, we prioritize Motion for standard buttons.
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant = 'primary', size = 'md', fullWidth = false, loading = false, children, disabled, ...props }, ref) => {
+        const { trigger } = useHaptics()
 
-        const baseStyles = "relative inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none touch-manipulation";
+        // Intercept click for haptics
+        const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+            if (!props.disabled && !loading) {
+                trigger('light')
+                onClick?.(e)
+            }
+        }
 
-        const variants = {
-            primary: "btn-primary text-white", // Uses CSS class from index.css for complex gradient
-            coral: "btn-coral text-white",     // Uses CSS class
-            secondary: "btn-secondary",        // Uses CSS class
-            ghost: "bg-transparent text-slate-600 hover:bg-slate-100/50 hover:text-slate-900",
-            outline: "bg-transparent border-2 border-slate-200 text-slate-700 hover:border-indigo-300 hover:text-indigo-600",
-        };
-
-        const sizes = {
-            sm: "h-9 px-4 text-xs",
-            md: "h-11 px-6 text-sm", // Min 44px target (11 * 4 = 44px)
-            lg: "h-14 px-8 text-base",
-            icon: "h-11 w-11 p-0",
-        };
+        if (asChild) {
+            return (
+                <Slot
+                    className={cn(buttonVariants({ variant, size, fullWidth, className }))}
+                    ref={ref}
+                    onClick={handleClick}
+                    {...props}
+                >
+                    {children}
+                </Slot>
+            )
+        }
 
         return (
-            <button
+            // @ts-expect-error - Dynamic component typing with motion is tricky
+            <motion.button
+                className={cn(buttonVariants({ variant, size, fullWidth, className }))}
                 ref={ref}
-                className={cn(
-                    baseStyles,
-                    variants[variant],
-                    sizes[size],
-                    fullWidth && "w-full",
-                    className
-                )}
-                disabled={disabled || loading}
+                onClick={handleClick}
+                disabled={props.disabled || loading}
+                aria-disabled={props.disabled || loading}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 {...props}
             >
                 {loading && (
@@ -54,12 +99,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                         </svg>
                     </span>
                 )}
-                <span className={cn(loading && "invisible", "flex items-center gap-2")}>
+                <span className={cn(loading && "invisible", "flex items-center justify-center gap-2")}>
                     {children}
                 </span>
-            </button>
-        );
+            </motion.button>
+        )
     }
-);
+)
+Button.displayName = "Button"
 
-Button.displayName = 'Button';
+export { Button, buttonVariants }

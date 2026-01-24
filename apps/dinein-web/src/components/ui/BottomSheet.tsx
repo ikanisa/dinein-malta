@@ -21,7 +21,8 @@ export function BottomSheet({ isOpen, onClose, title, children, className }: Bot
 
     useEffect(() => {
         if (isOpen) {
-            setIsRendered(true);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (!isRendered) setIsRendered(true);
             document.body.style.overflow = 'hidden';
         } else {
             const timer = setTimeout(() => setIsRendered(false), 300); // Wait for transition

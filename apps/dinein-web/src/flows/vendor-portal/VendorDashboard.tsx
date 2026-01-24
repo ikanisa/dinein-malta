@@ -4,6 +4,7 @@
  * - Interactive Charts
  * - Premium feel
  */
+import { useMemo } from 'react';
 import { Bell, Check, ChevronRight, DollarSign, ShoppingBag, Clock, Activity } from 'lucide-react';
 import { useVendorProfile } from '../../hooks/useVendorProfile';
 import { useVendorOrders } from '../../hooks/useVendorOrders';
@@ -26,27 +27,41 @@ export function VendorDashboard() {
     const newOrders = orders.filter(o => o.status === 'new');
     const preparingOrders = orders.filter(o => o.status === 'preparing');
 
-    // Mock Chart Data (should be real in prod)
-    const chartData = [
-        { name: '10am', value: 400 },
-        { name: '11am', value: 300 },
-        { name: '12pm', value: 800 },
-        { name: '1pm', value: 1200 },
-        { name: '2pm', value: 900 },
-        { name: '3pm', value: 600 },
-        { name: '4pm', value: 400 },
-    ];
+    // Aggregated Chart Data (Real)
+    // Group orders by hour of the day (0-23)
+    const chartData = useMemo(() => {
+        const hourlyData = new Array(24).fill(0).map((_, i) => ({
+            name: `${i === 0 ? 12 : i > 12 ? i - 12 : i}${i < 12 ? 'am' : 'pm'}`,
+            value: 0,
+            hour: i
+        }));
+
+        orders.forEach(order => {
+            const date = new Date(order.created_at);
+            // Only count today's orders for the "Daily Trend" chart
+            if (date.toDateString() === new Date().toDateString()) {
+                const hour = date.getHours();
+                if (order.status !== 'cancelled') {
+                    hourlyData[hour].value += (order.total_amount || 0);
+                }
+            }
+        });
+
+        // Filter to show a relevant range (e.g., 8am to 10pm) or just show all
+        // For Restaurant context, maybe 10am - 11pm is typical
+        return hourlyData.filter(d => d.hour >= 10 && d.hour <= 23);
+    }, [orders]);
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 pb-28 animate-fade-in">
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-28 animate-fade-in">
                 {/* Skeleton */}
-                <header className="bg-white px-4 py-6 border-b border-slate-100 mb-6">
-                    <div className="h-6 w-40 bg-slate-200 rounded-lg animate-pulse" />
+                <header className="bg-white dark:bg-slate-800 px-4 py-6 border-b border-slate-100 dark:border-slate-800 mb-6">
+                    <div className="h-6 w-40 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
                 </header>
                 <div className="px-4 grid grid-cols-2 gap-4">
                     {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="h-32 bg-white rounded-2xl animate-pulse" />
+                        <div key={i} className="h-32 bg-white dark:bg-slate-800 rounded-2xl animate-pulse" />
                     ))}
                 </div>
             </div>
@@ -54,13 +69,13 @@ export function VendorDashboard() {
     }
 
     return (
-        <div className="min-h-screen pb-28">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-28">
             {/* Glassy Header */}
-            <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-100/50 px-6 py-4">
+            <header className="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100/50 dark:border-slate-800/50 px-6 py-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight text-slate-900">{profile?.name || 'Dashboard'}</h1>
-                        <p className="text-xs text-slate-500 font-medium">Real-time Overview</p>
+                        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{profile?.name || 'Dashboard'}</h1>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Real-time Overview</p>
                     </div>
                 </div>
             </header>

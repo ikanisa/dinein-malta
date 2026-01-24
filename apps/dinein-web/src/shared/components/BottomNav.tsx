@@ -1,7 +1,7 @@
-import { Home, Search, User, Calendar } from 'lucide-react';
+import { Home, Search, User, ClipboardList } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 
-export type TabId = 'home' | 'discover' | 'reservations' | 'profile';
+export type TabId = 'home' | 'discover' | 'orders' | 'reservations' | 'profile';
 
 interface BottomNavProps {
     activeTab?: TabId;
@@ -14,8 +14,7 @@ export function BottomNav({ activeTab = 'home', onTabChange }: BottomNavProps) {
     const tabs = [
         { id: 'home' as TabId, icon: Home, label: 'Home' },
         { id: 'discover' as TabId, icon: Search, label: 'Explore' },
-        { id: 'reservations' as TabId, icon: Calendar, label: 'Bookings' },
-        // { id: 'cart' as TabId, icon: ShoppingCart, label: 'Cart', isCart: true }, // Hidden for now logic if needed, or keep? Let's add standard tab behavior for now.
+        { id: 'orders' as TabId, icon: ClipboardList, label: 'Orders' },
         { id: 'profile' as TabId, icon: User, label: 'Profile' },
     ];
 

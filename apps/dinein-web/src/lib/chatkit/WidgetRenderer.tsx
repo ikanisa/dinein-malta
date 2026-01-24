@@ -27,8 +27,6 @@ export function WidgetRenderer({ type, props }: WidgetProps) {
 
 // Wrapper for Button to handle actions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// Wrapper for Button to handle actions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChatKitButton({ label, onClickAction }: any) {
     const handleClick = () => {
         if (onClickAction) {

@@ -65,12 +65,28 @@ export function useOfflineCart() {
         localStorage.removeItem(STORAGE_KEY);
     };
 
+    // Store pending orders for sync
+    const saveOrderForSync = (order: any) => {
+        const pending = JSON.parse(localStorage.getItem('dinein_pending_orders') || '[]');
+        pending.push(order);
+        localStorage.setItem('dinein_pending_orders', JSON.stringify(pending));
+
+        // Trigger Background Sync if SW is ready
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            navigator.serviceWorker.ready.then(reg => {
+                // Background Sync API
+                (reg as any).sync.register('dinein-offline-orders').catch(console.error);
+            });
+        }
+    };
+
     return {
         items,
         addToCart,
         updateQuantity,
         removeItem,
         clearCart,
+        saveOrderForSync,
         isLoaded
     };
 }

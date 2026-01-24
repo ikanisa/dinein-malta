@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { QRMenuView } from './QRMenuView';
 import { CartScreen } from './CartScreen';
-import { CheckoutScreen } from './CheckoutScreen';
-import { OrderTracking } from './OrderTracking';
+import { CheckoutScreen } from '@/components/screens/CheckoutScreen';
+import { OrderTrackingScreen } from '@/components/screens/OrderTrackingScreen';
 import { supabase } from '@/shared/services/supabase';
+import { orders } from '@/shared/services/orders';
 import type { OrderStatus } from '@/shared/components/StatusBadge';
 
 type Screen = 'menu' | 'cart' | 'checkout' | 'tracking';
@@ -90,41 +91,49 @@ export default function QREntryFlow() {
     }, []);
 
     // Place order
-    const handlePlaceOrder = useCallback(async (_orderDetails: { paymentMethod: string; notes: string }) => {
+    const handlePlaceOrder = useCallback(async (orderDetails: { paymentMethod: string; notes: string }) => {
         // Calculate total
         const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
         const tax = subtotal * 0.18;
         const total = subtotal + tax;
 
-        // Create order in Supabase (mock for now - can integrate with real orders table)
-        const orderId = crypto.randomUUID();
-        const orderNumber = Math.floor(Math.random() * 9000) + 1000; // Random 4-digit number
+        try {
+            const order = await orders.createOrder({
+                venue_id: venueSlug, // Using slug as ID for now/mock
+                table_code: tableCode,
+                items: cart.map(i => ({
+                    name: i.name,
+                    quantity: i.quantity,
+                    price: i.price,
+                    // notes: i.notes // CartItem interface in this file needs updating if we want notes
+                })),
+                total,
+                payment_method: orderDetails.paymentMethod,
+                notes: orderDetails.notes
+            });
 
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+            // Set current order and navigate to tracking
+            // Use real order data if available, or fall back to local constructed state if `order` is partial
+            setCurrentOrder({
+                id: order?.id || crypto.randomUUID(),
+                orderNumber: parseInt(order?.order_code || '0000'),
+                status: 'pending', // Initial status
+                items: [...cart],
+                total,
+                createdAt: new Date(),
+            });
 
-        // Set current order and navigate to tracking
-        setCurrentOrder({
-            id: orderId,
-            orderNumber,
-            status: 'confirmed',
-            items: [...cart],
-            total,
-            createdAt: new Date(),
-        });
+            clearCart();
+            setScreen('tracking');
 
-        clearCart();
-        setScreen('tracking');
+            // Note: Realtime updates will handle status changes in production
+            // For demo/dev without realtime setup, we can keep the simulation or remove it
 
-        // Simulate status updates (in real app, this would use Supabase realtime)
-        setTimeout(() => {
-            setCurrentOrder(prev => prev ? { ...prev, status: 'preparing' } : null);
-        }, 5000);
-
-        setTimeout(() => {
-            setCurrentOrder(prev => prev ? { ...prev, status: 'ready' } : null);
-        }, 15000);
-    }, [cart, clearCart]);
+        } catch (error) {
+            console.error('Failed to place order:', error);
+            alert('Failed to place order. Please try again.');
+        }
+    }, [cart, clearCart, venueSlug, tableCode]);
 
     // Handle invalid QR code
     if (!match) {
@@ -175,7 +184,7 @@ export default function QREntryFlow() {
                 return null;
             }
             return (
-                <OrderTracking
+                <OrderTrackingScreen
                     orderId={currentOrder.id}
                     orderNumber={currentOrder.orderNumber}
                     venueName={venueName || 'Restaurant'}

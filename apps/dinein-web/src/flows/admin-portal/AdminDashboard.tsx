@@ -23,20 +23,20 @@ const PENDING_APPROVALS = [
 
 export function AdminDashboard() {
     return (
-        <div className="min-h-screen bg-slate-50 pb-28 animate-fade-in font-sans">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-28 animate-fade-in font-sans">
             {/* Sticky Glass Header */}
-            <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
+            <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 shadow-sm">
                 <div className="px-6 py-4 flex items-center justify-between">
                     <div>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-0.5">Admin Console</p>
-                        <h1 className="text-xl font-bold text-slate-900 leading-tight">Dashboard</h1>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-0.5">Admin Console</p>
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">Dashboard</h1>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="p-2 rounded-full hover:bg-slate-100 transition-colors relative">
-                            <Bell className="w-5 h-5 text-slate-600" />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
+                        <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+                            <Bell className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
                         </button>
-                        <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">
+                        <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20">
                             A
                         </div>
                     </div>
@@ -45,7 +45,7 @@ export function AdminDashboard() {
 
             <main className="p-6 space-y-8">
                 {/* Platform Health Card */}
-                <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 shadow-lg shadow-indigo-200 text-white relative overflow-hidden group">
+                <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 text-white relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-32 bg-white/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10 group-hover:translate-x-5 transition-transform duration-700" />
 
                     <div className="relative flex items-center gap-4">
@@ -65,14 +65,14 @@ export function AdminDashboard() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
                     {PLATFORM_STATS.map((stat) => (
-                        <div key={stat.label} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300">
-                            <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-3`}>
+                        <div key={stat.label} className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300">
+                            <div className={`w-10 h-10 ${stat.bg} ${stat.color} dark:bg-opacity-10 dark:text-opacity-90 rounded-xl flex items-center justify-center mb-3`}>
                                 <stat.icon className="w-5 h-5" />
                             </div>
-                            <p className="text-2xl font-black text-slate-900 tracking-tight">{stat.value}</p>
+                            <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
                             <div className="flex items-center justify-between mt-1">
-                                <span className="text-xs font-semibold text-slate-400">{stat.label}</span>
-                                <span className={`text-xs font-bold ${stat.change.includes('+') ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">{stat.label}</span>
+                                <span className={`text-xs font-bold ${stat.change.includes('+') ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                     {stat.change}
                                 </span>
                             </div>
@@ -84,23 +84,23 @@ export function AdminDashboard() {
                 {PENDING_APPROVALS.length > 0 && (
                     <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                         <div className="flex items-center justify-between mb-3 px-1">
-                            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Attention Needed</h2>
+                            <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide">Attention Needed</h2>
                         </div>
-                        <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 space-y-3">
+                        <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-2xl p-4 space-y-3">
                             <div className="flex items-center gap-2 mb-2">
-                                <div className="p-1.5 bg-amber-100 rounded-full">
-                                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                                <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                                    <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-500" />
                                 </div>
-                                <span className="text-xs font-bold text-amber-700">Pending Approvals ({PENDING_APPROVALS.length})</span>
+                                <span className="text-xs font-bold text-amber-700 dark:text-amber-500">Pending Approvals ({PENDING_APPROVALS.length})</span>
                             </div>
 
                             {PENDING_APPROVALS.map((item) => (
-                                <div key={item.id} className="bg-white rounded-xl p-3 shadow-sm border border-amber-100/50 flex items-center justify-between group cursor-pointer hover:border-amber-200 transition-colors">
+                                <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm border border-amber-100/50 dark:border-amber-900/20 flex items-center justify-between group cursor-pointer hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
                                     <div>
-                                        <p className="text-slate-900 font-bold text-sm">{item.name}</p>
-                                        <p className="text-xs text-slate-500 font-medium">{item.type} • {item.submitted}</p>
+                                        <p className="text-slate-900 dark:text-white font-bold text-sm">{item.name}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{item.type} • {item.submitted}</p>
                                     </div>
-                                    <button className="px-3 py-1.5 bg-slate-900 text-white text-xs rounded-lg font-bold shadow-lg shadow-slate-900/10 active:scale-95 transition-transform">
+                                    <button className="px-3 py-1.5 bg-slate-900 dark:bg-indigo-600 text-white text-xs rounded-lg font-bold shadow-lg shadow-slate-900/10 dark:shadow-indigo-900/20 active:scale-95 transition-transform">
                                         Review
                                     </button>
                                 </div>
@@ -111,19 +111,19 @@ export function AdminDashboard() {
 
                 {/* Quick Actions */}
                 <div className="space-y-3 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide px-1">Quick Actions</h2>
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide px-1">Quick Actions</h2>
                     <div className="grid grid-cols-2 gap-3">
-                        <button className="relative overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 rounded-2xl text-left shadow-lg shadow-indigo-200 active:scale-[0.98] transition-all group">
+                        <button className="relative overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 rounded-2xl text-left shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 active:scale-[0.98] transition-all group">
                             <div className="absolute top-0 right-0 p-8 bg-white/10 rounded-full blur-xl transform translate-x-4 -translate-y-4 group-hover:translate-x-2 transition-transform" />
                             <Plus className="w-6 h-6 text-white mb-2" />
                             <p className="font-bold text-white text-sm">Add Vendor</p>
                             <p className="text-[10px] text-indigo-100 font-medium">Register new</p>
                         </button>
-                        <button className="relative overflow-hidden bg-white p-4 rounded-2xl text-left shadow-md border border-slate-100 active:scale-[0.98] transition-all group hover:border-slate-200">
-                            <div className="absolute top-0 right-0 p-8 bg-slate-50 rounded-full blur-xl transform translate-x-4 -translate-y-4" />
-                            <BarChart3 className="w-6 h-6 text-indigo-600 mb-2" />
-                            <p className="font-bold text-slate-900 text-sm">Analytics</p>
-                            <p className="text-[10px] text-slate-400 font-medium">View reports</p>
+                        <button className="relative overflow-hidden bg-white dark:bg-slate-800 p-4 rounded-2xl text-left shadow-md border border-slate-100 dark:border-slate-700 active:scale-[0.98] transition-all group hover:border-slate-200 dark:hover:border-slate-600">
+                            <div className="absolute top-0 right-0 p-8 bg-slate-50 dark:bg-slate-700 rounded-full blur-xl transform translate-x-4 -translate-y-4" />
+                            <BarChart3 className="w-6 h-6 text-indigo-600 dark:text-indigo-400 mb-2" />
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">Analytics</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">View reports</p>
                         </button>
                     </div>
                 </div>
@@ -131,13 +131,13 @@ export function AdminDashboard() {
                 {/* Recent Activity */}
                 <div className="pb-4 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
                     <div className="flex items-center justify-between mb-4 px-1">
-                        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Recent Activity</h2>
-                        <button className="text-indigo-600 text-xs font-bold flex items-center gap-0.5 hover:underline">
+                        <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide">Recent Activity</h2>
+                        <button className="text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center gap-0.5 hover:underline">
                             View All <ChevronRight className="w-3 h-3" />
                         </button>
                     </div>
 
-                    <div className="bg-white rounded-3xl p-1 shadow-sm border border-slate-100">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-1 shadow-sm border border-slate-100 dark:border-slate-700">
                         {RECENT_ACTIVITY.map((activity, idx) => (
                             <div key={idx} className="flex items-start gap-3 p-3 hover:bg-slate-50 rounded-2xl transition-colors border-b border-slate-50 last:border-0 last:pb-2">
                                 <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-sm ${activity.type === 'vendor' ? 'bg-purple-100 text-purple-600' :

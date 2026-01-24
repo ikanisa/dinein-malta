@@ -1,17 +1,13 @@
 import React from 'react';
-import { Star, Clock, MapPin, Heart } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
+import { motion } from 'framer-motion';
+import { Star, Heart, Clock, MapPin } from 'lucide-react';
+import { GlassCard } from '../ui/GlassCard';
+import { cn } from '@/lib/utils';
 
 export interface VenueCardProps extends React.HTMLAttributes<HTMLDivElement> {
     id: string;
-    name: string;
     image?: string;
+    name: string;
     rating?: number;
     reviewCount?: number;
     deliveryTimeMin?: number;
@@ -19,46 +15,45 @@ export interface VenueCardProps extends React.HTMLAttributes<HTMLDivElement> {
     deliveryFee?: number;
     tags?: string[];
     distance?: string;
-    variant?: 'featured' | 'list';
-    onClick?: () => void;
-    onToggleFavorite?: (e: React.MouseEvent) => void;
     isFavorite?: boolean;
+    onToggleFavorite?: (e: React.MouseEvent) => void;
+    layoutId?: string;
+    variant?: 'featured' | 'list';
 }
 
 const getVenueGradient = (name: string) => {
     const gradients = [
-        'from-violet-500 to-fuchsia-500',
-        'from-indigo-500 to-blue-500',
-        'from-emerald-400 to-cyan-500',
-        'from-amber-400 to-orange-500',
-        'from-rose-400 to-pink-500',
+        'from-pink-500 to-rose-500',
+        'from-purple-500 to-indigo-500',
+        'from-blue-500 to-cyan-500',
+        'from-emerald-500 to-teal-500',
+        'from-amber-500 to-orange-500'
     ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return gradients[Math.abs(hash) % gradients.length];
+    const index = name.length % gradients.length;
+    return gradients[index];
 };
 
-export const VenueCard: React.FC<VenueCardProps> = ({
-    name,
+export function VenueCard({
+    className,
+    variant = 'list',
+    id,
     image,
+    name,
     rating,
     reviewCount,
-    deliveryTimeMin = 15,
-    deliveryTimeMax = 30,
-    deliveryFee = 0,
+    deliveryTimeMin,
+    deliveryTimeMax,
+    deliveryFee,
     tags,
     distance,
-    variant = 'featured',
-    onClick,
+    isFavorite,
     onToggleFavorite,
-    isFavorite = false,
-    className,
+    layoutId,
+    onClick,
     ...props
-}) => {
+}: VenueCardProps) {
 
-    // FEATURED VARIANT (Large, Immersive)
+    // FEATURED VARIANT
     if (variant === 'featured') {
         return (
             <GlassCard
@@ -71,7 +66,12 @@ export const VenueCard: React.FC<VenueCardProps> = ({
                 {/* Image Area */}
                 <div className="relative aspect-[4/3]">
                     {image ? (
-                        <img src={image} alt={name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <motion.img
+                            layoutId={layoutId || `venue-image-${id}`}
+                            src={image}
+                            alt={name}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
                     ) : (
                         <div className={cn("absolute inset-0 bg-gradient-to-br opacity-90 transition-opacity", getVenueGradient(name))} />
                     )}
@@ -191,4 +191,4 @@ export const VenueCard: React.FC<VenueCardProps> = ({
             </div>
         </GlassCard>
     );
-};
+}
