@@ -58,7 +58,7 @@ export default function Home() {
                             id={venue.id}
                             name={venue.name}
                             slug={venue.slug}
-                            image={venue.logo_url ?? undefined}
+                            image={venue.ai_image_url ?? undefined}
                             country={venue.country as 'RW' | 'MT'}
                         />
                     ))}

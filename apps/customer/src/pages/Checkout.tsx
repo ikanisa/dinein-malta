@@ -23,7 +23,7 @@ export default function Checkout() {
         // Use the venue's declared country as authority, fallback to active context
         const modeCountry = venue.country as 'RW' | 'MT' || countryCode
         return getPaymentOptions(modeCountry, {
-            momo_code: venue.momo_code || undefined,
+            momo_code: venue.whatsapp || undefined,  // whatsapp field stores MoMo USSD code
             revolut_link: venue.revolut_link || undefined
         })
     }, [venue, countryCode])
@@ -134,7 +134,7 @@ export default function Checkout() {
                                 : 'Select to proceed'
 
                             if (option.method === 'cash') sublabel = 'Pay at counter/table'
-                            if (option.method === 'momo_ussd' && option.enabled) sublabel = `Dial ${venue.momo_code}`
+                            if (option.method === 'momo_ussd' && option.enabled) sublabel = `Dial ${venue.whatsapp}`
                             if (option.method === 'revolut_link' && option.enabled) sublabel = 'Revolut App'
 
                             return (

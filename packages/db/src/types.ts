@@ -11,10 +11,15 @@ export interface Venue {
     slug: string
     name: string
     country: 'RW' | 'MT'
-    logo_url?: string | null
-    banner_url?: string | null
-    momo_code?: string | null
+    ai_image_url?: string | null
+    description?: string | null
+    address?: string | null
+    city?: string | null
+    rating?: number | null
+    price_level?: number | null
     revolut_link?: string | null
+    whatsapp?: string | null  // Used for MoMo USSD code in Rwanda
+    phone?: string | null
     claimed: boolean
     created_at: string
 }
