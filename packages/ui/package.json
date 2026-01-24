@@ -4,10 +4,16 @@
     "main": "src/index.ts",
     "types": "src/index.ts",
     "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./styles": "./src/styles/globals.css"
+    },
     "scripts": {
         "lint": "eslint . --max-warnings 0"
     },
-    "sideEffects": false,
+    "sideEffects": [
+        "./src/styles/*.css"
+    ],
     "peerDependencies": {
         "framer-motion": "^12.0.0",
         "lucide-react": "^0.563.0",
