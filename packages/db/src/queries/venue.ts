@@ -135,8 +135,9 @@ export async function getVenuesForCountry(
 
     const { data, error, count } = await client
         .from('vendors')
-        .select('id, name, slug, country, ai_image_url, created_at', { count: 'exact' })
+        .select('id, name, slug, country, ai_image_url, rating, price_level, description, city, created_at', { count: 'exact' })
         .eq('country', country)
+        .order('rating', { ascending: false, nullsFirst: false })
         .order('name', { ascending: true })
         .range(offset, offset + pageSize - 1);
 

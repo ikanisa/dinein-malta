@@ -1,16 +1,18 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, Smartphone, Banknote, HelpCircle } from 'lucide-react'
-import { Button, Card, useCountry } from '@dinein/ui'
+import { Button, Card, useCountry, useA2HS } from '@dinein/ui'
 import { getPaymentOptions, formatMoney, PAYMENT_METHOD_LABELS, type PaymentMethod } from '@dinein/core'
 
 import { useVenueContext } from '../context/VenueContext'
 import { useCartStore } from '../store/useCartStore'
 import { supabase } from '../shared/services/supabase'
+import { saveOrderToHistory } from '../hooks/useOrderHistory'
 
 export default function Checkout() {
     const { venue } = useVenueContext()
     const { countryCode } = useCountry()
+    const { signalEngagement } = useA2HS()
     const navigate = useNavigate()
 
     const items = useCartStore(state => venue ? state.getVenueItems(venue.id) : [])
@@ -82,6 +84,13 @@ export default function Checkout() {
             }
 
             clearCart(venue.id)
+
+            // Save order to history for Settings page
+            saveOrderToHistory(order.id)
+
+            // Signal engagement for A2HS prompt
+            signalEngagement('order_placed')
+
             navigate(`/v/${venue.slug}/orders/${order.id}`)
         } catch (err) {
             console.error(err)
