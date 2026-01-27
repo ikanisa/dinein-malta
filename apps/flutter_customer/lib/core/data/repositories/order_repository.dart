@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/order.dart';
 import '../models/order_status.dart';
 import '../supabase/supabase_client.dart';
+import '../../services/auth_service.dart';
+import '../../error/retry_helper.dart';
+import '../../utils/logger.dart';
 
 // Interface
 abstract class OrderRepository {
   Future<Order> createOrder({
-    required String sessionId,
     required String venueId,
     required List<Map<String, dynamic>> items,
     required String paymentMethod,
@@ -20,7 +22,8 @@ abstract class OrderRepository {
     required String orderCode,
   });
 
-  Stream<List<Order>> streamOrderHistory({required String sessionId});
+  /// Streams order history for the authenticated user
+  Stream<List<Order>> streamOrderHistory();
 }
 
 // Implementation - Edge Function order_create (no direct table insert)
@@ -29,9 +32,11 @@ class SupabaseOrderRepository implements OrderRepository {
 
   SupabaseOrderRepository(this._client);
 
+  /// Get the current authenticated user's ID
+  String? get _currentUserId => _client.auth.currentUser?.id;
+
   @override
   Future<Order> createOrder({
-    required String sessionId,
     required String venueId,
     required List<Map<String, dynamic>> items,
     required String paymentMethod,
@@ -103,7 +108,7 @@ class SupabaseOrderRepository implements OrderRepository {
       return Order(
         id: orderData['id'] as String,
         venueId: orderData['venue_id'] as String,
-        sessionId: sessionId,
+        sessionId: _currentUserId ?? '',
         tableNumber: tableNumber,
         status: orderData['status']?.toString() ?? 'received',
         totalAmount: (orderData['total_amount'] as num?)?.toDouble() ?? 0,
@@ -113,8 +118,9 @@ class SupabaseOrderRepository implements OrderRepository {
         items: orderItems,
         createdAt: createdAt,
       );
-    } catch (e) {
-      throw Exception('Failed to create order: $e');
+    } catch (e, stackTrace) {
+      Logger.error('Failed to create order for venue: $venueId', e, scope: 'OrderRepository', stackTrace: stackTrace);
+      throw ApiException(500, 'Unable to place order. Please try again.');
     }
   }
 
@@ -125,7 +131,7 @@ class SupabaseOrderRepository implements OrderRepository {
   }) async {
     try {
       if (orderCode.trim().isEmpty) {
-        throw Exception('Order code is required');
+        throw ValidationException('Order code is required');
       }
       final response = await _client.functions.invoke(
         'order_status',
@@ -137,13 +143,16 @@ class SupabaseOrderRepository implements OrderRepository {
 
       final payload = _normalizePayload(response.data);
       if (payload['success'] != true || payload['order'] == null) {
-        throw Exception(payload['error'] ?? 'Failed to fetch order');
+        final errorMsg = payload['error']?.toString() ?? 'Failed to fetch order';
+        throw ApiException(400, errorMsg);
       }
 
       final orderData = Map<String, dynamic>.from(payload['order'] as Map);
       return OrderStatus.fromJson(orderData);
-    } catch (e) {
-      throw Exception('Failed to fetch order: $e');
+    } catch (e, stackTrace) {
+      if (e is ApiException || e is ValidationException) rethrow;
+      Logger.error('Failed to fetch order status: $orderId', e, scope: 'OrderRepository', stackTrace: stackTrace);
+      throw ApiException(500, 'Unable to check order status. Please try again.');
     }
   }
 
@@ -157,11 +166,17 @@ class SupabaseOrderRepository implements OrderRepository {
   }
 
   @override
-  Stream<List<Order>> streamOrderHistory({required String sessionId}) {
+  Stream<List<Order>> streamOrderHistory() {
+    final userId = _currentUserId;
+    if (userId == null) {
+      // Return empty stream if not authenticated
+      return Stream.value([]);
+    }
+
     return _client
         .from('orders')
         .stream(primaryKey: ['id'])
-        .eq('session_id', sessionId)
+        .eq('client_auth_user_id', userId)
         .order('created_at', ascending: false)
         .map((rows) {
           return rows.map((row) {
@@ -193,7 +208,7 @@ class SupabaseOrderRepository implements OrderRepository {
             return Order(
               id: row['id'] as String,
               venueId: row['venue_id'] as String,
-              sessionId: row['session_id'] as String,
+              sessionId: row['client_auth_user_id']?.toString() ?? '',
               tableNumber: row['table_number']?.toString(),
               status: row['status']?.toString() ?? 'placed',
               totalAmount: (row['total_amount'] as num?)?.toDouble() ?? 0,
@@ -213,9 +228,8 @@ final orderRepositoryProvider = Provider<OrderRepository>((ref) {
   return SupabaseOrderRepository(ref.watch(supabaseClientProvider));
 });
 
-// Order history stream provider - requires sessionId
-final orderHistoryProvider =
-    StreamProvider.family<List<Order>, String>((ref, sessionId) {
+// Order history stream provider - uses authenticated user
+final orderHistoryProvider = StreamProvider<List<Order>>((ref) {
   final repo = ref.watch(orderRepositoryProvider);
-  return repo.streamOrderHistory(sessionId: sessionId);
+  return repo.streamOrderHistory();
 });

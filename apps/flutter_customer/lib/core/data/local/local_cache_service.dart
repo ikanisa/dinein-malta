@@ -188,6 +188,58 @@ class LocalCacheService {
     await cacheData('session_id', {'id': newId}, ttl: const Duration(days: 90));
     return newId;
   }
+
+  // === Profile Methods ===
+  
+  /// Get or create a persistent anonymous user ID
+  Future<String> getAnonymousUserId() async {
+    final cached = getData('anonymous_user_id', ignoreExpiration: true);
+    final cachedId = cached?['id'];
+    if (cachedId is String && cachedId.isNotEmpty) {
+      return cachedId;
+    }
+
+    final newId = const Uuid().v4();
+    await cacheData('anonymous_user_id', {'id': newId});
+    return newId;
+  }
+
+  /// Get stored display name
+  String? getDisplayName() {
+    final data = getData('user_display_name', ignoreExpiration: true);
+    final value = data?['name'];
+    return value is String && value.isNotEmpty ? value : null;
+  }
+
+  /// Set display name
+  Future<void> setDisplayName(String? name) async {
+    if (name == null || name.isEmpty) {
+      await _box.delete('user_display_name');
+    } else {
+      await cacheData('user_display_name', {'name': name});
+    }
+  }
+
+  /// Get stored phone number
+  String? getPhoneNumber() {
+    final data = getData('user_phone', ignoreExpiration: true);
+    final value = data?['phone'];
+    return value is String && value.isNotEmpty ? value : null;
+  }
+
+  /// Set phone number
+  Future<void> setPhoneNumber(String? phone) async {
+    if (phone == null || phone.isEmpty) {
+      await _box.delete('user_phone');
+    } else {
+      await cacheData('user_phone', {'phone': phone});
+    }
+  }
+
+  /// Clear all cached data (for data deletion requests)
+  Future<void> clearAll() async {
+    await _box.clear();
+  }
 }
 
 // Provider - returns the pre-initialized singleton instance

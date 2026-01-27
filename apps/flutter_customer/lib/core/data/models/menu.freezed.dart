@@ -416,8 +416,17 @@ mixin _$MenuItem {
   String? get imageUrl => throw _privateConstructorUsedError;
   List<String> get tags =>
       throw _privateConstructorUsedError; // e.g., 'spicy', 'vegan'
+  List<String> get allergens =>
+      throw _privateConstructorUsedError; // e.g., 'gluten', 'nuts', 'dairy'
+  @JsonKey(name: 'dietary_info')
+  List<String> get dietaryInfo =>
+      throw _privateConstructorUsedError; // e.g., 'vegan', 'vegetarian', 'gluten-free'
   @JsonKey(name: 'is_available')
   bool get isAvailable => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_popular')
+  bool get isPopular => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_recommended')
+  bool get isRecommended => throw _privateConstructorUsedError;
   List<ItemModifier> get modifiers => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -438,7 +447,11 @@ abstract class $MenuItemCopyWith<$Res> {
       double price,
       @JsonKey(name: 'image_url') String? imageUrl,
       List<String> tags,
+      List<String> allergens,
+      @JsonKey(name: 'dietary_info') List<String> dietaryInfo,
       @JsonKey(name: 'is_available') bool isAvailable,
+      @JsonKey(name: 'is_popular') bool isPopular,
+      @JsonKey(name: 'is_recommended') bool isRecommended,
       List<ItemModifier> modifiers});
 }
 
@@ -461,7 +474,11 @@ class _$MenuItemCopyWithImpl<$Res, $Val extends MenuItem>
     Object? price = null,
     Object? imageUrl = freezed,
     Object? tags = null,
+    Object? allergens = null,
+    Object? dietaryInfo = null,
     Object? isAvailable = null,
+    Object? isPopular = null,
+    Object? isRecommended = null,
     Object? modifiers = null,
   }) {
     return _then(_value.copyWith(
@@ -489,9 +506,25 @@ class _$MenuItemCopyWithImpl<$Res, $Val extends MenuItem>
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      allergens: null == allergens
+          ? _value.allergens
+          : allergens // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      dietaryInfo: null == dietaryInfo
+          ? _value.dietaryInfo
+          : dietaryInfo // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       isAvailable: null == isAvailable
           ? _value.isAvailable
           : isAvailable // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isPopular: null == isPopular
+          ? _value.isPopular
+          : isPopular // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isRecommended: null == isRecommended
+          ? _value.isRecommended
+          : isRecommended // ignore: cast_nullable_to_non_nullable
               as bool,
       modifiers: null == modifiers
           ? _value.modifiers
@@ -516,7 +549,11 @@ abstract class _$$MenuItemImplCopyWith<$Res>
       double price,
       @JsonKey(name: 'image_url') String? imageUrl,
       List<String> tags,
+      List<String> allergens,
+      @JsonKey(name: 'dietary_info') List<String> dietaryInfo,
       @JsonKey(name: 'is_available') bool isAvailable,
+      @JsonKey(name: 'is_popular') bool isPopular,
+      @JsonKey(name: 'is_recommended') bool isRecommended,
       List<ItemModifier> modifiers});
 }
 
@@ -537,7 +574,11 @@ class __$$MenuItemImplCopyWithImpl<$Res>
     Object? price = null,
     Object? imageUrl = freezed,
     Object? tags = null,
+    Object? allergens = null,
+    Object? dietaryInfo = null,
     Object? isAvailable = null,
+    Object? isPopular = null,
+    Object? isRecommended = null,
     Object? modifiers = null,
   }) {
     return _then(_$MenuItemImpl(
@@ -565,9 +606,25 @@ class __$$MenuItemImplCopyWithImpl<$Res>
           ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      allergens: null == allergens
+          ? _value._allergens
+          : allergens // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      dietaryInfo: null == dietaryInfo
+          ? _value._dietaryInfo
+          : dietaryInfo // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       isAvailable: null == isAvailable
           ? _value.isAvailable
           : isAvailable // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isPopular: null == isPopular
+          ? _value.isPopular
+          : isPopular // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isRecommended: null == isRecommended
+          ? _value.isRecommended
+          : isRecommended // ignore: cast_nullable_to_non_nullable
               as bool,
       modifiers: null == modifiers
           ? _value._modifiers
@@ -587,9 +644,15 @@ class _$MenuItemImpl implements _MenuItem {
       required this.price,
       @JsonKey(name: 'image_url') this.imageUrl,
       final List<String> tags = const [],
+      final List<String> allergens = const [],
+      @JsonKey(name: 'dietary_info') final List<String> dietaryInfo = const [],
       @JsonKey(name: 'is_available') this.isAvailable = true,
+      @JsonKey(name: 'is_popular') this.isPopular = false,
+      @JsonKey(name: 'is_recommended') this.isRecommended = false,
       final List<ItemModifier> modifiers = const []})
       : _tags = tags,
+        _allergens = allergens,
+        _dietaryInfo = dietaryInfo,
         _modifiers = modifiers;
 
   factory _$MenuItemImpl.fromJson(Map<String, dynamic> json) =>
@@ -616,9 +679,37 @@ class _$MenuItemImpl implements _MenuItem {
   }
 
 // e.g., 'spicy', 'vegan'
+  final List<String> _allergens;
+// e.g., 'spicy', 'vegan'
+  @override
+  @JsonKey()
+  List<String> get allergens {
+    if (_allergens is EqualUnmodifiableListView) return _allergens;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_allergens);
+  }
+
+// e.g., 'gluten', 'nuts', 'dairy'
+  final List<String> _dietaryInfo;
+// e.g., 'gluten', 'nuts', 'dairy'
+  @override
+  @JsonKey(name: 'dietary_info')
+  List<String> get dietaryInfo {
+    if (_dietaryInfo is EqualUnmodifiableListView) return _dietaryInfo;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_dietaryInfo);
+  }
+
+// e.g., 'vegan', 'vegetarian', 'gluten-free'
   @override
   @JsonKey(name: 'is_available')
   final bool isAvailable;
+  @override
+  @JsonKey(name: 'is_popular')
+  final bool isPopular;
+  @override
+  @JsonKey(name: 'is_recommended')
+  final bool isRecommended;
   final List<ItemModifier> _modifiers;
   @override
   @JsonKey()
@@ -630,7 +721,7 @@ class _$MenuItemImpl implements _MenuItem {
 
   @override
   String toString() {
-    return 'MenuItem(id: $id, name: $name, description: $description, price: $price, imageUrl: $imageUrl, tags: $tags, isAvailable: $isAvailable, modifiers: $modifiers)';
+    return 'MenuItem(id: $id, name: $name, description: $description, price: $price, imageUrl: $imageUrl, tags: $tags, allergens: $allergens, dietaryInfo: $dietaryInfo, isAvailable: $isAvailable, isPopular: $isPopular, isRecommended: $isRecommended, modifiers: $modifiers)';
   }
 
   @override
@@ -646,8 +737,16 @@ class _$MenuItemImpl implements _MenuItem {
             (identical(other.imageUrl, imageUrl) ||
                 other.imageUrl == imageUrl) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
+            const DeepCollectionEquality()
+                .equals(other._allergens, _allergens) &&
+            const DeepCollectionEquality()
+                .equals(other._dietaryInfo, _dietaryInfo) &&
             (identical(other.isAvailable, isAvailable) ||
                 other.isAvailable == isAvailable) &&
+            (identical(other.isPopular, isPopular) ||
+                other.isPopular == isPopular) &&
+            (identical(other.isRecommended, isRecommended) ||
+                other.isRecommended == isRecommended) &&
             const DeepCollectionEquality()
                 .equals(other._modifiers, _modifiers));
   }
@@ -662,7 +761,11 @@ class _$MenuItemImpl implements _MenuItem {
       price,
       imageUrl,
       const DeepCollectionEquality().hash(_tags),
+      const DeepCollectionEquality().hash(_allergens),
+      const DeepCollectionEquality().hash(_dietaryInfo),
       isAvailable,
+      isPopular,
+      isRecommended,
       const DeepCollectionEquality().hash(_modifiers));
 
   @JsonKey(ignore: true)
@@ -687,7 +790,11 @@ abstract class _MenuItem implements MenuItem {
       required final double price,
       @JsonKey(name: 'image_url') final String? imageUrl,
       final List<String> tags,
+      final List<String> allergens,
+      @JsonKey(name: 'dietary_info') final List<String> dietaryInfo,
       @JsonKey(name: 'is_available') final bool isAvailable,
+      @JsonKey(name: 'is_popular') final bool isPopular,
+      @JsonKey(name: 'is_recommended') final bool isRecommended,
       final List<ItemModifier> modifiers}) = _$MenuItemImpl;
 
   factory _MenuItem.fromJson(Map<String, dynamic> json) =
@@ -707,8 +814,19 @@ abstract class _MenuItem implements MenuItem {
   @override
   List<String> get tags;
   @override // e.g., 'spicy', 'vegan'
+  List<String> get allergens;
+  @override // e.g., 'gluten', 'nuts', 'dairy'
+  @JsonKey(name: 'dietary_info')
+  List<String> get dietaryInfo;
+  @override // e.g., 'vegan', 'vegetarian', 'gluten-free'
   @JsonKey(name: 'is_available')
   bool get isAvailable;
+  @override
+  @JsonKey(name: 'is_popular')
+  bool get isPopular;
+  @override
+  @JsonKey(name: 'is_recommended')
+  bool get isRecommended;
   @override
   List<ItemModifier> get modifiers;
   @override

@@ -51,7 +51,17 @@ _$MenuItemImpl _$$MenuItemImplFromJson(Map<String, dynamic> json) =>
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
+      allergens: (json['allergens'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      dietaryInfo: (json['dietary_info'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       isAvailable: json['is_available'] as bool? ?? true,
+      isPopular: json['is_popular'] as bool? ?? false,
+      isRecommended: json['is_recommended'] as bool? ?? false,
       modifiers: (json['modifiers'] as List<dynamic>?)
               ?.map((e) => ItemModifier.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -66,7 +76,11 @@ Map<String, dynamic> _$$MenuItemImplToJson(_$MenuItemImpl instance) =>
       'price': instance.price,
       'image_url': instance.imageUrl,
       'tags': instance.tags,
+      'allergens': instance.allergens,
+      'dietary_info': instance.dietaryInfo,
       'is_available': instance.isAvailable,
+      'is_popular': instance.isPopular,
+      'is_recommended': instance.isRecommended,
       'modifiers': instance.modifiers,
     };
 

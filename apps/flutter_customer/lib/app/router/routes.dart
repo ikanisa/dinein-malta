@@ -22,4 +22,5 @@ class Routes {
   static const String help = 'help'; // Relative to settings
   static const String favorites = 'favorites'; // Relative to settings
   static const String privacy = 'privacy'; // Relative to settings
+  static const String profile = 'profile'; // Relative to settings
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../repositories/favorites_repository.dart';
 
 /// Service for managing favorite venues and items locally using Hive
 class FavoritesService {
@@ -129,6 +130,41 @@ class FavoritesService {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // Server Sync Methods
+  // ─────────────────────────────────────────────────────────────
+
+  /// Sync local favorites to server
+  Future<void> syncToServer(FavoritesRepository repo, String userId) async {
+    final venueIds = getFavoriteVenueIds();
+    final itemIds = getFavoriteItemIds();
+    await repo.syncToServer(
+      userId: userId,
+      venueIds: venueIds,
+      itemIds: itemIds,
+    );
+  }
+
+  /// Pull favorites from server and merge with local
+  Future<void> pullFromServer(FavoritesRepository repo, String userId) async {
+    final serverVenues = await repo.getFavoriteVenueIds(userId);
+    final serverItems = await repo.getFavoriteItemIds(userId);
+
+    // Merge server favorites with local (server wins for additions)
+    for (final venueId in serverVenues) {
+      await addFavoriteVenue(venueId);
+    }
+    for (final itemId in serverItems) {
+      await addFavoriteItem(itemId);
+    }
+  }
+
+  /// Full sync: pull from server, merge, then push merged set back
+  Future<void> fullSync(FavoritesRepository repo, String userId) async {
+    await pullFromServer(repo, userId);
+    await syncToServer(repo, userId);
+  }
+
   /// Clear all favorites
   Future<void> clearAll() async {
     await _box.delete(_venuesKey);
@@ -141,11 +177,34 @@ final favoritesServiceProvider = Provider<FavoritesService>((ref) {
   return FavoritesService.instance;
 });
 
-// Reactive providers for UI updates
-final favoriteVenueIdsProvider = StateProvider<List<String>>((ref) {
-  return ref.read(favoritesServiceProvider).getFavoriteVenueIds();
-});
+// Reactive Notifier for favorite venues
+class FavoriteVenueIdsNotifier extends Notifier<List<String>> {
+  @override
+  List<String> build() {
+    return ref.read(favoritesServiceProvider).getFavoriteVenueIds();
+  }
 
-final favoriteItemIdsProvider = StateProvider<List<String>>((ref) {
-  return ref.read(favoritesServiceProvider).getFavoriteItemIds();
-});
+  void refresh() {
+    state = ref.read(favoritesServiceProvider).getFavoriteVenueIds();
+  }
+}
+
+final favoriteVenueIdsProvider =
+    NotifierProvider<FavoriteVenueIdsNotifier, List<String>>(
+        FavoriteVenueIdsNotifier.new);
+
+// Reactive Notifier for favorite items
+class FavoriteItemIdsNotifier extends Notifier<List<String>> {
+  @override
+  List<String> build() {
+    return ref.read(favoritesServiceProvider).getFavoriteItemIds();
+  }
+
+  void refresh() {
+    state = ref.read(favoritesServiceProvider).getFavoriteItemIds();
+  }
+}
+
+final favoriteItemIdsProvider =
+    NotifierProvider<FavoriteItemIdsNotifier, List<String>>(
+        FavoriteItemIdsNotifier.new);

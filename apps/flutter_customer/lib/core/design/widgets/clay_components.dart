@@ -201,6 +201,7 @@ class ClayTextField extends StatelessWidget {
   final bool autofocus;
   final int? maxLines;
   final int? minLines;
+  final ValueChanged<String>? onChanged;
 
   const ClayTextField({
     super.key,
@@ -213,6 +214,7 @@ class ClayTextField extends StatelessWidget {
     this.autofocus = false,
     this.maxLines = 1,
     this.minLines,
+    this.onChanged,
   });
 
   @override
@@ -237,6 +239,7 @@ class ClayTextField extends StatelessWidget {
             autofocus: autofocus,
             maxLines: obscureText ? 1 : maxLines,
             minLines: minLines,
+            onChanged: onChanged,
             style: ClayTypography.body,
             decoration: InputDecoration(
               hintText: hintText,

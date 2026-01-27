@@ -157,6 +157,58 @@ class _ItemDetailModalState extends State<ItemDetailModal> {
     Navigator.of(context).pop();
   }
 
+  Widget _buildPlaceholderImage(Color color) {
+    return Stack(
+      children: [
+        // Decorative circles
+        Positioned(
+          right: -30,
+          bottom: -30,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.2),
+            ),
+          ),
+        ),
+        Positioned(
+          left: -20,
+          top: -20,
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.15),
+            ),
+          ),
+        ),
+        // Center icon
+        Center(
+          child: Icon(
+            Icons.restaurant_rounded,
+            color: Colors.white.withValues(alpha: 0.7),
+            size: 64,
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _getDietaryIcon(String info) {
+    final lower = info.toLowerCase();
+    if (lower.contains('vegan')) return Icons.eco_rounded;
+    if (lower.contains('vegetarian')) return Icons.grass_rounded;
+    if (lower.contains('gluten')) return Icons.grain_rounded;
+    if (lower.contains('halal')) return Icons.mosque_rounded;
+    if (lower.contains('kosher')) return Icons.synagogue_rounded;
+    if (lower.contains('organic')) return Icons.spa_rounded;
+    if (lower.contains('dairy')) return Icons.no_drinks_rounded;
+    return Icons.check_circle_rounded;
+  }
+
   @override
   Widget build(BuildContext context) {
     final hue = (widget.item.name.hashCode % 360).abs().toDouble();
@@ -193,7 +245,7 @@ class _ItemDetailModalState extends State<ItemDetailModal> {
                   controller: scrollController,
                   padding: const EdgeInsets.all(ClaySpacing.lg),
                   children: [
-                    // Hero image placeholder
+                    // Hero image section
                     Container(
                       height: 200,
                       decoration: BoxDecoration(
@@ -202,40 +254,73 @@ class _ItemDetailModalState extends State<ItemDetailModal> {
                       ),
                       child: Stack(
                         children: [
-                          // Decorative circles
-                          Positioned(
-                            right: -30,
-                            bottom: -30,
-                            child: Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.2),
+                          // Real image or decorative placeholder
+                          if (widget.item.imageUrl != null &&
+                              widget.item.imageUrl!.isNotEmpty)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(ClayRadius.lg),
+                              child: Image.network(
+                                widget.item.imageUrl!,
+                                width: double.infinity,
+                                height: 200,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stack) =>
+                                    _buildPlaceholderImage(itemColor),
+                                loadingBuilder: (context, child, progress) {
+                                  if (progress == null) return child;
+                                  return Container(
+                                    color: itemColor,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white.withValues(alpha: 0.7),
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            )
+                          else
+                            _buildPlaceholderImage(itemColor),
+                          // Popular / Recommended badges
+                          if (widget.item.isPopular || widget.item.isRecommended)
+                            Positioned(
+                              top: ClaySpacing.sm,
+                              right: ClaySpacing.sm,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: widget.item.isPopular
+                                      ? ClayColors.warning
+                                      : ClayColors.primary,
+                                  borderRadius: BorderRadius.circular(ClayRadius.pill),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      widget.item.isPopular
+                                          ? Icons.local_fire_department_rounded
+                                          : Icons.star_rounded,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      widget.item.isPopular ? 'Popular' : 'Recommended',
+                                      style: ClayTypography.small.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          Positioned(
-                            left: -20,
-                            top: -20,
-                            child: Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.15),
-                              ),
-                            ),
-                          ),
-                          // Icon
-                          Center(
-                            child: Icon(
-                              Icons.restaurant_rounded,
-                              color: Colors.white.withValues(alpha: 0.7),
-                              size: 64,
-                            ),
-                          ),
-                          // Tags
+                          // Tags (dietary, spicy, etc.)
                           if (widget.item.tags.isNotEmpty)
                             Positioned(
                               top: ClaySpacing.md,
@@ -320,6 +405,90 @@ class _ItemDetailModalState extends State<ItemDetailModal> {
                         style: ClayTypography.body.copyWith(
                           color: ClayColors.textSecondary,
                         ),
+                      ),
+                    ],
+
+                    // Allergen warnings
+                    if (widget.item.allergens.isNotEmpty) ...[
+                      const SizedBox(height: ClaySpacing.md),
+                      Container(
+                        padding: const EdgeInsets.all(ClaySpacing.md),
+                        decoration: BoxDecoration(
+                          color: ClayColors.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(ClayRadius.md),
+                          border: Border.all(
+                            color: ClayColors.warning.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: ClayColors.warning,
+                              size: 20,
+                            ),
+                            const SizedBox(width: ClaySpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Contains allergens',
+                                    style: ClayTypography.small.copyWith(
+                                      color: ClayColors.warning,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    widget.item.allergens.join(', '),
+                                    style: ClayTypography.body.copyWith(
+                                      color: ClayColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Dietary info
+                    if (widget.item.dietaryInfo.isNotEmpty) ...[
+                      const SizedBox(height: ClaySpacing.md),
+                      Wrap(
+                        spacing: ClaySpacing.sm,
+                        runSpacing: ClaySpacing.sm,
+                        children: widget.item.dietaryInfo.map((info) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: ClayColors.success.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(ClayRadius.pill),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getDietaryIcon(info),
+                                  size: 14,
+                                  color: ClayColors.success,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  info,
+                                  style: ClayTypography.small.copyWith(
+                                    color: ClayColors.success,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ],
 

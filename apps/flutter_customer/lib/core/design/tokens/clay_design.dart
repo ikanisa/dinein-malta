@@ -58,6 +58,67 @@ class ClayColors {
   static const Color innerShadow = Color(0xFFFFFFFF);
 }
 
+/// Dark mode variant of ClayColors
+class ClayColorsDark {
+  ClayColorsDark._();
+
+  // === BACKGROUNDS ===
+  static const Color background = Color(0xFF1A1A1A);
+  static const Color backgroundAlt = Color(0xFF242424);
+  static const Color surface = Color(0xFF2D2D2D);
+
+  // === PRIMARY PALETTE (same coral for brand consistency) ===
+  static const Color primary = Color(0xFFFF8A65);
+  static const Color primaryLight = Color(0xFFFFBB93);
+  static const Color primaryDark = Color(0xFFE5735A);
+
+  // === SECONDARY PALETTE ===
+  static const Color secondary = Color(0xFF81C784);
+  static const Color secondaryLight = Color(0xFFB2F5B5);
+  static const Color secondaryDark = Color(0xFF66BB6A);
+
+  // === ACCENT PALETTE ===
+  static const Color accent = Color(0xFFB39DDB);
+  static const Color accentLight = Color(0xFFE6CEFF);
+  static const Color accentDark = Color(0xFF9575CD);
+
+  // === TEXT COLORS ===
+  static const Color textPrimary = Color(0xFFF5F5F5);
+  static const Color textSecondary = Color(0xFFB0B0B0);
+  static const Color textMuted = Color(0xFF808080);
+
+  // === UTILITY COLORS ===
+  static const Color error = Color(0xFFE57373);
+  static const Color warning = Color(0xFFFFB74D);
+  static const Color success = Color(0xFF81C784);
+  static const Color info = Color(0xFF64B5F6);
+
+  // === SHADOWS ===
+  static const Color shadowColor = Color(0x40000000);
+  static const Color innerShadow = Color(0x20FFFFFF);
+}
+
+/// Extension for theme-aware ClayColors access
+extension ClayTheme on BuildContext {
+  bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
+
+  // Theme-aware color getters
+  Color get clayBackground =>
+      isDarkMode ? ClayColorsDark.background : ClayColors.background;
+  Color get clayBackgroundAlt =>
+      isDarkMode ? ClayColorsDark.backgroundAlt : ClayColors.backgroundAlt;
+  Color get claySurface =>
+      isDarkMode ? ClayColorsDark.surface : ClayColors.surface;
+  Color get clayPrimary =>
+      isDarkMode ? ClayColorsDark.primary : ClayColors.primary;
+  Color get clayTextPrimary =>
+      isDarkMode ? ClayColorsDark.textPrimary : ClayColors.textPrimary;
+  Color get clayTextSecondary =>
+      isDarkMode ? ClayColorsDark.textSecondary : ClayColors.textSecondary;
+  Color get clayTextMuted =>
+      isDarkMode ? ClayColorsDark.textMuted : ClayColors.textMuted;
+}
+
 /// Claymorphism shadow styles
 class ClayShadows {
   ClayShadows._();

@@ -19,6 +19,14 @@ trigger: always_on
 - Never UI-only permissions.
 - Least privilege for tools, tokens, and browser access.
 
+## Authentication Policy (non-negotiable)
+- **Customer apps (PWA + Flutter): Supabase Anonymous Authentication ONLY.**
+  - NO email/password sign-in, NO OAuth, NO account creation for customers.
+  - Use `supabase.auth.signInAnonymously()` on first launch.
+  - Session persists via device/browser storage.
+- **Venue Portal + Admin Portal: Full email + password authentication required.**
+- Venue claim flow: email + 4-digit PIN (converts anonymous to authenticated for venue owners).
+
 ## Quality gates (must list exact commands in Walkthrough)
 - lint:
 - typecheck:

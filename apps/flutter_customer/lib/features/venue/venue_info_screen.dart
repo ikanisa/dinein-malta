@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/data/models/venue.dart';
 import 'venue_menu_screen.dart'; // For venueBySlugProvider
 import '../../core/design/tokens/clay_design.dart';
 import '../../core/design/widgets/clay_components.dart';
+import '../../core/utils/haptics.dart';
 
 /// Venue information screen showing details and features
 class VenueInfoScreen extends ConsumerWidget {
@@ -158,6 +160,23 @@ class _VenueInfoContent extends StatelessWidget {
                   title: 'Country',
                   value: venue.country == 'RW' ? 'Rwanda 🇷🇼' : 'Malta 🇲🇹',
                 ),
+                if (venue.phone != null && venue.phone!.isNotEmpty) ...[
+                  const Divider(height: 1),
+                  _ContactTile(
+                    icon: Icons.phone_rounded,
+                    title: 'Phone',
+                    value: venue.phone!,
+                    onTap: () => _launchPhone(venue.phone!),
+                  ),
+                ],
+                if (venue.address != null && venue.address!.isNotEmpty) ...[
+                  const Divider(height: 1),
+                  _DetailTile(
+                    icon: Icons.location_on_rounded,
+                    title: 'Address',
+                    value: venue.address!,
+                  ),
+                ],
                 if (venue.paymentMethods.isNotEmpty) ...[
                   const Divider(height: 1),
                   _DetailTile(
@@ -214,19 +233,40 @@ class _VenueInfoContent extends StatelessWidget {
             const SizedBox(height: ClaySpacing.lg),
           ],
 
-          // Operating hours placeholder
+          // Operating hours
           Text('Operating Hours', style: ClayTypography.h3),
           const SizedBox(height: ClaySpacing.sm),
           ClayCard(
             child: Column(
               children: [
-                _HoursRow(day: 'Monday', hours: '9:00 AM - 10:00 PM'),
-                _HoursRow(day: 'Tuesday', hours: '9:00 AM - 10:00 PM'),
-                _HoursRow(day: 'Wednesday', hours: '9:00 AM - 10:00 PM'),
-                _HoursRow(day: 'Thursday', hours: '9:00 AM - 10:00 PM'),
-                _HoursRow(day: 'Friday', hours: '9:00 AM - 11:00 PM'),
-                _HoursRow(day: 'Saturday', hours: '10:00 AM - 11:00 PM'),
-                _HoursRow(day: 'Sunday', hours: '10:00 AM - 9:00 PM'),
+                _HoursRow(
+                  day: 'Monday',
+                  hours: venue.operatingHours?.monday ?? 'Hours not available',
+                ),
+                _HoursRow(
+                  day: 'Tuesday',
+                  hours: venue.operatingHours?.tuesday ?? 'Hours not available',
+                ),
+                _HoursRow(
+                  day: 'Wednesday',
+                  hours: venue.operatingHours?.wednesday ?? 'Hours not available',
+                ),
+                _HoursRow(
+                  day: 'Thursday',
+                  hours: venue.operatingHours?.thursday ?? 'Hours not available',
+                ),
+                _HoursRow(
+                  day: 'Friday',
+                  hours: venue.operatingHours?.friday ?? 'Hours not available',
+                ),
+                _HoursRow(
+                  day: 'Saturday',
+                  hours: venue.operatingHours?.saturday ?? 'Hours not available',
+                ),
+                _HoursRow(
+                  day: 'Sunday',
+                  hours: venue.operatingHours?.sunday ?? 'Hours not available',
+                ),
               ],
             ),
           ),
@@ -264,6 +304,14 @@ class _VenueInfoContent extends StatelessWidget {
     if (lower.contains('vegan')) return Icons.eco_rounded;
     if (lower.contains('halal')) return Icons.restaurant_rounded;
     return Icons.check_circle_rounded;
+  }
+
+  Future<void> _launchPhone(String phone) async {
+    Haptics.lightImpact();
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 }
 
@@ -311,6 +359,63 @@ class _DetailTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ContactTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+
+  const _ContactTile({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(ClaySpacing.md),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: ClayColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(ClayRadius.sm),
+              ),
+              child: Icon(icon, color: ClayColors.primary, size: 20),
+            ),
+            const SizedBox(width: ClaySpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: ClayTypography.small),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: ClayTypography.bodyMedium.copyWith(
+                      color: ClayColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: ClayColors.textMuted,
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }

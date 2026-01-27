@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../supabase/supabase_client.dart';
 import '../models/menu.dart';
 import '../local/local_cache_service.dart';
+import '../../utils/logger.dart';
 
 // Interface
 abstract class MenuRepository {
@@ -25,9 +26,13 @@ class SupabaseMenuRepository implements MenuRepository {
 
       await _cache.cacheMenu(venueId, data);
       return Menu.fromJson(data);
-    } catch (e) {
+    } catch (e, stackTrace) {
       final cached = _cache.getMenu(venueId, allowStale: true);
-      if (cached != null) return Menu.fromJson(cached);
+      if (cached != null) {
+        Logger.info('Using cached menu for $venueId (network error)', scope: 'MenuRepository');
+        return Menu.fromJson(cached);
+      }
+      Logger.error('Failed to fetch menu for venue: $venueId', e, scope: 'MenuRepository', stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -49,8 +54,13 @@ class SupabaseMenuRepository implements MenuRepository {
       } else if (cached == null) {
         yield null;
       }
-    } catch (e) {
-      if (cached == null) rethrow; // If no cache, bubble error
+    } catch (e, stackTrace) {
+      if (cached == null) {
+        Logger.error('Failed to stream menu for venue: $venueId', e, scope: 'MenuRepository', stackTrace: stackTrace);
+        rethrow; // If no cache, bubble error
+      }
+      // Log but continue with cached data
+      Logger.info('Using cached menu for $venueId (network error)', scope: 'MenuRepository');
     }
   }
 

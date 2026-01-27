@@ -16,6 +16,7 @@ import '../../features/splash/splash_screen.dart';
 import '../../features/settings/help_screen.dart';
 import '../../features/settings/favorites_screen.dart';
 import '../../features/settings/privacy_policy_screen.dart';
+import '../../features/settings/profile_screen.dart';
 import '../../features/venue/venue_info_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -109,19 +110,43 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: Routes.ordersHistory,
-                    builder: (context, state) => const OrdersHistoryScreen(),
+                    pageBuilder: (context, state) => CustomTransitionPage(
+                      key: state.pageKey,
+                      child: const OrdersHistoryScreen(),
+                      transitionsBuilder: _slideRightTransition,
+                    ),
                   ),
                   GoRoute(
                     path: Routes.help,
-                    builder: (context, state) => const HelpScreen(),
+                    pageBuilder: (context, state) => CustomTransitionPage(
+                      key: state.pageKey,
+                      child: const HelpScreen(),
+                      transitionsBuilder: _slideRightTransition,
+                    ),
                   ),
                   GoRoute(
                     path: Routes.favorites,
-                    builder: (context, state) => const FavoritesScreen(),
+                    pageBuilder: (context, state) => CustomTransitionPage(
+                      key: state.pageKey,
+                      child: const FavoritesScreen(),
+                      transitionsBuilder: _slideRightTransition,
+                    ),
                   ),
                   GoRoute(
                     path: Routes.privacy,
-                    builder: (context, state) => const PrivacyPolicyScreen(),
+                    pageBuilder: (context, state) => CustomTransitionPage(
+                      key: state.pageKey,
+                      child: const PrivacyPolicyScreen(),
+                      transitionsBuilder: _slideRightTransition,
+                    ),
+                  ),
+                  GoRoute(
+                    path: Routes.profile,
+                    pageBuilder: (context, state) => CustomTransitionPage(
+                      key: state.pageKey,
+                      child: const ProfileScreen(),
+                      transitionsBuilder: _slideRightTransition,
+                    ),
                   ),
                 ],
               ),
@@ -215,3 +240,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Slide-right transition for settings sub-routes
+Widget _slideRightTransition(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  return SlideTransition(
+    position: Tween<Offset>(
+      begin: const Offset(1, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+    )),
+    child: child,
+  );
+}

@@ -43,7 +43,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: RefreshIndicator(
           color: ClayColors.primary,
           onRefresh: () async {
-            ref.invalidate(venuesProvider);
             await ref.read(homeProvider.notifier).refresh();
           },
           child: CustomScrollView(

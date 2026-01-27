@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../app/router/routes.dart';
 import '../../../core/design/tokens/clay_design.dart';
 import '../../../core/data/models/venue.dart';
@@ -234,75 +235,79 @@ class ClayVenueCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: ClayColors.surface,
-        borderRadius: BorderRadius.circular(ClayRadius.xl),
-        boxShadow: ClayShadows.card,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image skeleton
-          Container(
-            height: 140,
-            decoration: BoxDecoration(
-              color: ClayColors.background,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(ClayRadius.xl),
+    return Skeletonizer(
+      enabled: true,
+      child: Container(
+        decoration: BoxDecoration(
+          color: ClayColors.surface,
+          borderRadius: BorderRadius.circular(ClayRadius.xl),
+          boxShadow: ClayShadows.card,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image skeleton
+            Container(
+              height: 140,
+              decoration: BoxDecoration(
+                color: ClayColors.background,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(ClayRadius.xl),
+                ),
               ),
             ),
-          ),
-          // Content skeleton
-          Padding(
-            padding: const EdgeInsets.all(ClaySpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 20,
-                  width: 150,
-                  decoration: BoxDecoration(
-                    color: ClayColors.background,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  height: 14,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: ClayColors.background,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Container(
-                      height: 26,
-                      width: 80,
-                      decoration: BoxDecoration(
-                        color: ClayColors.background,
-                        borderRadius: BorderRadius.circular(ClayRadius.pill),
-                      ),
+            // Content skeleton
+            Padding(
+              padding: const EdgeInsets.all(ClaySpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 20,
+                    width: 150,
+                    decoration: BoxDecoration(
+                      color: ClayColors.background,
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      height: 26,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: ClayColors.background,
-                        borderRadius: BorderRadius.circular(ClayRadius.pill),
-                      ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    height: 14,
+                    width: 200,
+                    decoration: BoxDecoration(
+                      color: ClayColors.background,
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        height: 26,
+                        width: 80,
+                        decoration: BoxDecoration(
+                          color: ClayColors.background,
+                          borderRadius: BorderRadius.circular(ClayRadius.pill),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        height: 26,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          color: ClayColors.background,
+                          borderRadius: BorderRadius.circular(ClayRadius.pill),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
+

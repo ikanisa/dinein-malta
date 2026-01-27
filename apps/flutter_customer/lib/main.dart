@@ -12,6 +12,9 @@ import 'core/data/local/local_cache_service.dart';
 import 'core/data/local/favorites_service.dart';
 import 'core/telemetry/telemetry_config.dart';
 import 'core/services/push_notification_service.dart';
+import 'core/services/auth_service.dart';
+import 'core/services/version_service.dart';
+import 'core/design/widgets/force_update_dialog.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,6 +94,40 @@ class _DineInAppState extends ConsumerState<DineInApp> {
     ref.read(telemetryServiceProvider).init();
     // Initialize push notifications
     ref.read(pushNotificationServiceProvider).init();
+    // Ensure anonymous auth session exists
+    _initializeAuth();
+    // Check app version requirements
+    _checkVersion();
+  }
+
+  Future<void> _initializeAuth() async {
+    try {
+      await ref.read(authServiceProvider).ensureAnonymousSession();
+    } catch (e) {
+      // Log but don't crash - auth will be retried on next interaction
+      debugPrint('Auth init failed: $e');
+    }
+  }
+
+  Future<void> _checkVersion() async {
+    final result = await ref.read(versionCheckProvider.future);
+    final (status, config) = result;
+    
+    if (!mounted) return;
+    
+    if (status == VersionStatus.forceUpdateRequired) {
+      ForceUpdateDialog.show(
+        context,
+        message: config?.updateMessage,
+        forceUpdate: true,
+      );
+    } else if (status == VersionStatus.updateAvailable) {
+      ForceUpdateDialog.show(
+        context,
+        message: config?.updateMessage,
+        forceUpdate: false,
+      );
+    }
   }
 
   @override

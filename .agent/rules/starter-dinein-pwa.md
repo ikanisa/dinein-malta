@@ -21,6 +21,12 @@ This is a "DINE-IN ONLY" system. Treat scope boundaries as hard laws.
 - Order statuses ONLY: Placed → Received → Served, or Cancelled.
 - NO in-app QR scanner UI. QR scan is ONLY for first-time entry via phone camera -> URL.
 - Country is auto-derived from Venue (scan/deep link) and stored as active context; user never manually picks country.
+- **NO CLIENT SIGN-IN**: Supabase Anonymous Authentication ONLY for customers (both PWA and Flutter app).
+  - Customers never create accounts, never sign in with email/password/OAuth.
+  - Use `supabase.auth.signInAnonymously()` on first launch.
+  - Session persists via device/browser storage.
+  - No profile creation, no password reset flows for customers.
+  - Venue owners/admins use separate authenticated flows (email + 4-digit PIN).
 
 If any request tries to add excluded features, stop and propose the smallest compliant alternative.
 
@@ -66,11 +72,22 @@ If a task is large, split into sub-tasks and complete one sub-task end-to-end be
 - Prefer simple, boring solutions over clever ones.
 
 ## 6) Data + Auth Rules (high-level)
-- Everyone starts as a customer by default.
-- “Add Venue” is a CTA in Settings (customer app) leading to claim flow.
+
+### Customer Auth (Anonymous-Only)
+- **NO client sign-in flows** — customers use Supabase Anonymous Authentication only.
+- On first app/PWA launch: call `supabase.auth.signInAnonymously()`.
+- Anonymous session persists in device/browser storage across app restarts.
+- No email, no password, no OAuth, no profile creation for customers.
+- Order history tied to anonymous user ID (cleared if device storage is cleared).
+- Applies to BOTH Flutter Customer App AND Customer PWA.
+
+### Venue Owner / Admin Auth (Authenticated)
+- Everyone starts as a customer by default (anonymous).
+- "Add Venue" is a CTA in Settings (customer app) leading to claim flow.
 - Venue claim: email + 4-digit password; user searches venue from existing DB; submit for admin review.
 - If venue is already approved/owned, claiming must be blocked/disabled.
 - Venue owner can edit venue info, manage menu (including OCR ingestion pipeline), manage orders, and receive bell calls.
+- Venue Portal and Admin Portal require full email + password authentication.
 
 ## 7) What “Done” Means (global definition)
 A feature is done ONLY when:

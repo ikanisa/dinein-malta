@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../supabase/supabase_client.dart';
 import '../models/venue.dart';
 import '../local/local_cache_service.dart';
+import '../../error/retry_helper.dart';
+import '../../utils/logger.dart';
 
 // Interface
 abstract class VenueRepository {
@@ -34,11 +36,12 @@ class SupabaseVenueRepository implements VenueRepository {
         _cache.cacheVenueById(venueId, response);
       }
       return Venue.fromJson(response);
-    } catch (e) {
-      // Fallback to cache if network fails?
+    } catch (e, stackTrace) {
+      // Fallback to cache if network fails
       final cached = _cache.getVenue(slug, allowStale: true);
       if (cached != null) return Venue.fromJson(cached);
-      throw Exception('Failed to fetch venue: $e');
+      Logger.error('Failed to fetch venue by slug: $slug', e, scope: 'VenueRepository', stackTrace: stackTrace);
+      throw NetworkException('Unable to load venue. Please check your connection.');
     }
   }
 
@@ -65,10 +68,14 @@ class SupabaseVenueRepository implements VenueRepository {
       } else if (cached == null) {
         yield null; // Not found anywhere
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       // If we haven't emitted cache, throw
-      if (cached == null) throw e;
-      // Else swallow error and stay on cache (maybe log it)
+      if (cached == null) {
+        Logger.error('Failed to stream venue by slug: $slug', e, scope: 'VenueRepository', stackTrace: stackTrace);
+        rethrow;
+      }
+      // Swallow error and stay on cache, but log it
+      Logger.info('Using cached venue for $slug (network error)', scope: 'VenueRepository');
     }
   }
 
@@ -101,8 +108,13 @@ class SupabaseVenueRepository implements VenueRepository {
           ttl: const Duration(hours: 1));
 
       yield fresh;
-    } catch (e) {
-      if (cachedList == null) rethrow;
+    } catch (e, stackTrace) {
+      if (cachedList == null) {
+        Logger.error('Failed to stream active venues', e, scope: 'VenueRepository', stackTrace: stackTrace);
+        rethrow;
+      }
+      // Log but continue with cached data
+      Logger.info('Using cached venue list (network error)', scope: 'VenueRepository');
     }
   }
 
@@ -131,8 +143,9 @@ class SupabaseVenueRepository implements VenueRepository {
       return (response as List)
           .map((e) => Venue.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (e) {
-      return [];
+    } catch (e, stackTrace) {
+      Logger.error('Search venues failed for query: $query', e, scope: 'VenueRepository', stackTrace: stackTrace);
+      return []; // Return empty on error for search
     }
   }
 }

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../supabase/supabase_client.dart';
+import '../../error/retry_helper.dart';
+import '../../utils/logger.dart';
 
 // Interface
 abstract class BellRepository {
@@ -38,8 +40,9 @@ class SupabaseBellRepository implements BellRepository {
       // Function usually returns { success: true }
       final data = _normalizePayload(response.data);
       return data['success'] == true;
-    } catch (e) {
-      throw Exception('Failed to ring bell: $e');
+    } catch (e, stackTrace) {
+      Logger.error('Failed to ring bell at venue: $venueId, table: $tableNumber', e, scope: 'BellRepository', stackTrace: stackTrace);
+      throw ApiException(500, 'Unable to call waiter. Please try again.');
     }
   }
 

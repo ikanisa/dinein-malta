@@ -8,18 +8,11 @@ import '../../../core/design/tokens/clay_design.dart';
 import '../../../core/design/widgets/clay_components.dart';
 import '../../../core/utils/currency.dart';
 
-/// Provider for the current session's order history
-final _sessionIdProvider = FutureProvider<String>((ref) async {
-  return ref.read(localCacheServiceProvider).getOrCreateSessionId();
-});
-
 class OrdersHistoryScreen extends ConsumerWidget {
   const OrdersHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sessionIdAsync = ref.watch(_sessionIdProvider);
-
     return Scaffold(
       backgroundColor: ClayColors.background,
       appBar: AppBar(
@@ -44,45 +37,18 @@ class OrdersHistoryScreen extends ConsumerWidget {
         title: Text('My Orders', style: ClayTypography.h2),
         centerTitle: false,
       ),
-      body: sessionIdAsync.when(
-        loading: () => const _OrdersSkeleton(),
-        error: (err, _) => _buildLocalFallback(ref),
-        data: (sessionId) => _OrdersHistoryBody(sessionId: sessionId),
-      ),
-    );
-  }
-
-  Widget _buildLocalFallback(WidgetRef ref) {
-    return FutureBuilder<List<dynamic>>(
-      future: ref.read(localCacheServiceProvider).getOrdersRaw(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: ClayEmptyState(
-              icon: Icons.receipt_long_rounded,
-              title: 'No past orders',
-              subtitle: 'Your order history will appear here',
-            ),
-          );
-        }
-        return _OrdersList(
-          orders: snapshot.data!
-              .map((json) => Order.fromJson(json as Map<String, dynamic>))
-              .toList(),
-        );
-      },
+      body: const _OrdersHistoryBody(),
     );
   }
 }
 
-class _OrdersHistoryBody extends ConsumerWidget {
-  final String sessionId;
 
-  const _OrdersHistoryBody({required this.sessionId});
+class _OrdersHistoryBody extends ConsumerWidget {
+  const _OrdersHistoryBody();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ordersAsync = ref.watch(orderHistoryProvider(sessionId));
+    final ordersAsync = ref.watch(orderHistoryProvider);
 
     return ordersAsync.when(
       loading: () => const _OrdersSkeleton(),
@@ -92,7 +58,7 @@ class _OrdersHistoryBody extends ConsumerWidget {
           return RefreshIndicator(
             color: ClayColors.primary,
             onRefresh: () async {
-              ref.invalidate(orderHistoryProvider(sessionId));
+              ref.invalidate(orderHistoryProvider);
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -111,7 +77,7 @@ class _OrdersHistoryBody extends ConsumerWidget {
         return RefreshIndicator(
           color: ClayColors.primary,
           onRefresh: () async {
-            ref.invalidate(orderHistoryProvider(sessionId));
+            ref.invalidate(orderHistoryProvider);
           },
           child: _OrdersList(orders: orders),
         );

@@ -68,49 +68,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: ClaySpacing.xl),
 
-              // Profile section
-              ClayCard(
-                padding: const EdgeInsets.all(ClaySpacing.lg),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            ClayColors.primary,
-                            ClayColors.primaryDark,
+              // Profile section - tappable
+              InkWell(
+                onTap: () => context.push('${Routes.settings}/${Routes.profile}'),
+                borderRadius: BorderRadius.circular(ClayRadius.lg),
+                child: ClayCard(
+                  padding: const EdgeInsets.all(ClaySpacing.lg),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              ClayColors.primary,
+                              ClayColors.primaryDark,
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.person_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: ClaySpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Guest User', style: ClayTypography.h3),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tap to view your profile',
+                              style: ClayTypography.caption,
+                            ),
                           ],
                         ),
-                        shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.person_rounded,
-                        color: Colors.white,
-                        size: 28,
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: ClayColors.textMuted,
+                        size: 18,
                       ),
-                    ),
-                    const SizedBox(width: ClaySpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Guest User', style: ClayTypography.h3),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Sign in for a better experience',
-                            style: ClayTypography.caption,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      color: ClayColors.textMuted,
-                      size: 18,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: ClaySpacing.lg),

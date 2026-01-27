@@ -108,11 +108,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               })
           .toList();
 
-      final sessionId =
-          await ref.read(localCacheServiceProvider).getOrCreateSessionId();
-
       final order = await ref.read(orderRepositoryProvider).createOrder(
-            sessionId: sessionId,
             venueId: cart.venueId!,
             items: itemsPayload,
             paymentMethod: _paymentMethod,

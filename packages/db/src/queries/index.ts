@@ -39,18 +39,13 @@ export {
     subscribeToServiceRequests,
 } from './service-requests';
 
-// Claims (uses venues.claimed column)
+// Claims (onboarding_requests table)
 export {
-    getUnclaimedVenues,
-    getClaimedVenues,
-    claimVenue,
-    unclaimVenue,
-    // Legacy aliases
+    createVenueClaim,
+    getClaimStatus,
     getPendingClaims,
-    getClaims,
-    approveClaim,
-    rejectClaim,
-    type ClaimApprovalResult,
+    type OnboardingRequest,
+    type OnboardingStatus,
 } from './claims';
 
 // Ingest (OCR pipeline)

@@ -36,7 +36,11 @@ class MenuItem with _$MenuItem {
     required double price,
     @JsonKey(name: 'image_url') String? imageUrl,
     @Default([]) List<String> tags, // e.g., 'spicy', 'vegan'
+    @Default([]) List<String> allergens, // e.g., 'gluten', 'nuts', 'dairy'
+    @Default([]) @JsonKey(name: 'dietary_info') List<String> dietaryInfo, // e.g., 'vegan', 'vegetarian', 'gluten-free'
     @Default(true) @JsonKey(name: 'is_available') bool isAvailable,
+    @Default(false) @JsonKey(name: 'is_popular') bool isPopular,
+    @Default(false) @JsonKey(name: 'is_recommended') bool isRecommended,
     @Default([]) List<ItemModifier> modifiers,
   }) = _MenuItem;
 
