@@ -27,7 +27,7 @@ export default function Login() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+        <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4" data-testid="venue-login:page">
             <Card className="w-full max-w-md p-8 shadow-xl">
                 <div className="mb-8 text-center">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
@@ -47,19 +47,19 @@ export default function Login() {
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             required
+                            data-testid="venue-login:email"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label htmlFor="login-pin" className="text-sm font-medium">Pin Code</label>
+                        <label htmlFor="login-password" className="text-sm font-medium">Password</label>
                         <Input
-                            id="login-pin"
+                            id="login-password"
                             type="password"
-                            placeholder="4-digit pin"
-                            maxLength={4}
+                            placeholder="Enter password"
                             value={pincode}
                             onChange={e => setPincode(e.target.value)}
                             required
-                            className="tracking-widest"
+                            data-testid="venue-login:pin"
                         />
                     </div>
 
@@ -69,7 +69,7 @@ export default function Login() {
                         </div>
                     )}
 
-                    <Button type="submit" className="w-full" size="lg" loading={isLoading}>
+                    <Button type="submit" className="w-full" size="lg" loading={isLoading} data-testid="venue-login:submit">
                         Sign In
                     </Button>
 

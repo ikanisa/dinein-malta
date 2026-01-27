@@ -18,7 +18,7 @@ import {
 
 // --- Input Validation Schema ---
 const tablesGenerateSchema = z.object({
-  vendor_id: z.string().uuid(),
+  venue_id: z.string().uuid(),
   count: z.number().int().positive().optional(),
   table_numbers: z.array(z.number().int().positive()).optional(),
   start_number: z.number().int().positive().optional(),
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     }
 
     const input: TablesGenerateInput = parsed.data;
-    logger.info("Processing tables generate", { vendorId: input.vendor_id, count: input.count });
+    logger.info("Processing tables generate", { vendorId: input.venue_id, count: input.count });
 
     // Rate limiting
     const rateLimitResult = await checkRateLimit(supabaseAdmin, user.id, RATE_LIMIT, logger);
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     const rbacResult = await requireVendorOrAdmin(
       supabaseAdmin,
       supabaseUser,
-      input.vendor_id,
+      input.venue_id,
       user.id,
       logger
     );
@@ -91,13 +91,13 @@ Deno.serve(async (req) => {
     // STEP 2: Verify vendor exists
     // ========================================================================
     const { data: vendor } = await supabaseAdmin
-      .from("vendors")
+      .from("venues")
       .select("id")
-      .eq("id", input.vendor_id)
+      .eq("id", input.venue_id)
       .single();
 
     if (!vendor) {
-      logger.warn("Vendor not found", { vendorId: input.vendor_id });
+      logger.warn("Vendor not found", { vendorId: input.venue_id });
       return errorResponse("Vendor not found", 404);
     }
 
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     const { data: existingTables } = await supabaseAdmin
       .from("tables")
       .select("table_number")
-      .eq("vendor_id", input.vendor_id)
+      .eq("venue_id", input.venue_id)
       .in("table_number", tableNumbers);
 
     if (existingTables && existingTables.length > 0) {
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
     };
 
     const tablesToInsert = tableNumbers.map((tableNumber) => ({
-      vendor_id: input.vendor_id,
+      venue_id: input.venue_id,
       table_number: tableNumber,
       label: `Table ${tableNumber}`,
       public_code: generatePublicCode(),
@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
     // STEP 6: Write audit log
     // ========================================================================
     await audit.log(AuditAction.TABLES_GENERATE, EntityType.TABLE, null, {
-      vendorId: input.vendor_id,
+      vendorId: input.venue_id,
       tableNumbers,
       count: createdTables.length,
     });

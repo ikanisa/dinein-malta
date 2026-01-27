@@ -19,7 +19,7 @@ export default function Login() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4">
+        <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4" data-testid="admin-login:page">
             <Card className="w-full max-w-md p-8 bg-zinc-900 border-zinc-800 text-zinc-100">
                 <div className="mb-8 text-center">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
@@ -38,7 +38,7 @@ export default function Login() {
                         </p>
                     </div>
 
-                    <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white" size="lg" loading={isSubmitting}>
+                    <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white" size="lg" loading={isSubmitting} data-testid="admin-login:submit">
                         Send Magic Link
                     </Button>
                 </form>

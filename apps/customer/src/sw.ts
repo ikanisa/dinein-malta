@@ -14,8 +14,7 @@ cleanupOutdatedCaches()
 
 precacheAndRoute(self.__WB_MANIFEST)
 
-// 1. Assets (JS, CSS, Images) - StaleWhileRevalidate
-// Served from cache for speed, updated in background
+// 1. Assets (JS, CSS, Images, Workers) - StaleWhileRevalidate
 registerRoute(
     ({ request }) => ['style', 'script', 'worker'].includes(request.destination),
     new StaleWhileRevalidate({
@@ -38,12 +37,15 @@ registerRoute(
     })
 )
 
-// 3. API Requests (Supabase) - NetworkFirst
-// Try network for fresh data, fall back to cache if offline
+// 3. API Requests (Supabase) - NetworkFirst (GET ONLY)
+// Safe for Menus/Venues. Writes (Orders) go to network only.
 registerRoute(
-    ({ url }) => url.hostname.includes('supabase.co'),
+    ({ url, request }) =>
+        url.hostname.includes('supabase.co') &&
+        request.method === 'GET',
     new NetworkFirst({
         cacheName: 'api-cache',
+        networkTimeoutSeconds: 10, // Fallback to cache after 10s timeout
         plugins: [
             new CacheableResponsePlugin({ statuses: [0, 200] }),
             new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 24 * 60 * 60 }), // 24 Hours

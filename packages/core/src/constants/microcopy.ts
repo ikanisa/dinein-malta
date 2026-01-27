@@ -17,6 +17,9 @@ export const MICROCOPY = {
             loginFailed: "Login failed. Check your credentials.",
             claimFailed: "Could not claim venue. Contact support.",
             unauthorized: "You don't have permission to access this."
+        },
+        logs: {
+            loadFailed: "Couldn't load logs. Check connection."
         }
     },
     states: {
@@ -59,10 +62,19 @@ export const MICROCOPY = {
                 title: "No bell calls",
                 description: "Customers can ring the bell to request service.",
             },
+            // Customer
+            favorites: {
+                title: "No favorites yet",
+                description: "Long-press items to add them here.",
+            },
             // Admin Portal
             claims: {
                 title: "No pending claims",
                 description: "Venue claim requests will appear here.",
+            },
+            logs: {
+                title: "No logs found",
+                description: "Activity logs will appear here.",
             }
         }
     },

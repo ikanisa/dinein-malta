@@ -289,7 +289,7 @@ async function seedVendors() {
 
     // 1. Parse Data
     const lines = RAW_DATA.split('\n');
-    const vendors = new Map<string, any>(); // Use Map to deduplicate by slug
+    const venues = new Map<string, any>(); // Use Map to deduplicate by slug
 
     let skippedCount = 0;
 
@@ -312,7 +312,7 @@ async function seedVendors() {
         const slug = slugify(name);
 
         // Handle deduplication (case-insensitive name check effectively via slug)
-        if (vendors.has(slug)) {
+        if (venues.has(slug)) {
             skippedCount++;
             continue;
         }
@@ -320,7 +320,7 @@ async function seedVendors() {
         const currency = country === 'RW' ? 'RWF' : 'EUR';
         const address = country === 'RW' ? 'Kigali, Rwanda' : 'Valletta, Malta'; // Default address based on country
 
-        vendors.set(slug, {
+        venues.set(slug, {
             name,
             slug,
             google_place_id: `manual-${slug}`, // Required constraint!
@@ -334,10 +334,10 @@ async function seedVendors() {
         });
     }
 
-    console.log(`Parsed ${vendors.size} unique vendors. Duplicates skipped: ${skippedCount}`);
+    console.log(`Parsed ${venues.size} unique venues. Duplicates skipped: ${skippedCount}`);
 
     // 2. Batch Insert/Upsert
-    const vendorArray = Array.from(vendors.values());
+    const vendorArray = Array.from(venues.values());
 
     // Process in chunks of 50 to match Supabase limits
     const chunkSize = 50;
@@ -345,13 +345,13 @@ async function seedVendors() {
         const chunk = vendorArray.slice(i, i + chunkSize);
 
         const { error } = await supabase
-            .from('vendors')
+            .from('venues')
             .upsert(chunk, { onConflict: 'slug', ignoreDuplicates: false });
 
         if (error) {
             console.error(`Error Upserting Batch ${i / chunkSize + 1}:`, error);
         } else {
-            console.log(`✅ Upserted batch ${i / chunkSize + 1} (${chunk.length} vendors)`);
+            console.log(`✅ Upserted batch ${i / chunkSize + 1} (${chunk.length} venues)`);
         }
     }
 

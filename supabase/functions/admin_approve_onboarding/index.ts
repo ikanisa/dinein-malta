@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         // ========================================================================
         const { data: request, error: requestError } = await supabaseAdmin
             .from("onboarding_requests")
-            .select("*, vendors(*)")
+            .select("*, venues(*)")
             .eq("id", input.request_id)
             .single();
 
@@ -105,9 +105,9 @@ Deno.serve(async (req) => {
             if (request.momo_code) vendorUpdates.momo_code = request.momo_code;
 
             const { error: vendorUpdateError } = await supabaseAdmin
-                .from("vendors")
+                .from("venues")
                 .update(vendorUpdates)
-                .eq("id", request.vendor_id);
+                .eq("id", request.venue_id);
 
             if (vendorUpdateError) {
                 logger.error("Failed to update vendor", { error: vendorUpdateError.message });
@@ -116,9 +116,9 @@ Deno.serve(async (req) => {
 
             // Activate the vendor user
             const { error: userUpdateError } = await supabaseAdmin
-                .from("vendor_users")
+                .from("venue_users")
                 .update({ is_active: true })
-                .eq("vendor_id", request.vendor_id)
+                .eq("venue_id", request.venue_id)
                 .eq("auth_user_id", request.submitted_by);
 
             if (userUpdateError) {
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
             // Add menu items if provided
             if (request.menu_items_json && Array.isArray(request.menu_items_json)) {
                 const menuItems = request.menu_items_json.map((item: any) => ({
-                    vendor_id: request.vendor_id,
+                    venue_id: request.venue_id,
                     name: item.name,
                     description: item.description || null,
                     price: item.price,
@@ -163,14 +163,14 @@ Deno.serve(async (req) => {
                 .eq("id", input.request_id);
 
             // Audit log
-            await audit.log(AuditAction.UPDATE, EntityType.VENDOR, request.vendor_id, {
+            await audit.log(AuditAction.UPDATE, EntityType.VENDOR, request.venue_id, {
                 action: "onboarding_approved",
                 requestId: input.request_id,
                 approvedBy: user.id,
             });
 
             logger.info("Onboarding approved successfully", {
-                vendorId: request.vendor_id,
+                vendorId: request.venue_id,
                 email: request.email
             });
 
@@ -192,13 +192,13 @@ Deno.serve(async (req) => {
 
             // Deactivate the vendor user (keep for audit trail)
             await supabaseAdmin
-                .from("vendor_users")
+                .from("venue_users")
                 .update({ is_active: false })
-                .eq("vendor_id", request.vendor_id)
+                .eq("venue_id", request.venue_id)
                 .eq("auth_user_id", request.submitted_by);
 
             // Audit log
-            await audit.log(AuditAction.UPDATE, EntityType.VENDOR, request.vendor_id, {
+            await audit.log(AuditAction.UPDATE, EntityType.VENDOR, request.venue_id, {
                 action: "onboarding_rejected",
                 requestId: input.request_id,
                 rejectedBy: user.id,
@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
             });
 
             logger.info("Onboarding rejected", {
-                vendorId: request.vendor_id,
+                vendorId: request.venue_id,
                 email: request.email
             });
         }

@@ -66,10 +66,10 @@ Deno.serve(async (req) => {
         if (rateLimitResult instanceof Response) return rateLimitResult;
 
         // ========================================================================
-        // Search vendors table
+        // Search venues table
         // ========================================================================
         let query = supabaseAdmin
-            .from("vendors")
+            .from("venues")
             .select("id, name, address, country, slug, status, lat, lng, photos_json")
             .or(`name.ilike.%${input.query}%,address.ilike.%${input.query}%`)
             .order("name", { ascending: true })
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
             query = query.eq("country", input.country.toUpperCase());
         }
 
-        const { data: vendors, error: queryError } = await query;
+        const { data: venues, error: queryError } = await query;
 
         if (queryError) {
             logger.error("Database query failed", { error: queryError.message });
@@ -96,8 +96,8 @@ Deno.serve(async (req) => {
         return jsonResponse({
             success: true,
             requestId,
-            count: vendors?.length || 0,
-            bars: (vendors || []).map((v) => ({
+            count: venues?.length || 0,
+            bars: (venues || []).map((v) => ({
                 id: v.id,
                 name: v.name,
                 address: v.address,

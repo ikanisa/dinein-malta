@@ -14,7 +14,7 @@ export type { Order, OrderItem };
 export interface CreateOrderPayload {
     venue_id: string;
     table_no?: string;
-    payment_method: 'cash' | 'momo' | 'revolut';
+    payment_method: 'cash' | 'momo_ussd' | 'revolut_link';
     items: Array<{
         menu_item_id: string;
         name: string;

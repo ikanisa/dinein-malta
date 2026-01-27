@@ -4,7 +4,7 @@ import { Button, Card, Badge, Input, Skeleton } from '@dinein/ui'
 import {
     getIngestJob,
     getStagingItems,
-    updateStagingItemStatus,
+    updateStagingItemAction,
     publishApprovedItems,
     IngestJob,
     IngestStagingItem
@@ -34,7 +34,7 @@ export default function IngestMenu() {
             if (fetchedJob) {
                 setJob(fetchedJob)
 
-                if (fetchedJob.status === 'completed') {
+                if (fetchedJob.status === 'needs_review') {
                     const stagingItems = await getStagingItems(supabase, jobId)
                     setItems(stagingItems)
                 }
@@ -53,7 +53,7 @@ export default function IngestMenu() {
 
         // Poll every 2s while job is processing
         const interval = setInterval(() => {
-            if (job?.status === 'pending' || job?.status === 'processing') {
+            if (job?.status === 'pending' || job?.status === 'running') {
                 fetchData()
             } else {
                 clearInterval(interval)
@@ -66,12 +66,12 @@ export default function IngestMenu() {
     const handleApprove = async (itemId: string) => {
         setUpdatingItems(prev => new Set(prev).add(itemId))
 
-        const result = await updateStagingItemStatus(supabase, itemId, 'approved')
+        const result = await updateStagingItemAction(supabase, itemId, 'keep')
         if (result) {
-            setItems(prev => prev.map(i => i.id === itemId ? { ...i, status: 'approved' } : i))
-            toast.success('Item approved')
+            setItems(prev => prev.map(i => i.id === itemId ? { ...i, suggested_action: 'keep' } : i))
+            toast.success('Item kept')
         } else {
-            toast.error('Failed to approve item')
+            toast.error('Failed to update item')
         }
 
         setUpdatingItems(prev => {
@@ -84,12 +84,12 @@ export default function IngestMenu() {
     const handleReject = async (itemId: string) => {
         setUpdatingItems(prev => new Set(prev).add(itemId))
 
-        const result = await updateStagingItemStatus(supabase, itemId, 'rejected')
+        const result = await updateStagingItemAction(supabase, itemId, 'drop')
         if (result) {
-            setItems(prev => prev.map(i => i.id === itemId ? { ...i, status: 'rejected' } : i))
-            toast.success('Item rejected')
+            setItems(prev => prev.map(i => i.id === itemId ? { ...i, suggested_action: 'drop' } : i))
+            toast.success('Item removed')
         } else {
-            toast.error('Failed to reject item')
+            toast.error('Failed to update item')
         }
 
         setUpdatingItems(prev => {
@@ -151,7 +151,7 @@ export default function IngestMenu() {
         )
     }
 
-    const approvedCount = items.filter(i => i.status === 'approved').length
+    const approvedCount = items.filter(i => i.suggested_action !== 'drop').length
 
     return (
         <div className="space-y-6">
@@ -172,7 +172,7 @@ export default function IngestMenu() {
             </header>
 
             {/* Processing state */}
-            {(job.status === 'pending' || job.status === 'processing') && (
+            {(job.status === 'pending' || job.status === 'running') && (
                 <Card className="p-12 flex flex-col items-center justify-center text-center space-y-4">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                     <div className="space-y-1">
@@ -201,7 +201,7 @@ export default function IngestMenu() {
             )}
 
             {/* Completed - show items for review */}
-            {job.status === 'completed' && (
+            {(job.status === 'needs_review' || job.status === 'published') && (
                 <div className="space-y-4">
                     {items.length === 0 ? (
                         <Card className="p-8 text-center">
@@ -211,8 +211,8 @@ export default function IngestMenu() {
                         items.map(item => (
                             <Card
                                 key={item.id}
-                                className={`p-4 transition-colors ${item.status === 'rejected' ? 'opacity-50 bg-muted' : ''
-                                    } ${item.status === 'approved' ? 'border-green-500/50 bg-green-500/5' : ''
+                                className={`p-4 transition-colors ${item.suggested_action === 'drop' ? 'opacity-50 bg-muted' : ''
+                                    } ${item.suggested_action === 'keep' ? 'border-green-500/50 bg-green-500/5' : ''
                                     }`}
                             >
                                 <div className="flex flex-col md:flex-row gap-4">
@@ -222,7 +222,7 @@ export default function IngestMenu() {
                                             <label htmlFor={`category-${item.id}`} className="text-xs font-medium text-muted-foreground">
                                                 Category
                                             </label>
-                                            <Input id={`category-${item.id}`} defaultValue={item.category} className="h-8" />
+                                            <Input id={`category-${item.id}`} defaultValue={item.raw_category ?? ''} className="h-8" />
                                         </div>
                                         <div className="md:col-span-1">
                                             <label htmlFor={`name-${item.id}`} className="text-xs font-medium text-muted-foreground">
@@ -234,7 +234,7 @@ export default function IngestMenu() {
                                             <label htmlFor={`price-${item.id}`} className="text-xs font-medium text-muted-foreground">
                                                 Price
                                             </label>
-                                            <Input id={`price-${item.id}`} defaultValue={item.price.toString()} className="h-8" />
+                                            <Input id={`price-${item.id}`} defaultValue={(item.price ?? 0).toString()} className="h-8" />
                                         </div>
                                         <div className="md:col-span-1">
                                             <span className="text-xs font-medium text-muted-foreground block">Confidence</span>
@@ -246,13 +246,13 @@ export default function IngestMenu() {
                                             <label htmlFor={`description-${item.id}`} className="text-xs font-medium text-muted-foreground">
                                                 Description
                                             </label>
-                                            <Input id={`description-${item.id}`} defaultValue={item.description} className="h-8" />
+                                            <Input id={`description-${item.id}`} defaultValue={item.description ?? ''} className="h-8" />
                                         </div>
                                     </div>
 
                                     {/* Actions */}
                                     <div className="flex flex-col justify-center gap-2 border-l pl-4">
-                                        {item.status !== 'approved' && (
+                                        {item.suggested_action !== 'keep' && (
                                             <Button
                                                 size="sm"
                                                 className="bg-green-600 hover:bg-green-700 w-full"
@@ -266,7 +266,7 @@ export default function IngestMenu() {
                                                 )}
                                             </Button>
                                         )}
-                                        {item.status !== 'rejected' && (
+                                        {item.suggested_action !== 'drop' && (
                                             <Button
                                                 size="sm"
                                                 variant="outline"

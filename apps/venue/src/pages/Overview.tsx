@@ -17,7 +17,7 @@ export default function Overview() {
     ]
 
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-8 animate-fade-in" data-testid="venue-dashboard:page">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                 <p className="text-muted-foreground">Overview of your venue's performance today.</p>

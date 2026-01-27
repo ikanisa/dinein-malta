@@ -10,123 +10,151 @@
    ======================================== */
 
 :root {
-    /* Primary brand colors - Premium Indigo/Purple gradient */
-    --color-brand: 99 102 241;
-    --color-brand-secondary: 168 85 247;
-    --color-background: 248 250 255;
-    --radius-default: 1rem;
-
-    /* Premium color palette - Light Mode Defaults */
-    --indigo-50: #eef2ff;
-    --indigo-100: #e0e7ff;
-    --indigo-400: #818cf8;
-    --indigo-500: #6366f1;
-    --indigo-600: #4f46e5;
-
-    /* Semantic Colors */
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
-    --bg-primary: #f8fafc;
-    --bg-secondary: #ffffff;
-    --border-color: #e2e8f0;
-
-    /* Glass effect tokens */
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.7);
-    --glass-blur: 32px;
-    --glass-shadow: 0 8px 32px rgba(99, 102, 241, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-
+    /* Bright Bistro (Light Mode) - Design Pack */
+    --background: #FCFAF6;
+    --foreground: #141318;
+    
+    --card: #FFFFFF;
+    --card-foreground: #141318;
+    
+    --popover: #FFFFFF;
+    --popover-foreground: #141318;
+    
+    --primary: #FF6A00;
+    --primary-foreground: #FFFFFF;
+    
+    --secondary: #FFF8EE;
+    --secondary-foreground: #141318;
+    
+    --muted: #FFF8EE;
+    --muted-foreground: #4E4B57;
+    
+    --accent: #FFF8EE;
+    --accent-foreground: #141318;
+    
+    --destructive: #DC2626;
+    --destructive-foreground: #FFFFFF;
+    
+    --border: #E6DFD4;
+    --input: #E6DFD4;
+    --ring: #FF9A4A;
+    
+    --radius: 1rem;
+    
+    /* Design Pack Specifics */
+    --surface: #FFFFFF;
+    --surface-2: #FFF8EE;
+    --surface-3: #F2EEE7;
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(20, 19, 24, 0.10);
+    --glass-blur: 16px;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    
+    --rw-accent: rgba(46, 204, 113, 0.18);
+    --mt-accent: rgba(59, 167, 255, 0.18);
+    
     --safe-area-inset-top: env(safe-area-inset-top);
     --safe-area-inset-bottom: env(safe-area-inset-bottom);
-
-    /* Shadcn HSL Tokens */
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 239 84% 67%;
-    /* Indigo 500 */
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 239 84% 67%;
-
-    --radius: 1rem;
+    
+    /* Legacy Aliases & Gradients */
+    --bg-primary: var(--background);
+    --text-primary: var(--foreground);
+    --bg-secondary: var(--secondary);
+    --text-secondary: var(--muted-foreground);
+    --border-color: var(--border);
 }
 
-/* Dark mode support */
+/* Dark Mode (Candlelight Modern) */
 @media (prefers-color-scheme: dark) {
     :root {
-        /* Semantic Colors - Dark Override */
-        --text-primary: #f1f5f9;
-        --text-secondary: #94a3b8;
-        --bg-primary: #0f172a;
-        --bg-secondary: #1e293b;
-        --border-color: #334155;
-
-        --glass-bg: rgba(30, 41, 59, 0.85);
-        /* Darker glass */
-        --glass-border: rgba(51, 65, 85, 0.5);
+        --background: #0B0B0E;
+        --foreground: #F4F1EA;
+        
+        --card: #12131A;
+        --card-foreground: #F4F1EA;
+        
+        --popover: #12131A;
+        --popover-foreground: #F4F1EA;
+        
+        --primary: #FF7A1A;
+        --primary-foreground: #FFFFFF;
+        
+        --secondary: #161825;
+        --secondary-foreground: #F4F1EA;
+        
+        --muted: #161825;
+        --muted-foreground: #B9B4A7;
+        
+        --accent: #161825;
+        --accent-foreground: #F4F1EA;
+        
+        --destructive: #FF4D4F;
+        --destructive-foreground: #FFFFFF;
+        
+        --border: #26283A;
+        --input: #26283A;
+        --ring: #FFB15C;
+        
+        --surface: #12131A;
+        --surface-2: #161825;
+        --surface-3: #1B1F2E;
+        
+        --glass-bg: rgba(18, 19, 26, 0.62);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-blur: 18px;
         --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+        
+        --bg-primary: var(--background);
+        --text-primary: var(--foreground);
+        --bg-secondary: var(--secondary);
+        --text-secondary: var(--muted-foreground);
+        --border-color: var(--border);
     }
 }
 
-/* Manual Dark Mode Class (via ThemeToggle) takes precedence */
 .dark {
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --border-color: #334155;
-
+    --background: #0B0B0E;
+    --foreground: #F4F1EA;
+    
+    --card: #12131A;
+    --card-foreground: #F4F1EA;
+    
+    --popover: #12131A;
+    --popover-foreground: #F4F1EA;
+    
+    --primary: #FF7A1A;
+    --primary-foreground: #FFFFFF;
+    
+    --secondary: #161825;
+    --secondary-foreground: #F4F1EA;
+    
+    --muted: #161825;
+    --muted-foreground: #B9B4A7;
+    
+    --accent: #161825;
+    --accent-foreground: #F4F1EA;
+    
+    --destructive: #FF4D4F;
+    --destructive-foreground: #FFFFFF;
+    
+    --border: #26283A;
+    --input: #26283A;
+    --ring: #FFB15C;
+    
+    --surface: #12131A;
+    --surface-2: #161825;
+    --surface-3: #1B1F2E;
+    
+    --glass-bg: rgba(18, 19, 26, 0.62);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: 18px;
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
-
-    /* Shadcn Dark Tokens */
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 239 84% 67%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    
+    --bg-primary: var(--background);
+    --text-primary: var(--foreground);
+    --bg-secondary: var(--secondary);
+    --text-secondary: var(--muted-foreground);
+    --border-color: var(--border);
 }
 
 * {
@@ -141,8 +169,8 @@ html {
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
+    background-color: var(--background);
+    color: var(--foreground);
     overflow-x: hidden;
     background-image:
         radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),

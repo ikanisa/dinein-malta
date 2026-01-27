@@ -2,7 +2,8 @@
  * Ingest (OCR) query helpers for packages/db
  * Provides typed data access for menu OCR ingestion pipeline
  * 
- * Flow: Upload → Job Created (pending) → Processing → Completed → Staging Review → Publish
+ * Tables: menu_ingest_jobs, menu_items_staging
+ * Flow: Upload → Job Created (pending) → Running → NeedsReview → Publish/Failed
  */
 import type { IngestJob, IngestStagingItem } from '../types';
 
@@ -21,19 +22,22 @@ export type StagingItemForReview = IngestStagingItem & {
  * Create a new ingest job (pending status)
  * @param client - Supabase client instance
  * @param venueId - Venue UUID
- * @param imageUrl - URL of uploaded menu image
+ * @param filePath - Storage path of uploaded menu image
+ * @param userId - Auth user ID who created the job
  * @returns Created job or null on error
  */
 export async function createIngestJob(
     client: SupabaseClient,
     venueId: string,
-    imageUrl: string
+    filePath: string,
+    userId: string
 ): Promise<IngestJob | null> {
     const { data, error } = await client
-        .from('ingest_jobs')
+        .from('menu_ingest_jobs')
         .insert({
             venue_id: venueId,
-            image_url: imageUrl,
+            file_path: filePath,
+            created_by: userId,
             status: 'pending',
         })
         .select()
@@ -58,7 +62,7 @@ export async function getIngestJobs(
     venueId: string
 ): Promise<IngestJob[]> {
     const { data, error } = await client
-        .from('ingest_jobs')
+        .from('menu_ingest_jobs')
         .select('*')
         .eq('venue_id', venueId)
         .order('created_at', { ascending: false });
@@ -82,7 +86,7 @@ export async function getIngestJob(
     jobId: string
 ): Promise<IngestJob | null> {
     const { data, error } = await client
-        .from('ingest_jobs')
+        .from('menu_ingest_jobs')
         .select('*')
         .eq('id', jobId)
         .single();
@@ -108,7 +112,7 @@ export async function updateIngestJobStatus(
     status: IngestJob['status']
 ): Promise<IngestJob | null> {
     const { data, error } = await client
-        .from('ingest_jobs')
+        .from('menu_ingest_jobs')
         .update({ status })
         .eq('id', jobId)
         .select()
@@ -133,10 +137,10 @@ export async function getStagingItems(
     jobId: string
 ): Promise<IngestStagingItem[]> {
     const { data, error } = await client
-        .from('ingest_staging_items')
+        .from('menu_items_staging')
         .select('*')
         .eq('job_id', jobId)
-        .order('category', { ascending: true });
+        .order('raw_category', { ascending: true });
 
     if (error) {
         console.error('Error fetching staging items:', error.message);
@@ -169,13 +173,13 @@ export async function createStagingItems(
         name: item.name,
         description: item.description ?? '',
         price: item.price,
-        category: item.category ?? 'Uncategorized',
+        raw_category: item.category ?? 'Uncategorized',
         confidence: item.confidence,
-        status: 'draft',
+        suggested_action: 'keep' as const,
     }));
 
     const { data, error } = await client
-        .from('ingest_staging_items')
+        .from('menu_items_staging')
         .insert(rows)
         .select();
 
@@ -188,26 +192,26 @@ export async function createStagingItems(
 }
 
 /**
- * Update staging item status
+ * Update staging item action (keep/edit/drop)
  * @param client - Supabase client instance
  * @param itemId - Staging item UUID
- * @param status - New status
+ * @param action - New action
  * @returns Updated item or null
  */
-export async function updateStagingItemStatus(
+export async function updateStagingItemAction(
     client: SupabaseClient,
     itemId: string,
-    status: IngestStagingItem['status']
+    action: IngestStagingItem['suggested_action']
 ): Promise<IngestStagingItem | null> {
     const { data, error } = await client
-        .from('ingest_staging_items')
-        .update({ status })
+        .from('menu_items_staging')
+        .update({ suggested_action: action })
         .eq('id', itemId)
         .select()
         .single();
 
     if (error) {
-        console.error('Error updating staging item status:', error.message);
+        console.error('Error updating staging item action:', error.message);
         return null;
     }
 
@@ -215,8 +219,8 @@ export async function updateStagingItemStatus(
 }
 
 /**
- * Publish approved staging items to menu
- * Creates menu items from approved staging items
+ * Publish kept staging items to menu
+ * Creates menu items from staging items with suggested_action='keep'
  * 
  * @param client - Supabase client instance
  * @param jobId - Job UUID
@@ -228,17 +232,17 @@ export async function publishApprovedItems(
     client: SupabaseClient,
     jobId: string,
     venueId: string,
-    currency: 'RWF' | 'EUR' = 'RWF'
+    currency: 'RWF' | 'EUR' = 'EUR'
 ): Promise<number> {
-    // Get approved items
+    // Get items to publish (action = 'keep')
     const { data: rawStagingItems, error: fetchError } = await client
-        .from('ingest_staging_items')
+        .from('menu_items_staging')
         .select('*')
         .eq('job_id', jobId)
-        .eq('status', 'approved');
+        .neq('suggested_action', 'drop');
 
     if (fetchError || !rawStagingItems?.length) {
-        console.error('Error fetching approved items:', fetchError?.message);
+        console.error('Error fetching staging items:', fetchError?.message);
         return 0;
     }
 
@@ -246,15 +250,14 @@ export async function publishApprovedItems(
     const stagingItems = rawStagingItems as IngestStagingItem[];
 
     // Create menu items
-    const menuItems = stagingItems.map((item, index) => ({
+    const menuItems = stagingItems.map((item, _index) => ({
         venue_id: venueId,
-        category_id: null, // Would need category lookup/creation
+        category: item.raw_category,
         name: item.name,
         description: item.description,
-        price: item.price,
+        price: item.price ?? 0,
         currency,
-        available: true,
-        sort_order: index,
+        is_available: true,
     }));
 
     const { data: created, error: insertError } = await client
@@ -266,6 +269,12 @@ export async function publishApprovedItems(
         console.error('Error creating menu items:', insertError.message);
         return 0;
     }
+
+    // Mark job as published
+    await client
+        .from('menu_ingest_jobs')
+        .update({ status: 'published', updated_at: new Date().toISOString() })
+        .eq('id', jobId);
 
     return created?.length ?? 0;
 }

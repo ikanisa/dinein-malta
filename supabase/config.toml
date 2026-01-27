@@ -399,11 +399,11 @@ verify_jwt = true
 import_map = "./functions/order_mark_paid/deno.json"
 entrypoint = "./functions/order_mark_paid/index.ts"
 
-[functions.vendor_claim]
+[functions.venue_claim]
 enabled = true
 verify_jwt = true
-import_map = "./functions/vendor_claim/deno.json"
-entrypoint = "./functions/vendor_claim/index.ts"
+import_map = "./functions/venue_claim/deno.json"
+entrypoint = "./functions/venue_claim/index.ts"
 
 [functions.tables_generate]
 enabled = true

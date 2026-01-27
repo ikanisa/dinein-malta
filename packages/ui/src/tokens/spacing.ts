@@ -35,3 +35,33 @@ export const spacing = {
     '80': '20rem',
     '96': '24rem',
 };
+
+/**
+ * Layout constants for consistent mobile-first PWA design.
+ * - containerMaxWidth: Max content width on mobile (520-640px per workflow)
+ * - horizontalPadding: Default horizontal page padding
+ * - safeAreaBottom: Bottom padding for nav + cart pill (~56px nav + buffer)
+ * - minTapTarget: Minimum touch target size (WCAG 2.5.5)
+ */
+export const LAYOUT = {
+    containerMaxWidth: '640px',
+    horizontalPadding: '16px',
+    safeAreaBottom: '84px',       // 56px bottom nav + 28px buffer for cart pill
+    minTapTarget: '44px',
+} as const;
+
+/**
+ * Numeric spacing scale (pixels) for programmatic use
+ */
+export const SPACING_PX = {
+    0: 0,
+    1: 4,
+    2: 8,
+    3: 12,
+    4: 16,
+    5: 20,
+    6: 24,
+    8: 32,
+    10: 40,
+    12: 48,
+} as const;

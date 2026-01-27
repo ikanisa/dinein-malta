@@ -1,3 +1,7 @@
+/**
+ * @deprecated Use MOTION from './motion.ts' instead.
+ * This file is kept for backwards compatibility only.
+ */
 export const animations = {
     duration: {
         DEFAULT: '0.3s',

@@ -62,25 +62,53 @@ export default function Claim() {
         e.preventDefault()
         if (!selectedVenue) return
 
+        const formData = new FormData(e.currentTarget)
+        const email = formData.get('email') as string
+        const phone = formData.get('phone') as string
+        const password = formData.get('password') as string
+
+        if (!email || !phone || !password) return
+
         setSubmitting(true)
         try {
-            // Update vendors.claimed to true
-            const { error } = await supabase
-                .from('vendors')
-                .update({ claimed: true })
-                .eq('id', selectedVenue.id)
+            // 1. Sign Up User
+            const { error: authError } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: { phone }
+                }
+            })
 
-            if (error) {
-                console.error('Claim error:', error)
-                alert('Failed to claim venue. Please try again.')
-                return
+            if (authError) {
+                // If user exists, we might still want to submit the claim?
+                // Or tell them to login?
+                if (authError.message.includes('already registered')) {
+                    alert("User already registered. Please login first (if you haven't) or check your email.")
+                    // Proceed to submit claim anyway? 
+                    // If we proceed, we use the email.
+                } else {
+                    throw authError
+                }
             }
 
-            alert(`Successfully claimed ${selectedVenue.name}! You are now the owner.`)
-            navigate('/dashboard')
-        } catch (error) {
+            // 2. Submit Claim Request
+            const { data, error } = await supabase.functions.invoke('submit_claim', {
+                body: {
+                    venue_id: selectedVenue.id,
+                    email,
+                    phone
+                }
+            })
+
+            if (error) throw error
+            if (!data?.success) throw new Error(data?.message || 'Submission failed')
+
+            alert(`Account created! Please CHECK YOUR EMAIL to confirm.\n\nClaim request submitted for ${selectedVenue.name}.`)
+            navigate('/login')
+        } catch (error: any) {
             console.error('Error:', error)
-            alert('An error occurred. Please try again.')
+            alert(error.message || 'An error occurred. Please try again.')
         } finally {
             setSubmitting(false)
         }
@@ -144,27 +172,60 @@ export default function Claim() {
                     </>
                 ) : (
                     <form onSubmit={handleSubmitClaim} className="space-y-4">
-                        <h2 className="text-lg font-semibold">Verify Ownership</h2>
-                        <p className="text-sm text-muted-foreground">
-                            To claim <strong>{selectedVenue?.name}</strong>, please provide your business details.
-                        </p>
-
-                        <div className="space-y-2">
-                            <label htmlFor="claim-email" className="text-sm font-medium">Business Email</label>
-                            <Input id="claim-email" name="email" type="email" required placeholder="manager@venue.com" />
-                        </div>
-                        <div className="space-y-2">
-                            <label htmlFor="claim-phone" className="text-sm font-medium">Business Phone</label>
-                            <Input id="claim-phone" name="phone" type="tel" required placeholder="+250 ..." />
+                        <div className="space-y-2 text-center">
+                            <h2 className="text-xl font-semibold">Verify Ownership</h2>
+                            <p className="text-muted-foreground text-sm">
+                                Claim request for <span className="text-foreground font-bold">{selectedVenue?.name}</span>
+                            </p>
                         </div>
 
-                        <div className="pt-4 flex gap-2">
+                        <div className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                                <label htmlFor="claim-email" className="text-sm font-medium">Business Email</label>
+                                <Input
+                                    id="claim-email"
+                                    name="email"
+                                    type="email"
+                                    required
+                                    placeholder="manager@venue.com"
+                                    className="bg-muted/30"
+                                />
+                                <p className="text-xs text-muted-foreground">This will be your login email.</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label htmlFor="claim-phone" className="text-sm font-medium">Business Phone</label>
+                                <Input
+                                    id="claim-phone"
+                                    name="phone"
+                                    type="tel"
+                                    required
+                                    placeholder="+250 ..."
+                                    className="bg-muted/30"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label htmlFor="claim-password" className="text-sm font-medium">Create Password</label>
+                                <Input
+                                    id="claim-password"
+                                    name="password"
+                                    type="password"
+                                    required
+                                    placeholder="••••••"
+                                    minLength={6}
+                                    className="bg-muted/30"
+                                />
+                                <p className="text-xs text-muted-foreground">Minimum 6 characters.</p>
+                            </div>
+                        </div>
+
+                        <div className="pt-6 flex gap-3">
                             <Button type="button" variant="outline" className="flex-1" onClick={() => setStep('search')}>
                                 Cancel
                             </Button>
-                            <Button type="submit" className="flex-1" disabled={submitting}>
-                                {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                                Submit Claim
+                            <Button type="submit" className="flex-1 bg-primary text-primary-foreground shadow-glass" loading={submitting}>
+                                Submit Request
                             </Button>
                         </div>
                     </form>

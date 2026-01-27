@@ -62,59 +62,69 @@ export function ThemeProvider({
         const root = window.document.documentElement
         root.classList.remove("light", "dark")
 
-        // "candlelight" is dark-like, "bistro" is light-like
-        // This helps tailwind dark: modifiers work if we map them
+        // "candlelight" is dark-like, "bistro" is light-like.
         const mode = theme === 'candlelight' ? 'dark' : 'light';
         root.classList.add(mode);
 
         const palette = PALETTES[theme];
         if (!palette) return;
 
-        // Helper to set variable
-        const setVar = (name: string, hexValue: string) => {
-            if (!hexValue || hexValue.startsWith('rgba') || hexValue.startsWith('linear')) {
-                // If rgba or gradient, we can't easily put it inside hsl(). 
-                // For now, we assume standard colors are Hex. 
-                // For rgba/gradients, we might need a separate strategy or just set them raw 
-                // and hope tailwind config doesn't wrap them in hsl() forcefully.
-                // NOTE: The current tailwind config WRAPS everything in hsl(). 
-                // We MUST skip wrapper for complex values in config, or use HSL for everything.
-                // For V1, we only map the core shadcn colors which are Hex in our palette.
-                return;
+        // Optimized setVar that handles both Hex (converted to HSL for Shadcn) 
+        // and raw values (RGB/RGBA) for new utility tokens.
+        const setVar = (name: string, value: string, asHsl: boolean = false) => {
+            if (!value) return;
+
+            if (asHsl) {
+                // For legacy Shadcn vars that REQUIRE H S L format (without hsl() wrapper)
+                // This logic is kept to avoid breaking existing Shadcn components.
+                if (value.startsWith('#')) {
+                    root.style.setProperty(name, hexToHsl(value));
+                }
+                // If it's not hex (e.g. rgba), we can't easily convert to HSL channels. 
+                // We skip setting the HSL channel var if it's not compatible.
+            } else {
+                // Set usage-ready values (Hex, RGBA, etc.)
+                root.style.setProperty(name, value);
             }
-            root.style.setProperty(name, hexToHsl(hexValue));
         };
 
-        // Map DineIn Palette to Shadcn Variables
-        setVar('--background', palette.bg);
-        setVar('--foreground', palette.text);
+        // --- 1. SHADCN COMPATIBILITY LAYER (HSL Channels) ---
+        // These are used by standard components: hsl(var(--primary))
+        setVar('--background', palette.bg, true);
+        setVar('--foreground', palette.text, true);
+        setVar('--card', palette.surface, true);
+        setVar('--card-foreground', palette.text, true);
+        setVar('--popover', palette.surface, true);
+        setVar('--popover-foreground', palette.text, true);
+        setVar('--primary', palette.primary, true);
+        setVar('--primary-foreground', palette.bg, true);
+        setVar('--secondary', palette.surface2, true);
+        setVar('--secondary-foreground', palette.text, true);
+        setVar('--muted', palette.surface3, true);
+        setVar('--muted-foreground', palette.textMuted, true);
+        setVar('--accent', palette.surface2, true);
+        setVar('--accent-foreground', palette.text, true);
+        setVar('--destructive', palette.danger, true);
+        setVar('--destructive-foreground', palette.text, true);
+        setVar('--border', palette.border, true);
+        setVar('--input', palette.border, true);
+        setVar('--ring', palette.focusRing, true);
+        setVar('--radius', '0.5rem', false); // Direct value
 
-        setVar('--card', palette.surface);
-        setVar('--card-foreground', palette.text);
+        // --- 2. DINEIN PREMIUM TOKENS (Direct Values) ---
+        // These match the user's new tailwind config: var(--name)
+        setVar('--surface', palette.surface);
+        setVar('--surface-2', palette.surface2);
+        setVar('--surface-3', palette.surface3);
 
-        setVar('--popover', palette.surface);
-        setVar('--popover-foreground', palette.text);
+        setVar('--glass-bg', palette.glassBg);
+        setVar('--glass-border', palette.glassBorder);
 
-        setVar('--primary', palette.primary);
-        setVar('--primary-foreground', palette.bg); // Text on primary
+        setVar('--rw-accent', palette.rwAccent);
+        setVar('--mt-accent', palette.mtAccent);
 
-        setVar('--secondary', palette.surface2);
-        setVar('--secondary-foreground', palette.text);
-
-        setVar('--muted', palette.surface3);
-        setVar('--muted-foreground', palette.textMuted);
-
-        setVar('--accent', palette.surface2);
-        setVar('--accent-foreground', palette.text);
-
-        setVar('--destructive', palette.danger);
-        setVar('--destructive-foreground', palette.text);
-
-        setVar('--border', palette.border);
-        setVar('--input', palette.border); // Inputs use border color
-        setVar('--ring', palette.focusRing);
-
-        setVar('--radius', '0.5rem');
+        // Also expose base colors as CSS vars for flexibility
+        setVar('--color-brand', palette.primary); // Note: globals.css might expect RGB channels, but this is a fallback.
 
     }, [theme])
 

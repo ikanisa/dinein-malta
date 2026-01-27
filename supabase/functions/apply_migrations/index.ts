@@ -33,15 +33,15 @@ BEGIN
   ) THEN
     ALTER TABLE public.orders 
     ADD CONSTRAINT orders_vendor_code_unique 
-    UNIQUE (vendor_id, order_code);
+    UNIQUE (venue_id, order_code);
   END IF;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_orders_vendor_status_created 
-  ON public.orders(vendor_id, status, created_at DESC);
+  ON public.orders(venue_id, status, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_menu_items_vendor_available 
-  ON public.menu_items(vendor_id, is_available) 
+  ON public.menu_items(venue_id, is_available) 
   WHERE is_available = true;
 
 CREATE INDEX IF NOT EXISTS idx_tables_public_code 
@@ -52,7 +52,7 @@ CREATE INDEX IF NOT EXISTS idx_order_items_order_id_created
   ON public.order_items(order_id, created_at);
 
 CREATE INDEX IF NOT EXISTS idx_reservations_vendor_datetime_status 
-  ON public.reservations(vendor_id, datetime, status);
+  ON public.reservations(venue_id, datetime, status);
 
 -- RLS Hardening
 DROP POLICY IF EXISTS "orders_insert_client" ON public.orders;
@@ -62,11 +62,11 @@ DROP POLICY IF EXISTS "tables_select_public_by_code" ON public.tables;
 CREATE POLICY "tables_select_public_by_code"
 ON public.tables FOR SELECT
 USING (
-  public.can_manage_vendor_ops(vendor_id)
+  public.can_manage_vendor_ops(venue_id)
   OR
   (is_active = true AND EXISTS (
-    SELECT 1 FROM public.vendors v 
-    WHERE v.id = vendor_id AND v.status = 'active'
+    SELECT 1 FROM public.venues v 
+    WHERE v.id = venue_id AND v.status = 'active'
   ))
 );
 

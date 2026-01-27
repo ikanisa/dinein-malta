@@ -19,7 +19,7 @@ import {
 const ocrSchema = z.object({
     image_base64: z.string().min(100), // Base64 encoded image
     mime_type: z.enum(["image/jpeg", "image/png", "image/webp"]),
-    vendor_id: z.string().uuid().optional(), // Optional context
+    venue_id: z.string().uuid().optional(), // Optional context
 });
 
 type OcrInput = z.infer<typeof ocrSchema>;
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         }
 
         const input: OcrInput = parsed.data;
-        logger.info("Processing menu OCR", { mimeType: input.mime_type, vendorId: input.vendor_id });
+        logger.info("Processing menu OCR", { mimeType: input.mime_type, vendorId: input.venue_id });
 
         // Rate limiting
         const rateLimitResult = await checkRateLimit(supabaseAdmin, user.id, RATE_LIMIT, logger);

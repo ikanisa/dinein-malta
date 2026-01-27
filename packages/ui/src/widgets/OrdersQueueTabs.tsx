@@ -10,9 +10,9 @@ export interface OrdersQueueTabsProps {
     /** Status tabs with counts */
     statuses: OrderStatus[];
     /** Currently active status */
-    activeStatus: string;
+    activeStatus: OrderStatus['id'];
     /** Callback when tab is selected */
-    onStatusChange: (status: string) => void;
+    onStatusChange: (status: OrderStatus['id']) => void;
     /** Additional className */
     className?: string;
 }
@@ -28,7 +28,11 @@ export function OrdersQueueTabs({
     className,
 }: OrdersQueueTabsProps) {
     return (
-        <div className={cn('flex gap-2 overflow-x-auto pb-2 scrollbar-hide', className)}>
+        <div
+            className={cn('flex gap-2 overflow-x-auto pb-2 scrollbar-hide', className)}
+            role="tablist"
+            aria-label="Order Statuses"
+        >
             {statuses.map(status => {
                 const isActive = activeStatus === status.id;
                 const isNew = status.id === 'placed' && status.count > 0;
@@ -36,9 +40,14 @@ export function OrdersQueueTabs({
                 return (
                     <button
                         key={status.id}
+                        role="tab"
+                        aria-selected={isActive}
+                        aria-controls={`panel-${status.id}`}
+                        id={`tab-${status.id}`}
+                        tabIndex={isActive ? 0 : -1}
                         onClick={() => onStatusChange(status.id)}
                         className={cn(
-                            'relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+                            'relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                             isActive
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-muted/50 text-muted-foreground hover:bg-muted'

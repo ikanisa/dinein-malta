@@ -20,14 +20,16 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png', 'offline.html'],
       manifest: {
+        id: '/',
         name: 'DineIn Venue Portal',
         short_name: 'Venue Portal',
         description: 'Manage your venue, menu, and orders.',
-        theme_color: '#09090b',
-        background_color: '#09090b',
+        theme_color: '#0B0B0E',
+        background_color: '#0B0B0E',
         display: 'standalone',
+        orientation: 'portrait',
         icons: [
           {
             src: 'pwa-192x192.png',

@@ -13,7 +13,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     className
                 )}
                 aria-invalid={props["aria-invalid"]}
-                aria-describedby={props["aria-describedby"]}
+                // Explicitly allow aria-describedby but handled by props
                 ref={ref}
                 {...props}
             />

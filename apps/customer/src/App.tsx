@@ -7,14 +7,22 @@ import Checkout from './pages/Checkout'
 import OrderStatus from './pages/OrderStatus'
 import Settings from './pages/Settings'
 import { Toaster } from 'sonner'
-import { useA2HS, ErrorBoundary } from '@dinein/ui'
+import { useA2HS, ErrorBoundary, IOSInstallSheet } from '@dinein/ui'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { Download } from 'lucide-react'
 
 function App() {
-    const { isReady, install } = useA2HS()
+    const {
+        isReady,
+        install,
+        isIOSReady,
+        showIOSSheet,
+        openIOSSheet,
+        closeIOSSheet
+    } = useA2HS()
 
+    // Show native install prompt (Chrome/Edge/etc)
     useEffect(() => {
         if (isReady) {
             toast('Install DineIn for a better experience', {
@@ -24,6 +32,13 @@ function App() {
             })
         }
     }, [isReady, install])
+
+    // Show iOS install instructions
+    useEffect(() => {
+        if (isIOSReady) {
+            openIOSSheet()
+        }
+    }, [isIOSReady, openIOSSheet])
 
     return (
         <ErrorBoundary>
@@ -45,6 +60,13 @@ function App() {
 
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+
+                {/* iOS Safari install sheet */}
+                <IOSInstallSheet
+                    isOpen={showIOSSheet}
+                    onClose={closeIOSSheet}
+                    appName="DineIn"
+                />
             </BrowserRouter>
         </ErrorBoundary>
     )

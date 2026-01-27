@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { CheckCircle2, Clock, Utensils, XCircle, ArrowLeft } from 'lucide-react'
-import { Button, Card } from '@dinein/ui'
+import { Button, Card, OrderProgressTimeline } from '@dinein/ui'
 import { useOrder } from '../hooks/useOrder'
 import { useVenueContext } from '../context/VenueContext'
 
@@ -23,11 +23,11 @@ export default function OrderStatus() {
         return <div className="p-8 text-center text-destructive">Order not found</div>
     }
 
-    const currentStepIndex = STATUS_STEPS.findIndex(s => s.id === order.status)
+
     const isCancelled = order.status === 'cancelled'
 
     return (
-        <div className="min-h-screen bg-background p-4">
+        <div className="min-h-screen bg-background p-4" data-testid="order-status:page">
             <header className="mb-6">
                 <Link to={`/v/${venue.slug}`}>
                     <Button variant="ghost" className="-ml-4 gap-2 text-muted-foreground">
@@ -44,7 +44,7 @@ export default function OrderStatus() {
                         {order.currency} {order.total_amount.toLocaleString()}
                     </div>
                     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${isCancelled ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                        }`}>
+                        }`} data-testid="order-status:status-pill">
                         {isCancelled ? (
                             <>
                                 <XCircle className="h-4 w-4" /> Cancelled
@@ -57,32 +57,7 @@ export default function OrderStatus() {
                 </div>
 
                 {!isCancelled && (
-                    <div className="space-y-8 relative pl-4 border-l-2 border-muted ml-2">
-                        {STATUS_STEPS.map((step, index) => {
-                            const DeviceIcon = step.icon
-                            const isCompleted = index <= currentStepIndex
-                            const isCurrent = index === currentStepIndex
-
-                            return (
-                                <div key={step.id} className="relative pl-6">
-                                    <div className={`absolute -left-[21px] top-0 flex h-10 w-10 items-center justify-center rounded-full border-4 border-background transition-all ${isCompleted ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
-                                        }`}>
-                                        <DeviceIcon className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h3 className={`font-semibold ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                            {step.label}
-                                        </h3>
-                                        {isCurrent && (
-                                            <p className="text-sm text-muted-foreground animate-pulse">
-                                                In progress...
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
+                    <OrderProgressTimeline status={order.status as any} />
                 )}
             </Card>
 

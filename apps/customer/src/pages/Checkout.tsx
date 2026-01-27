@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, Smartphone, Banknote, HelpCircle } from 'lucide-react'
-import { Button, Card, useCountry, useA2HS } from '@dinein/ui'
+import { Button, Card, useCountry, useA2HS, TableNumberSheet } from '@dinein/ui'
 import { getPaymentOptions, formatMoney, PAYMENT_METHOD_LABELS, type PaymentMethod } from '@dinein/core'
 
 import { useVenueContext } from '../context/VenueContext'
@@ -32,6 +32,10 @@ export default function Checkout() {
 
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>('cash')
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [showTableSheet, setShowTableSheet] = useState(false)
+    const setTable = useCartStore(state => state.setTable)
+    const getTable = useCartStore(state => state.getTable)
+    const currentTable = venue ? getTable(venue.id) : undefined
 
     // Calculate formatted total (before early returns to satisfy hooks rules)
     const formattedTotal = useMemo(() => {
@@ -49,6 +53,13 @@ export default function Checkout() {
 
     const handlePlaceOrder = async () => {
         if (!paymentMethod) return
+
+        // Enforce table number
+        if (!currentTable) {
+            setShowTableSheet(true)
+            return
+        }
+
         setIsSubmitting(true)
         try {
             // Map payment method to expected format
@@ -66,6 +77,7 @@ export default function Checkout() {
             const { data: order, error } = await supabase.functions.invoke('order_create', {
                 body: {
                     venue_id: venue.id,
+                    table_no: currentTable, // Pass table number
                     payment_method: paymentMethodMap[paymentMethod],
                     total_amount,
                     currency,
@@ -101,11 +113,11 @@ export default function Checkout() {
     }
 
     return (
-        <div className="min-h-screen bg-background pb-32 p-4">
+        <div className="min-h-screen bg-background pb-32 p-4" data-testid="checkout:page">
             <header className="mb-6 flex items-center gap-4">
                 <Link to={`/v/${venue.slug}/cart`}>
-                    <Button variant="ghost" size="icon" className="-ml-2">
-                        <ArrowLeft className="h-5 w-5" />
+                    <Button variant="ghost" size="icon" className="-ml-2" aria-label="Back to Cart">
+                        <ArrowLeft className="h-5 w-5" aria-hidden="true" />
                     </Button>
                 </Link>
                 <h1 className="text-xl font-bold">Checkout</h1>
@@ -123,9 +135,9 @@ export default function Checkout() {
                     </Card>
                 </section>
 
-                <section>
-                    <h2 className="mb-3 text-lg font-semibold">Payment Method</h2>
-                    <div className="grid gap-3">
+                <section aria-labelledby="payment-method-heading">
+                    <h2 id="payment-method-heading" className="mb-3 text-lg font-semibold">Payment Method</h2>
+                    <div className="grid gap-3" role="radiogroup" aria-labelledby="payment-method-heading">
                         {paymentOptions.map((option) => {
                             const isSelected = paymentMethod === option.method
                             const isDisabled = !option.enabled
@@ -150,24 +162,27 @@ export default function Checkout() {
                                 <button
                                     key={option.method}
                                     type="button"
+                                    role="radio"
+                                    aria-checked={isSelected}
                                     disabled={isDisabled}
                                     className={`w-full text-left flex items-center justify-between rounded-xl border p-4 transition-all
                                         ${isDisabled ? 'opacity-50 cursor-not-allowed bg-muted/50' : 'cursor-pointer'}
                                         ${isSelected && !isDisabled ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/30'}
                                     `}
                                     onClick={() => !isDisabled && setPaymentMethod(option.method)}
+                                    data-testid={`checkout:pay-method:${option.method}`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`flex h-10 w-10 items-center justify-center rounded-full 
                                             ${isSelected ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                                            <Icon className="h-5 w-5" />
+                                            <Icon className="h-5 w-5" aria-hidden="true" />
                                         </div>
                                         <div>
                                             <div className="font-semibold">{label}</div>
                                             <div className="text-xs text-muted-foreground">{sublabel}</div>
                                         </div>
                                     </div>
-                                    {isSelected && <Check className="h-5 w-5 text-primary" />}
+                                    {isSelected && <Check className="h-5 w-5 text-primary" aria-label="Selected" />}
                                 </button>
                             )
                         })}
@@ -182,10 +197,23 @@ export default function Checkout() {
                     onClick={handlePlaceOrder}
                     disabled={isSubmitting || !paymentMethod}
                     loading={isSubmitting}
+                    data-testid="checkout:place-order"
                 >
                     {isSubmitting ? 'Placing Order...' : `Pay ${formattedTotal}`}
                 </Button>
             </div>
+            <TableNumberSheet
+                isOpen={showTableSheet}
+                onClose={() => setShowTableSheet(false)} // Should be blocking mostly
+                isRequired={true}
+                currentTable={currentTable}
+                onConfirm={(table) => {
+                    if (venue) setTable(venue.id, table)
+                    setShowTableSheet(false)
+                    // Auto-continue could happen here, or user just clicks Pay again. 
+                    // Let's just close and let them click pay to be safe/explicit.
+                }}
+            />
         </div>
     )
 }

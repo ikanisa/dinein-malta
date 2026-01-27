@@ -1,0 +1,16 @@
+{
+    "name": "e2e-tests",
+    "private": true,
+    "scripts": {
+        "test": "playwright test",
+        "test:customer": "playwright test --project=customer",
+        "test:venue": "playwright test --project=venue",
+        "test:admin": "playwright test --project=admin",
+        "test:headed": "playwright test --headed",
+        "report": "playwright show-report"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.40.0",
+        "@dinein/core": "workspace:*"
+    }
+}

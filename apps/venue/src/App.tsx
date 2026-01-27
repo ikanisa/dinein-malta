@@ -6,6 +6,7 @@ import Overview from './pages/Overview'
 import MenuManager from './pages/MenuManager'
 import OrdersQueue from './pages/OrdersQueue'
 import IngestMenu from './pages/IngestMenu'
+import Settings from './pages/Settings'
 import { DashboardLayout } from './layouts/DashboardLayout'
 import { ThemeProvider, ErrorBoundary } from '@dinein/ui'
 
@@ -24,6 +25,7 @@ function App() {
                                 <Route path="orders" element={<OrdersQueue />} />
                                 <Route path="menu" element={<MenuManager />} />
                                 <Route path="ingest/:jobId" element={<IngestMenu />} />
+                                <Route path="settings" element={<Settings />} />
                             </Route>
 
                             <Route path="*" element={<Navigate to="/" replace />} />

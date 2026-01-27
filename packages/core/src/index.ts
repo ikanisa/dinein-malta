@@ -91,3 +91,4 @@ export function getPaymentMethodsForCountry(code: CountryCode): PaymentMethod[] 
 }
 
 export * from './country';
+export * from './testids';

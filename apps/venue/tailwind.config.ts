@@ -1,5 +1,5 @@
 import type { Config } from 'tailwindcss';
-import { colors } from '../../packages/ui/src/tokens/colors';
+// import { colors } from '../../packages/ui/src/tokens/colors';
 import { typography } from '../../packages/ui/src/tokens/typography';
 import { animations } from '../../packages/ui/src/tokens/animations';
 import { spacing } from '../../packages/ui/src/tokens/spacing';
@@ -15,57 +15,55 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Shadcn UI / Guide Variables
-                border: 'hsl(var(--border))',
-                input: 'hsl(var(--input))',
-                ring: 'hsl(var(--ring))',
-                background: 'hsl(var(--background))',
-                foreground: 'hsl(var(--foreground))',
+                border: 'var(--border)',
+                input: 'var(--input)',
+                ring: 'var(--ring)',
+                background: 'var(--background)',
+                foreground: 'var(--foreground)',
                 primary: {
-                    DEFAULT: 'hsl(var(--primary))',
-                    foreground: 'hsl(var(--primary-foreground))',
+                    DEFAULT: 'var(--primary)',
+                    foreground: 'var(--primary-foreground)',
                 },
                 secondary: {
-                    DEFAULT: 'hsl(var(--secondary))',
-                    foreground: 'hsl(var(--secondary-foreground))',
+                    DEFAULT: 'var(--secondary)',
+                    foreground: 'var(--secondary-foreground)',
                 },
                 destructive: {
-                    DEFAULT: 'hsl(var(--destructive))',
-                    foreground: 'hsl(var(--destructive-foreground))',
+                    DEFAULT: 'var(--destructive)',
+                    foreground: 'var(--destructive-foreground)',
                 },
                 muted: {
-                    DEFAULT: 'hsl(var(--muted))',
-                    foreground: 'hsl(var(--muted-foreground))',
+                    DEFAULT: 'var(--muted)',
+                    foreground: 'var(--muted-foreground)',
                 },
                 accent: {
-                    DEFAULT: 'hsl(var(--accent))',
-                    foreground: 'hsl(var(--accent-foreground))',
+                    DEFAULT: 'var(--accent)',
+                    foreground: 'var(--accent-foreground)',
                 },
                 popover: {
-                    DEFAULT: 'hsl(var(--popover))',
-                    foreground: 'hsl(var(--popover-foreground))',
+                    DEFAULT: 'var(--popover)',
+                    foreground: 'var(--popover-foreground)',
                 },
                 card: {
-                    DEFAULT: 'hsl(var(--card))',
-                    foreground: 'hsl(var(--card-foreground))',
+                    DEFAULT: 'var(--card)',
+                    foreground: 'var(--card-foreground)',
                 },
-                // Existing Token Integration
-                ...colors.brand,
-                ...colors.semantic,
-                // Override background/text to ensure compatibility if needed, 
-                // but Shadcn variables above should take precedence for new components.
-                // ...colors.background, 
-                // ...colors.text,
 
-                // Custom glass colors
-                glass: {
-                    light: 'rgba(255, 255, 255, 0.7)',
-                    medium: 'rgba(255, 255, 255, 0.5)',
-                    dark: 'rgba(15, 23, 42, 0.8)',
+                // Design Pack Extensions
+                surface: {
+                    DEFAULT: 'var(--surface)',
+                    2: 'var(--surface-2)',
+                    3: 'var(--surface-3)',
                 },
+                glass: {
+                    bg: 'var(--glass-bg)',
+                    border: 'var(--glass-border)',
+                },
+                rw: 'var(--rw-accent)',
+                mt: 'var(--mt-accent)',
             },
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize,
+            fontFamily: typography.fontFamily as any,
+            fontSize: typography.fontSize as any,
             fontWeight: typography.fontWeight,
             spacing: {
                 ...spacing,
@@ -76,7 +74,6 @@ export default {
             },
             boxShadow: {
                 ...shadows,
-                // Custom glass shadows
                 'glass': '0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
                 'glass-lg': '0 16px 48px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06)',
                 'nav': '0 -8px 32px rgba(0, 0, 0, 0.06)',

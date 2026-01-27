@@ -9,7 +9,9 @@
         "./styles": "./src/styles/globals.css"
     },
     "scripts": {
-        "lint": "eslint . --max-warnings 0"
+        "lint": "eslint . --max-warnings 0",
+        "test": "vitest run",
+        "test:watch": "vitest"
     },
     "sideEffects": [
         "./src/styles/*.css"
@@ -39,6 +41,7 @@
         "@radix-ui/react-tooltip": "^1.2.8",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "date-fns": "^4.1.0",
         "framer-motion": "^12.0.0",
         "react-router-dom": "^6.22.0",
         "sonner": "^2.0.7",
@@ -51,7 +54,9 @@
         "eslint": "^9.39.2",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.1.0",
+        "jsdom": "^24.0.0",
         "typescript": "^5.2.0",
-        "typescript-eslint": "^8.53.1"
+        "typescript-eslint": "^8.53.1",
+        "vitest": "^1.0.0"
     }
 }

@@ -39,7 +39,7 @@ export {
     subscribeToServiceRequests,
 } from './service-requests';
 
-// Claims (uses vendors.claimed column)
+// Claims (uses venues.claimed column)
 export {
     getUnclaimedVenues,
     getClaimedVenues,
@@ -61,7 +61,13 @@ export {
     updateIngestJobStatus,
     getStagingItems,
     createStagingItems,
-    updateStagingItemStatus,
+    updateStagingItemAction,
     publishApprovedItems,
     type StagingItemForReview,
 } from './ingest';
+
+// Venue management
+export {
+    updateVenue,
+    type UpdateVenueInput,
+} from './venue-update';

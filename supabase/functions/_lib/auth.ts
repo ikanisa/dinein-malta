@@ -118,9 +118,9 @@ export async function isVendorMember(
     logger?: Logger
 ): Promise<boolean> {
     const { data: memberRecord } = await supabaseUser
-        .from("vendor_users")
+        .from("venue_users")
         .select("id, role")
-        .eq("vendor_id", vendorId)
+        .eq("venue_id", vendorId)
         .eq("auth_user_id", userId)
         .eq("is_active", true)
         .single();

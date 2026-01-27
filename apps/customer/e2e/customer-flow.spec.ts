@@ -26,27 +26,23 @@ test.describe('PWA Home Flow', () => {
     });
 
     test('Can switch between tabs', async ({ page }) => {
-        // Get nav buttons - use evaluate for fixed position elements outside viewport
-        const buttons = page.locator('nav button');
+        // Per STARTER RULES: Customer bottom nav = EXACTLY 2 items (Home + Settings)
+        // BottomNav uses Link elements with data-testid attributes
+        const homeTab = page.locator('[data-testid="nav-home"]');
+        const settingsTab = page.locator('[data-testid="nav-settings"]');
 
-        // Verify 4 tabs exist
-        await expect(buttons).toHaveCount(4);
+        // Verify both tabs exist
+        await expect(homeTab).toBeVisible();
+        await expect(settingsTab).toBeVisible();
 
-        // Use dispatchEvent for reliable clicks on fixed nav
-        await buttons.nth(1).dispatchEvent('click');
+        // Navigate to Settings
+        await settingsTab.click();
         await page.waitForTimeout(300);
-        await page.screenshot({ path: 'test-results/home-03-discover.png', fullPage: true });
+        await page.screenshot({ path: 'test-results/home-03-settings.png', fullPage: true });
 
-        await buttons.nth(2).dispatchEvent('click');
+        // Back to Home
+        await homeTab.click();
         await page.waitForTimeout(300);
-        await page.screenshot({ path: 'test-results/home-04-reservations.png', fullPage: true });
-
-        await buttons.nth(3).dispatchEvent('click');
-        await page.waitForTimeout(300);
-        await page.screenshot({ path: 'test-results/home-05-settings.png', fullPage: true });
-
-        await buttons.nth(0).dispatchEvent('click');
-        await page.waitForTimeout(300);
-        await page.screenshot({ path: 'test-results/home-06-back-home.png', fullPage: true });
+        await page.screenshot({ path: 'test-results/home-04-back-home.png', fullPage: true });
     });
 });

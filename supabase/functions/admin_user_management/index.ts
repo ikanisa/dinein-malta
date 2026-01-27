@@ -45,7 +45,7 @@ const createVendorSchema = z.object({
 // Update Vendor
 const updateVendorSchema = z.object({
     action: z.literal("update_vendor"),
-    vendor_id: z.string().uuid(),
+    venue_id: z.string().uuid(),
     name: z.string().min(1).optional(),
     address: z.string().optional(),
     phone: z.string().optional(),
@@ -60,12 +60,12 @@ const updateVendorSchema = z.object({
 // Delete Vendor
 const deleteVendorSchema = z.object({
     action: z.literal("delete_vendor"),
-    vendor_id: z.string().uuid(),
+    venue_id: z.string().uuid(),
 });
 
 // Get All Vendors (Admin)
 const listVendorsSchema = z.object({
-    action: z.literal("list_vendors"),
+    action: z.literal("list_venues"),
 });
 
 // Get Admin Users
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
             case "delete_vendor":
                 return await handleDeleteVendor(supabaseAdmin, input, audit, logger);
 
-            case "list_vendors":
+            case "list_venues":
                 return await handleListVendors(supabaseAdmin, logger);
 
             case "list_admins":
@@ -262,7 +262,7 @@ async function handleCreateVendor(
 
     while (slugExists && slugAttempts < 10) {
         const { data: existing } = await supabaseAdmin
-            .from("vendors")
+            .from("venues")
             .select("id")
             .eq("slug", slug)
             .single();
@@ -275,12 +275,12 @@ async function handleCreateVendor(
         }
     }
 
-    // Generate a fake google_place_id for admin-created vendors
+    // Generate a fake google_place_id for admin-created venues
     const googlePlaceId = `admin_created_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
     // Create vendor
     const { data: vendor, error: vendorError } = await supabaseAdmin
-        .from("vendors")
+        .from("venues")
         .insert({
             google_place_id: googlePlaceId,
             slug,
@@ -305,11 +305,11 @@ async function handleCreateVendor(
         return errorResponse("Failed to create vendor", 500, vendorError?.message);
     }
 
-    // Create vendor_users membership
+    // Create venue_users membership
     const { data: membership, error: membershipError } = await supabaseAdmin
-        .from("vendor_users")
+        .from("venue_users")
         .insert({
-            vendor_id: vendor.id,
+            venue_id: vendor.id,
             auth_user_id: authData.user.id,
             role: "owner",
             is_active: true,
@@ -319,7 +319,7 @@ async function handleCreateVendor(
 
     if (membershipError) {
         // Cleanup vendor and auth user
-        await supabaseAdmin.from("vendors").delete().eq("id", vendor.id);
+        await supabaseAdmin.from("venues").delete().eq("id", vendor.id);
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
         logger.error("Failed to create vendor membership", { error: membershipError.message });
         return errorResponse("Failed to create vendor membership", 500, membershipError.message);
@@ -347,7 +347,7 @@ async function handleUpdateVendor(
     audit: any,
     logger: any
 ) {
-    logger.info("Updating vendor", { vendorId: input.vendor_id });
+    logger.info("Updating vendor", { vendorId: input.venue_id });
 
     const updateData: Record<string, any> = {};
     if (input.name !== undefined) updateData.name = input.name;
@@ -361,9 +361,9 @@ async function handleUpdateVendor(
     if (input.status !== undefined) updateData.status = input.status;
 
     const { data: vendor, error } = await supabaseAdmin
-        .from("vendors")
+        .from("venues")
         .update(updateData)
-        .eq("id", input.vendor_id)
+        .eq("id", input.venue_id)
         .select()
         .single();
 
@@ -372,7 +372,7 @@ async function handleUpdateVendor(
         return errorResponse("Failed to update vendor", 500, error.message);
     }
 
-    await audit.log(AuditAction.VENDOR_UPDATE, EntityType.VENDOR, input.vendor_id, updateData);
+    await audit.log(AuditAction.VENDOR_UPDATE, EntityType.VENDOR, input.venue_id, updateData);
 
     return jsonResponse({ success: true, vendor });
 }
@@ -383,55 +383,55 @@ async function handleDeleteVendor(
     audit: any,
     logger: any
 ) {
-    logger.info("Deleting vendor", { vendorId: input.vendor_id });
+    logger.info("Deleting vendor", { vendorId: input.venue_id });
 
-    // Get vendor_users to clean up auth users
+    // Get venue_users to clean up auth users
     const { data: vendorUsers } = await supabaseAdmin
-        .from("vendor_users")
+        .from("venue_users")
         .select("auth_user_id")
-        .eq("vendor_id", input.vendor_id);
+        .eq("venue_id", input.venue_id);
 
-    // Delete vendor (cascades to vendor_users, menu_items, tables, etc.)
+    // Delete vendor (cascades to venue_users, menu_items, tables, etc.)
     const { error } = await supabaseAdmin
-        .from("vendors")
+        .from("venues")
         .delete()
-        .eq("id", input.vendor_id);
+        .eq("id", input.venue_id);
 
     if (error) {
         logger.error("Failed to delete vendor", { error: error.message });
         return errorResponse("Failed to delete vendor", 500, error.message);
     }
 
-    await audit.log(AuditAction.VENDOR_DELETE, EntityType.VENDOR, input.vendor_id, {
+    await audit.log(AuditAction.VENDOR_DELETE, EntityType.VENDOR, input.venue_id, {
         deletedUserCount: vendorUsers?.length || 0,
     });
 
-    return jsonResponse({ success: true, deleted: input.vendor_id });
+    return jsonResponse({ success: true, deleted: input.venue_id });
 }
 
 async function handleListVendors(supabaseAdmin: any, logger: any) {
-    logger.info("Listing all vendors for admin");
+    logger.info("Listing all venues for admin");
 
-    const { data: vendors, error } = await supabaseAdmin
-        .from("vendors")
+    const { data: venues, error } = await supabaseAdmin
+        .from("venues")
         .select(`
       id, name, slug, address, phone, revolut_link, whatsapp, website,
       status, country, hours_json, photos_json, created_at, updated_at,
-      vendor_users (
+      venue_users (
         id, auth_user_id, role, is_active
       )
     `)
         .order("created_at", { ascending: false });
 
     if (error) {
-        logger.error("Failed to list vendors", { error: error.message });
-        return errorResponse("Failed to list vendors", 500, error.message);
+        logger.error("Failed to list venues", { error: error.message });
+        return errorResponse("Failed to list venues", 500, error.message);
     }
 
     // Fetch emails for owners
-    const vendorsWithEmails = await Promise.all(
-        (vendors || []).map(async (vendor: any) => {
-            const owner = vendor.vendor_users?.find((u: any) => u.role === "owner");
+    const venuesWithEmails = await Promise.all(
+        (venues || []).map(async (vendor: any) => {
+            const owner = vendor.venue_users?.find((u: any) => u.role === "owner");
             let ownerEmail = null;
             if (owner) {
                 const { data: userData } = await supabaseAdmin.auth.admin.getUserById(owner.auth_user_id);
@@ -441,7 +441,7 @@ async function handleListVendors(supabaseAdmin: any, logger: any) {
         })
     );
 
-    return jsonResponse({ success: true, vendors: vendorsWithEmails });
+    return jsonResponse({ success: true, venues: venuesWithEmails });
 }
 
 async function handleListAdmins(supabaseAdmin: any, logger: any) {

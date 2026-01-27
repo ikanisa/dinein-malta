@@ -1,0 +1,74 @@
+{
+    "brand": {
+        "primary": "#000000",
+        "onPrimary": "#FFFFFF",
+        "secondary": "#FFFFFF",
+        "onSecondary": "#000000",
+        "accent": "#007AFF"
+    },
+    "surface": {
+        "background": "#F5F5F7",
+        "card": "#FFFFFF",
+        "glass": {
+            "light": "rgba(255, 255, 255, 0.8)",
+            "dark": "rgba(0, 0, 0, 0.8)"
+        }
+    },
+    "text": {
+        "primary": "#000000",
+        "secondary": "#8E8E93",
+        "disabled": "#C7C7CC"
+    },
+    "status": {
+        "success": "#34C759",
+        "error": "#FF3B30",
+        "warning": "#FF9500",
+        "info": "#007AFF"
+    },
+    "spacing": {
+        "xs": "4px",
+        "sm": "8px",
+        "md": "16px",
+        "lg": "24px",
+        "xl": "32px",
+        "xxl": "48px"
+    },
+    "radii": {
+        "sm": "8px",
+        "md": "12px",
+        "lg": "16px",
+        "pill": "999px"
+    },
+    "typography": {
+        "fontFamily": "Inter",
+        "weights": {
+            "regular": 400,
+            "medium": 500,
+            "bold": 700
+        },
+        "sizes": {
+            "xs": "12px",
+            "sm": "14px",
+            "base": "16px",
+            "lg": "18px",
+            "xl": "20px",
+            "xxl": "24px",
+            "hero": "32px"
+        }
+    },
+    "shadows": {
+        "sm": "0px 1px 2px rgba(0, 0, 0, 0.05)",
+        "md": "0px 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "lg": "0px 10px 15px -3px rgba(0, 0, 0, 0.1)"
+    },
+    "glass": {
+        "blur": {
+            "sm": "10px",
+            "md": "20px"
+        },
+        "border": {
+            "light": "rgba(255, 255, 255, 0.2)",
+            "dark": "rgba(255, 255, 255, 0.1)"
+        }
+    }
+}

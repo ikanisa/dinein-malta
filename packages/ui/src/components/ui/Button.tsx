@@ -4,6 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { motion } from "framer-motion"
 import { cn } from "../../lib/utils"
 import { useHaptics } from "../../hooks/useHaptics"
+import { useReducedMotion } from "../../hooks/useReducedMotion"
 
 const buttonVariants = cva(
     "inline-flex items-center justify-center whitespace-nowrap rounded-2xl text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none",
@@ -56,6 +57,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         // For this design system, we prioritize Motion for standard buttons.
 
         const { trigger } = useHaptics()
+        const shouldReduceMotion = useReducedMotion()
 
         // Intercept click for haptics
         const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -72,6 +74,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                     ref={ref}
                     onClick={handleClick}
                     {...props}
+                    data-loading={loading ? "true" : undefined}
+                    aria-busy={loading}
                 >
                     {children}
                 </Slot>
@@ -86,14 +90,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 onClick={handleClick}
                 disabled={props.disabled || loading}
                 aria-disabled={props.disabled || loading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
+                aria-busy={loading}
+                whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.96 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 {...props}
             >
                 {loading && (
                     <span className="absolute inset-0 flex items-center justify-center">
-                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>

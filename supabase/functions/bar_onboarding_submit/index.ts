@@ -16,7 +16,7 @@ import {
 
 // --- Input Validation Schema ---
 const onboardingSchema = z.object({
-    vendor_id: z.string().uuid(),
+    venue_id: z.string().uuid(),
     email: z.string().email(),
     password: z.string().min(8).max(100),
     whatsapp: z.string().optional().nullable(),
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
         }
 
         const input: OnboardingInput = parsed.data;
-        logger.info("Processing onboarding submission", { vendorId: input.vendor_id, email: input.email });
+        logger.info("Processing onboarding submission", { vendorId: input.venue_id, email: input.email });
 
         // Rate limiting based on IP
         const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -81,13 +81,13 @@ Deno.serve(async (req) => {
         // STEP 1: Verify vendor exists
         // ========================================================================
         const { data: vendor, error: vendorError } = await supabaseAdmin
-            .from("vendors")
+            .from("venues")
             .select("id, name, country, status")
-            .eq("id", input.vendor_id)
+            .eq("id", input.venue_id)
             .single();
 
         if (vendorError || !vendor) {
-            logger.warn("Vendor not found", { vendorId: input.vendor_id });
+            logger.warn("Vendor not found", { vendorId: input.venue_id });
             return errorResponse("Bar not found", 404);
         }
 
@@ -97,12 +97,12 @@ Deno.serve(async (req) => {
         const { data: existingRequest } = await supabaseAdmin
             .from("onboarding_requests")
             .select("id, status")
-            .eq("vendor_id", input.vendor_id)
+            .eq("venue_id", input.venue_id)
             .eq("status", "pending")
             .maybeSingle();
 
         if (existingRequest) {
-            logger.warn("Pending request already exists", { vendorId: input.vendor_id });
+            logger.warn("Pending request already exists", { vendorId: input.venue_id });
             return errorResponse("A pending onboarding request already exists for this bar", 409);
         }
 
@@ -110,15 +110,15 @@ Deno.serve(async (req) => {
         // STEP 3: Check if vendor already has an active owner
         // ========================================================================
         const { data: existingOwner } = await supabaseAdmin
-            .from("vendor_users")
+            .from("venue_users")
             .select("id")
-            .eq("vendor_id", input.vendor_id)
+            .eq("venue_id", input.venue_id)
             .eq("role", "owner")
             .eq("is_active", true)
             .maybeSingle();
 
         if (existingOwner) {
-            logger.warn("Vendor already has active owner", { vendorId: input.vendor_id });
+            logger.warn("Vendor already has active owner", { vendorId: input.venue_id });
             return errorResponse("This bar already has an owner", 409);
         }
 
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
             password: input.password,
             email_confirm: true, // Auto-confirm for onboarding
             user_metadata: {
-                vendor_id: input.vendor_id,
+                venue_id: input.venue_id,
                 vendor_name: vendor.name,
                 role: "vendor",
             },
@@ -148,12 +148,12 @@ Deno.serve(async (req) => {
         logger.info("Created auth user", { userId, email: input.email });
 
         // ========================================================================
-        // STEP 5: Create vendor_users record (inactive until approved)
+        // STEP 5: Create venue_users record (inactive until approved)
         // ========================================================================
         const { error: vendorUserError } = await supabaseAdmin
-            .from("vendor_users")
+            .from("venue_users")
             .insert({
-                vendor_id: input.vendor_id,
+                venue_id: input.venue_id,
                 auth_user_id: userId,
                 role: "owner",
                 is_active: false, // Pending approval
@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
         const { data: request, error: requestError } = await supabaseAdmin
             .from("onboarding_requests")
             .insert({
-                vendor_id: input.vendor_id,
+                venue_id: input.venue_id,
                 submitted_by: userId,
                 email: input.email,
                 whatsapp: input.whatsapp || null,
@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
         if (requestError || !request) {
             logger.error("Failed to create onboarding request", { error: requestError?.message });
             // Cleanup
-            await supabaseAdmin.from("vendor_users").delete().eq("auth_user_id", userId);
+            await supabaseAdmin.from("venue_users").delete().eq("auth_user_id", userId);
             await supabaseAdmin.auth.admin.deleteUser(userId);
             return errorResponse("Failed to submit onboarding request", 500, requestError?.message);
         }
@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
         // STEP 7: Write audit log
         // ========================================================================
         const audit = createAuditLogger(supabaseAdmin, userId, requestId, logger);
-        await audit.log(AuditAction.CREATE, EntityType.VENDOR, input.vendor_id, {
+        await audit.log(AuditAction.CREATE, EntityType.VENDOR, input.venue_id, {
             action: "onboarding_submit",
             requestId: request.id,
             email: input.email,
@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
             message: "Onboarding request submitted successfully. Awaiting admin approval.",
             onboardingRequest: {
                 id: request.id,
-                vendor_id: request.vendor_id,
+                venue_id: request.venue_id,
                 status: request.status,
                 created_at: request.created_at,
             },

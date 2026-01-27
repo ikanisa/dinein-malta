@@ -8,6 +8,7 @@ interface OwnerContextType {
     login: (email: string, pincode: string) => Promise<void>
     logout: () => void
     isAuthenticated: boolean
+    refreshVenue: () => Promise<void>
 }
 
 const OwnerContext = createContext<OwnerContextType | undefined>(undefined)
@@ -95,8 +96,12 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
         setVenue(null)
     }
 
+    const refreshVenue = async () => {
+        await fetchVendorProfile()
+    }
+
     return (
-        <OwnerContext.Provider value={{ venue, loading, login, logout, isAuthenticated: !!venue }}>
+        <OwnerContext.Provider value={{ venue, loading, login, logout, isAuthenticated: !!venue, refreshVenue }}>
             {children}
         </OwnerContext.Provider>
     )

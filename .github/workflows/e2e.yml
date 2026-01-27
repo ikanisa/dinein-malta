@@ -1,0 +1,97 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      # Supabase connection (use staging/preview)
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      # E2E test config
+      E2E_VENUE_SLUG: ${{ secrets.E2E_VENUE_SLUG }}
+      E2E_VENUE_OWNER_EMAIL: ${{ secrets.E2E_VENUE_OWNER_EMAIL }}
+      E2E_VENUE_OWNER_PIN: ${{ secrets.E2E_VENUE_OWNER_PIN }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Playwright Browsers
+        run: cd tests/e2e && npx playwright install --with-deps chromium
+
+      - name: Build packages
+        run: pnpm build:packages
+
+      - name: Build customer app
+        run: pnpm build:customer
+
+      - name: Build venue app
+        run: pnpm build:venue
+
+      - name: Build admin app
+        run: pnpm build:admin
+
+      - name: Start apps (background)
+        run: |
+          # Start preview servers for all 3 apps
+          (cd apps/customer && npx vite preview --port 5173 &)
+          (cd apps/venue && npx vite preview --port 5174 &)
+          (cd apps/admin && npx vite preview --port 5175 &)
+          # Wait for servers to be ready
+          sleep 10
+
+      - name: Run E2E tests
+        run: pnpm e2e
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: tests/e2e/playwright-report/
+          retention-days: 7
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: tests/e2e/test-results/
+          retention-days: 7

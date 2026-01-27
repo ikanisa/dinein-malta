@@ -22,7 +22,7 @@ export async function getVenueBySlug(
     slug: string
 ): Promise<Venue | null> {
     const { data, error } = await client
-        .from('vendors')
+        .from('venues')
         .select('*')
         .eq('slug', slug)
         .single();
@@ -134,7 +134,7 @@ export async function getVenuesForCountry(
     const offset = (page - 1) * pageSize;
 
     const { data, error, count } = await client
-        .from('vendors')
+        .from('venues')
         .select('id, name, slug, country, ai_image_url, rating, price_level, description, city, created_at', { count: 'exact' })
         .eq('country', country)
         .order('rating', { ascending: false, nullsFirst: false })
@@ -156,4 +156,32 @@ export async function getVenuesForCountry(
         hasMore,
         page,
     };
+}
+
+/**
+ * Search venues by name (fuzzy-ish)
+ * @param client - Supabase client instance
+ * @param query - Search term
+ * @param limit - Max results (default: 5)
+ * @returns Array of matching venues
+ */
+export async function searchVenues(
+    client: SupabaseClient,
+    query: string,
+    limit = 5
+): Promise<Venue[]> {
+    if (!query || query.length < 2) return [];
+
+    const { data, error } = await client
+        .from('vendors')
+        .select('id, name, slug, country, city, ai_image_url')
+        .ilike('name', `%${query}%`)
+        .limit(limit);
+
+    if (error) {
+        console.error('Error searching venues:', error.message);
+        return [];
+    }
+
+    return (data ?? []) as Venue[];
 }

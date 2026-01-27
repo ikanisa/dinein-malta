@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     // ========================================================================
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
-      .select("id, vendor_id, payment_status")
+      .select("id, venue_id, payment_status")
       .eq("id", input.order_id)
       .single();
 
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const rbacResult = await requireVendorOrAdmin(
       supabaseAdmin,
       supabaseUser,
-      order.vendor_id,
+      order.venue_id,
       user.id,
       logger
     );
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
     // STEP 5: Write audit log
     // ========================================================================
     await audit.log(AuditAction.ORDER_MARK_PAID, EntityType.ORDER, order.id, {
-      vendorId: order.vendor_id,
+      vendorId: order.venue_id,
       previousStatus: order.payment_status,
       newStatus: "paid",
     });

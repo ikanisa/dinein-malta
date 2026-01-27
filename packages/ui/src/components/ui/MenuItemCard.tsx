@@ -46,6 +46,7 @@ export function MenuItemCard({
                         variant="secondary"
                         className="h-9 rounded-full px-5 font-semibold active:scale-95 transition-transform"
                         onClick={onAdd}
+                        aria-label={`Add ${name} to cart`}
                     >
                         Add
                     </Button>
@@ -56,15 +57,18 @@ export function MenuItemCard({
                             variant="ghost"
                             className="h-8 w-8 rounded-full bg-background shadow-sm hover:bg-background/90"
                             onClick={onDecrement}
+                            aria-label={`Decrease quantity of ${name}`}
                         >
                             <Minus className="h-3.5 w-3.5" />
                         </Button>
-                        <span className="w-5 text-center text-sm font-bold tabular-nums">{qty}</span>
+                        <span className="w-5 text-center text-sm font-bold tabular-nums" aria-hidden="true">{qty}</span>
+                        <span className="sr-only">{qty} in cart</span>
                         <Button
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 rounded-full bg-background shadow-sm hover:bg-background/90"
                             onClick={onIncrement}
+                            aria-label={`Increase quantity of ${name}`}
                         >
                             <Plus className="h-3.5 w-3.5" />
                         </Button>

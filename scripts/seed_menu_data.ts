@@ -47,7 +47,7 @@ async function seed() {
 
         // Check if vendor exists
         let { data: vendor, error } = await supabase
-            .from('vendors')
+            .from('venues')
             .select('id')
             .eq('name', barName)
             .single();
@@ -57,7 +57,7 @@ async function seed() {
             // Create simplified vendor
             const slug = barName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
             const { data: newVendor, error: createError } = await supabase
-                .from('vendors')
+                .from('venues')
                 .insert({
                     name: barName,
                     slug: slug,
@@ -88,7 +88,7 @@ async function seed() {
         const { error: deleteError } = await supabase
             .from('menu_items')
             .delete()
-            .eq('vendor_id', vendorId);
+            .eq('venue_id', vendorId);
 
         if (deleteError) {
             // If table doesn't exist, this will fail.
@@ -102,7 +102,7 @@ async function seed() {
 
         // Insert new items
         const itemsToInsert = bars[barName].map(item => ({
-            vendor_id: vendorId,
+            venue_id: vendorId,
             name: item.itemName,
             price: item.price,
             category: item.category,

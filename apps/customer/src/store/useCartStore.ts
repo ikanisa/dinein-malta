@@ -31,6 +31,12 @@ interface CartState {
     /** All cart items keyed by itemId */
     items: Record<string, CartItem>
 
+    /** Table assignments keyed by venueId */
+    tables: Record<string, string>
+
+    /** Set table number for a venue */
+    setTable: (venueId: string, tableNo: string) => void
+
     /** Add a menu item to cart (creates or increments) */
     addItem: (item: MenuItem, venueId: string) => void
     /** Remove an item completely */
@@ -39,18 +45,34 @@ interface CartState {
     updateQuantity: (itemId: string, delta: number) => void
     /** Clear all items for a specific venue */
     clearCart: (venueId: string) => void
+    /** Clear table assignment */
+    clearTable: (venueId: string) => void
 
     // Computed helpers (derived from state)
     getVenueItems: (venueId: string) => CartItem[]
     getVenueTotal: (venueId: string) => number
     getItemCount: (venueId: string) => number
     getItemQuantity: (itemId: string) => number
+    getTable: (venueId: string) => string | undefined
 }
 
 export const useCartStore = create<CartState>()(
     persist(
         (set, get) => ({
             items: {},
+            tables: {},
+
+            setTable: (venueId, tableNo) => set((state) => ({
+                tables: { ...state.tables, [venueId]: tableNo }
+            })),
+
+            clearTable: (venueId) => set((state) => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { [venueId]: _, ...rest } = state.tables
+                return { tables: rest }
+            }),
+
+            getTable: (venueId) => get().tables[venueId],
 
             addItem: (item, venueId) => set((state) => {
                 const existing = state.items[item.id]

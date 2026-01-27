@@ -21,6 +21,10 @@ export interface Venue {
     whatsapp?: string | null  // Used for MoMo USSD code in Rwanda
     phone?: string | null
     claimed: boolean
+    owner_email?: string | null
+    owner_pin?: string | null
+    owner_phone?: string | null
+    contact_email?: string | null
     created_at: string
 }
 
@@ -51,7 +55,7 @@ export interface Order {
     total_amount: number
     currency: 'RWF' | 'EUR'
     table_no?: string | null
-    payment_method: 'cash' | 'momo' | 'revolut'
+    payment_method: 'cash' | 'momo_ussd' | 'revolut_link'
     created_at: string
     items?: OrderItem[]
 }
@@ -70,20 +74,32 @@ export interface OrderItem {
 export interface IngestJob {
     id: string
     venue_id: string
-    status: 'pending' | 'processing' | 'completed' | 'failed'
-    image_url: string
+    created_by: string
+    file_path: string
+    status: 'pending' | 'running' | 'needs_review' | 'published' | 'failed'
+    error_code?: string | null
+    error_message?: string | null
+    attempt_count: number
+    next_attempt_at?: string | null
+    started_at?: string | null
+    finished_at?: string | null
     created_at: string
+    updated_at: string
 }
 
 export interface IngestStagingItem {
     id: string
     job_id: string
+    venue_id: string
+    raw_category?: string | null
     name: string
-    description: string
-    price: number
-    category: string
+    description?: string | null
+    price?: number | null
+    currency?: string | null
     confidence: number
-    status: 'draft' | 'approved' | 'rejected'
+    parse_warnings: string[]
+    suggested_action: 'keep' | 'edit' | 'drop'
+    created_at: string
 }
 
 export interface ServiceRequest {

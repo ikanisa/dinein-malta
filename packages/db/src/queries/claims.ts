@@ -1,118 +1,107 @@
 /**
  * Venue claims query helpers for packages/db
- * Uses vendors.claimed column to track claimed status
- * 
- * Simplified model: venues start unclaimed (claimed=false), 
- * venue owners claim them (claimed=true)
+ * Uses onboarding_requests table to track claim status and details
  */
+
+import type { Database } from '../database.types';
 
 // Permissive client type for cross-app compatibility
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClient = any;
 
-import type { Venue } from '../types';
+export type OnboardingRequest = Database['public']['Tables']['onboarding_requests']['Row'];
+export type OnboardingStatus = 'pending' | 'approved' | 'rejected';
 
 /**
- * Claim result
+ * Create a new venue claim (onboarding request)
  */
-export interface ClaimApprovalResult {
-    success: boolean;
-    venueId?: string;
-    error?: string;
-}
-
-/**
- * Get unclaimed venues (for admin review or venue owner to claim)
- * @param client - Supabase client instance
- * @returns Array of unclaimed venues
- */
-export async function getUnclaimedVenues(
-    client: SupabaseClient
-): Promise<Venue[]> {
-    const { data, error } = await client
-        .from('vendors')
-        .select('*')
-        .eq('claimed', false)
-        .order('name', { ascending: true });
-
-    if (error) {
-        console.error('Error fetching unclaimed venues:', error.message);
-        return [];
-    }
-
-    return (data ?? []) as Venue[];
-}
-
-/**
- * Get claimed venues
- * @param client - Supabase client instance
- * @returns Array of claimed venues
- */
-export async function getClaimedVenues(
-    client: SupabaseClient
-): Promise<Venue[]> {
-    const { data, error } = await client
-        .from('vendors')
-        .select('*')
-        .eq('claimed', true)
-        .order('name', { ascending: true });
-
-    if (error) {
-        console.error('Error fetching claimed venues:', error.message);
-        return [];
-    }
-
-    return (data ?? []) as Venue[];
-}
-
-/**
- * Claim a venue (set claimed = true)
- * @param client - Supabase client instance
- * @param venueId - Venue UUID to claim
- * @returns Success result
- */
-export async function claimVenue(
+export async function createVenueClaim(
     client: SupabaseClient,
-    venueId: string
-): Promise<ClaimApprovalResult> {
-    const { error } = await client
-        .from('vendors')
-        .update({ claimed: true })
-        .eq('id', venueId);
+    claim: {
+        venue_id: string;
+        email: string;
+        submitted_by: string; // auth_user_id
+        momo_code?: string;
+        revolut_link?: string;
+        whatsapp?: string;
+    }
+): Promise<{ success: boolean; data?: OnboardingRequest; error?: string }> {
+    // First check if there's already a pending claim for this venue
+    const { data: existing } = await client
+        .from('onboarding_requests')
+        .select('id')
+        .eq('venue_id', claim.venue_id)
+        .eq('status', 'pending')
+        .single();
+
+    if (existing) {
+        return { success: false, error: 'A pending claim already exists for this venue.' };
+    }
+
+    const { data, error } = await client
+        .from('onboarding_requests')
+        .insert({
+            venue_id: claim.venue_id,
+            email: claim.email,
+            submitted_by: claim.submitted_by,
+            momo_code: claim.momo_code,
+            revolut_link: claim.revolut_link,
+            whatsapp: claim.whatsapp,
+            status: 'pending'
+        })
+        .select()
+        .single();
 
     if (error) {
-        console.error('Error claiming venue:', error.message);
+        console.error('Error creating venue claim:', error.message);
         return { success: false, error: error.message };
     }
 
-    return { success: true, venueId };
+    return { success: true, data };
 }
 
 /**
- * Unclaim a venue (set claimed = false) - admin only
- * @param client - Supabase client instance
- * @param venueId - Venue UUID to unclaim
- * @returns Success boolean
+ * Get claim status for a user and venue
  */
-export async function unclaimVenue(
+export async function getClaimStatus(
     client: SupabaseClient,
+    userId: string,
     venueId: string
-): Promise<boolean> {
-    const { error } = await client
-        .from('vendors')
-        .update({ claimed: false })
-        .eq('id', venueId);
+): Promise<OnboardingRequest | null> {
+    const { data, error } = await client
+        .from('onboarding_requests')
+        .select('*')
+        .eq('submitted_by', userId)
+        .eq('venue_id', venueId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
 
-    if (error) {
-        console.error('Error unclaiming venue:', error.message);
-        return false;
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error fetching claim status:', error.message);
     }
 
-    return true;
+    return data;
 }
 
-// Legacy aliases for backward compatibility
-export const getPendingClaims = getUnclaimedVenues;
-export const getClaims = getClaimedVenues;
-export const approveClaim = claimVenue;
-export const rejectClaim = unclaimVenue;
+/**
+ * Get all pending claims (Admin only)
+ */
+export async function getPendingClaims(
+    client: SupabaseClient
+): Promise<(OnboardingRequest & { vendor: { name: string; slug: string } })[]> {
+    const { data, error } = await client
+        .from('onboarding_requests')
+        .select('*, vendor:venues(name, slug)')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching pending claims:', error.message);
+        return [];
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (data ?? []) as any;
+}
+

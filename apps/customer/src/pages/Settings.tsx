@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Heart, History, Share2, Download, ChevronRight, Clock, Loader2 } from 'lucide-react'
-import { Button, Card, useA2HS, EmptyState } from '@dinein/ui'
+import { Heart, History, Share2, Download, ChevronRight, Clock, Loader2, Smartphone } from 'lucide-react'
+import { Button, Card, useA2HS, EmptyState, ReorderButton, IOSInstallSheet, useHaptics, Switch } from '@dinein/ui'
 import { formatMoney } from '@dinein/core'
 import { useVenueContext } from '../context/VenueContext'
 import { useOrderHistory } from '../hooks/useOrderHistory'
@@ -10,12 +10,20 @@ export default function Settings() {
     const venueContext = useVenueContext()
     const venue = venueContext?.venue ?? null // Gracefully handle undefined context
     const { orders, loading: ordersLoading } = useOrderHistory()
-    const { canInstall, install } = useA2HS()
+    const { canInstall, install, isIOS, isInstalled } = useA2HS()
+    const { enabled: hapticsEnabled, toggle: toggleHaptics } = useHaptics()
 
     const [showOrderHistory, setShowOrderHistory] = useState(false)
     const [installing, setInstalling] = useState(false)
+    const [showIOSSheet, setShowIOSSheet] = useState(false)
 
     const handleInstall = async () => {
+        if (isIOS) {
+            // Show iOS instructions instead of native prompt
+            setShowIOSSheet(true)
+            return
+        }
+
         setInstalling(true)
         try {
             await install()
@@ -23,6 +31,7 @@ export default function Settings() {
             setInstalling(false)
         }
     }
+
 
     const handleShare = async () => {
         const shareData = {
@@ -81,25 +90,34 @@ export default function Settings() {
                                             orders.slice(0, 5).map(order => (
                                                 <div
                                                     key={order.id}
-                                                    className="flex items-center justify-between rounded-lg bg-background p-3 shadow-sm"
+                                                    className="rounded-lg bg-background p-3 shadow-sm"
                                                 >
-                                                    <div className="flex items-center gap-3">
-                                                        <Clock className="h-4 w-4 text-muted-foreground" />
-                                                        <div>
-                                                            <div className="text-sm font-medium">
-                                                                {formatMoney(order.total_amount, order.currency === 'RWF' ? 'RW' : 'MT')}
-                                                            </div>
-                                                            <div className="text-xs text-muted-foreground">
-                                                                {new Date(order.created_at).toLocaleDateString()}
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <Clock className="h-4 w-4 text-muted-foreground" />
+                                                            <div>
+                                                                <div className="text-sm font-medium">
+                                                                    {formatMoney(order.total_amount, order.currency === 'RWF' ? 'RW' : 'MT')}
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {new Date(order.created_at).toLocaleDateString()}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'served' ? 'bg-green-100 text-green-700' :
+                                                        <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'served' ? 'bg-green-100 text-green-700' :
                                                             order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
                                                                 'bg-yellow-100 text-yellow-700'
-                                                        }`}>
-                                                        {order.status}
-                                                    </span>
+                                                            }`}>
+                                                            {order.status}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-3 flex justify-end border-t border-muted/50 pt-2">
+                                                        <ReorderButton
+                                                            onReorder={() => {
+                                                                alert('Reorder feature coming soon!')
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
                                             ))
                                         ) : (
@@ -129,6 +147,29 @@ export default function Settings() {
                     </section>
 
                     <section>
+                        <h2 className="mb-3 text-sm font-semibold uppercase text-muted-foreground tracking-wider">Preferences</h2>
+                        <Card className="overflow-hidden border-muted/50">
+                            <div className="divide-y divide-muted">
+                                <div className="flex items-center justify-between p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                                            <Smartphone className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-medium">Haptic Feedback</div>
+                                            <div className="text-xs text-muted-foreground">Vibrate on interactions</div>
+                                        </div>
+                                    </div>
+                                    <Switch
+                                        checked={hapticsEnabled}
+                                        onCheckedChange={toggleHaptics}
+                                    />
+                                </div>
+                            </div>
+                        </Card>
+                    </section>
+
+                    <section>
                         <h2 className="mb-3 text-sm font-semibold uppercase text-muted-foreground tracking-wider">App</h2>
                         <Card className="overflow-hidden border-muted/50">
                             <div className="divide-y divide-muted">
@@ -151,7 +192,7 @@ export default function Settings() {
                                     variant="ghost"
                                     className="w-full justify-start rounded-none p-4 h-auto"
                                     onClick={handleInstall}
-                                    disabled={!canInstall || installing}
+                                    disabled={isInstalled || (!canInstall && !isIOS) || installing}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
@@ -164,7 +205,14 @@ export default function Settings() {
                                         <div className="text-left">
                                             <div className="font-medium">Add to Home Screen</div>
                                             <div className="text-xs text-muted-foreground">
-                                                {canInstall ? 'Install app' : 'Already installed or not available'}
+                                                {isInstalled
+                                                    ? 'Already installed'
+                                                    : isIOS
+                                                        ? 'Follow instructions to install'
+                                                        : canInstall
+                                                            ? 'Install app'
+                                                            : 'Not available'
+                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -177,6 +225,13 @@ export default function Settings() {
 
             {/* Bottom Navigation - EXACTLY 2 tabs per STARTER RULES */}
             <BottomNav venueSlug={venue?.slug} />
+
+            {/* iOS Safari install instructions sheet */}
+            <IOSInstallSheet
+                isOpen={showIOSSheet}
+                onClose={() => setShowIOSSheet(false)}
+                appName="DineIn"
+            />
         </>
     )
 }

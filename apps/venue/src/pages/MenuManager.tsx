@@ -86,7 +86,7 @@ export default function MenuManager() {
 
                     {loadingCat ? (
                         <div className="space-y-2">
-                            {[1, 2, 3].map(i => <div key={i} className="h-8 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />)}
+                            {[1, 2, 3].map(i => <div key={i} className="h-8 bg-muted rounded animate-pulse" />)}
                         </div>
                     ) : (
                         <div className="space-y-1">
@@ -127,7 +127,7 @@ export default function MenuManager() {
                 <div className="md:col-span-3 space-y-4">
                     {loadingItems ? (
                         <div className="space-y-4">
-                            {[1, 2].map(i => <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />)}
+                            {[1, 2].map(i => <div key={i} className="h-24 bg-muted rounded-xl animate-pulse" />)}
                         </div>
                     ) : categories.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl flex flex-col items-center">

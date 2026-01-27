@@ -21,7 +21,7 @@ const orderItemSchema = z.object({
 });
 
 const createOrderSchema = z.object({
-  vendor_id: z.string().uuid(),
+  venue_id: z.string().uuid(),
   table_public_code: z.string().min(1),
   items: z.array(orderItemSchema).min(1),
   notes: z.string().max(1000).optional(),
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     }
 
     const input: CreateOrderInput = parsed.data;
-    logger.info("Processing order", { vendorId: input.vendor_id, itemCount: input.items.length });
+    logger.info("Processing order", { vendorId: input.venue_id, itemCount: input.items.length });
 
     // Create audit logger for this request (use 'anonymous' for public orders)
     const audit = createAuditLogger(supabaseAdmin, userId || 'anonymous', requestId, logger);
@@ -71,18 +71,18 @@ Deno.serve(async (req) => {
     // STEP 1: Validate vendor exists and is active
     // ========================================================================
     const { data: vendor, error: vendorError } = await supabaseAdmin
-      .from("vendors")
+      .from("venues")
       .select("id, status")
-      .eq("id", input.vendor_id)
+      .eq("id", input.venue_id)
       .single();
 
     if (vendorError || !vendor) {
-      logger.warn("Vendor not found", { vendorId: input.vendor_id });
+      logger.warn("Vendor not found", { vendorId: input.venue_id });
       return errorResponse("Vendor not found", 404);
     }
 
     if (vendor.status !== "active") {
-      logger.warn("Vendor not active", { vendorId: input.vendor_id, status: vendor.status });
+      logger.warn("Vendor not active", { vendorId: input.venue_id, status: vendor.status });
       return errorResponse("Vendor is not active", 400);
     }
 
@@ -92,13 +92,13 @@ Deno.serve(async (req) => {
     const rawTableInput = input.table_public_code.trim();
     const normalizedTableCode = rawTableInput.toUpperCase();
 
-    let table: { id: string; vendor_id: string; table_number: number; label: string } | null = null;
+    let table: { id: string; venue_id: string; table_number: number; label: string } | null = null;
 
     const { data: tableByCode } = await supabaseAdmin
       .from("tables")
-      .select("id, vendor_id, table_number, label")
+      .select("id, venue_id, table_number, label")
       .eq("public_code", normalizedTableCode)
-      .eq("vendor_id", input.vendor_id)
+      .eq("venue_id", input.venue_id)
       .eq("is_active", true)
       .single();
 
@@ -112,9 +112,9 @@ Deno.serve(async (req) => {
         if (!Number.isNaN(tableNumber)) {
           const { data: tableByNumber } = await supabaseAdmin
             .from("tables")
-            .select("id, vendor_id, table_number, label")
+            .select("id, venue_id, table_number, label")
             .eq("table_number", tableNumber)
-            .eq("vendor_id", input.vendor_id)
+            .eq("venue_id", input.venue_id)
             .eq("is_active", true)
             .single();
 
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
     }
 
     if (!table) {
-      logger.warn("Table not found", { tableCode: rawTableInput, vendorId: input.vendor_id });
+      logger.warn("Table not found", { tableCode: rawTableInput, vendorId: input.venue_id });
       return errorResponse("Table not found or inactive", 404);
     }
 
@@ -136,9 +136,9 @@ Deno.serve(async (req) => {
     const menuItemIds = input.items.map((item) => item.menu_item_id);
     const { data: menuItems, error: menuItemsError } = await supabaseAdmin
       .from("menu_items")
-      .select("id, name, price, is_available, vendor_id")
+      .select("id, name, price, is_available, venue_id")
       .in("id", menuItemIds)
-      .eq("vendor_id", input.vendor_id);
+      .eq("venue_id", input.venue_id);
 
     if (menuItemsError || !menuItems || menuItems.length === 0) {
       logger.warn("Menu items not found", { menuItemIds });
@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
       const { data: existing } = await supabaseAdmin
         .from("orders")
         .select("id")
-        .eq("vendor_id", input.vendor_id)
+        .eq("venue_id", input.venue_id)
         .eq("order_code", orderCode)
         .single();
 
@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .insert({
-        vendor_id: input.vendor_id,
+        venue_id: input.venue_id,
         table_id: table.id,
         client_auth_user_id: userId || null,
         order_code: orderCode,
@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
     // STEP 7: Write audit log
     // ========================================================================
     await audit.log(AuditAction.ORDER_CREATE, EntityType.ORDER, order.id, {
-      vendorId: input.vendor_id,
+      vendorId: input.venue_id,
       tableId: table.id,
       orderCode,
       totalAmount,
