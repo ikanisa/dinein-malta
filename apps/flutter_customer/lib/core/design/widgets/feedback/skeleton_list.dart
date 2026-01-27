@@ -17,7 +17,8 @@ class SkeletonList extends StatelessWidget {
           child: Container(
             height: 80,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
+              color:
+                  Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
               borderRadius: Radii.r12,
             ),
           ),

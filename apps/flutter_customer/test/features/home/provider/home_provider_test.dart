@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_customer/core/data/models/venue.dart';
 import 'package:flutter_customer/core/data/models/promo.dart';
@@ -23,10 +24,12 @@ class FakeVenueRepository implements VenueRepository {
   Future<List<Venue>> listActiveVenues({String? country}) async => venues;
 
   @override
-  Stream<List<Venue>> streamActiveVenues({String? country}) => Stream.value(venues);
+  Stream<List<Venue>> streamActiveVenues({String? country}) =>
+      Stream.value(venues);
 
   @override
-  Future<List<Venue>> searchVenues({required String country, required String query}) async {
+  Future<List<Venue>> searchVenues(
+      {required String country, required String query}) async {
     return searchResults;
   }
 }
@@ -58,19 +61,30 @@ void main() {
       Promo(id: 'p1', title: 'Promo', country: 'RW'),
     ];
 
-    final notifier = HomeNotifier(
-      venueRepository: FakeVenueRepository(venues: venues, searchResults: const []),
-      promoRepository: FakePromoRepository(promos),
-      menuRepository: FakeMenuRepository(),
+    final container = ProviderContainer(
+      overrides: [
+        venueRepositoryProvider.overrideWithValue(
+          FakeVenueRepository(venues: venues, searchResults: const []),
+        ),
+        promoRepositoryProvider.overrideWithValue(
+          FakePromoRepository(promos),
+        ),
+        menuRepositoryProvider.overrideWithValue(
+          FakeMenuRepository(),
+        ),
+      ],
     );
-    addTearDown(notifier.dispose);
+    addTearDown(container.dispose);
 
-    await Future<void>.delayed(Duration.zero);
-    await Future<void>.delayed(Duration.zero);
+    // Manually trigger refresh and wait for stream to emit
+    final notifier = container.read(homeProvider.notifier);
+    await notifier.refresh();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    expect(notifier.state.venues, venues);
-    expect(notifier.state.promos, promos);
-    expect(notifier.state.isLoading, false);
+    final state = container.read(homeProvider);
+    expect(state.venues, venues);
+    expect(state.promos, promos);
+    expect(state.isLoading, false);
   });
 
   test('performSearch replaces venue list', () async {
@@ -81,17 +95,31 @@ void main() {
       Venue(id: 'v2', slug: 'burger', name: 'Burger Bar', country: 'RW'),
     ];
 
-    final notifier = HomeNotifier(
-      venueRepository: FakeVenueRepository(venues: venues, searchResults: searchResults),
-      promoRepository: FakePromoRepository(const []),
-      menuRepository: FakeMenuRepository(),
+    final container = ProviderContainer(
+      overrides: [
+        venueRepositoryProvider.overrideWithValue(
+          FakeVenueRepository(venues: venues, searchResults: searchResults),
+        ),
+        promoRepositoryProvider.overrideWithValue(
+          FakePromoRepository(const []),
+        ),
+        menuRepositoryProvider.overrideWithValue(
+          FakeMenuRepository(),
+        ),
+      ],
     );
-    addTearDown(notifier.dispose);
+    addTearDown(container.dispose);
 
+    // Wait for initial load
     await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    // Perform search
+    final notifier = container.read(homeProvider.notifier);
     await notifier.performSearch('burg');
 
-    expect(notifier.state.venues, searchResults);
-    expect(notifier.state.isLoading, false);
+    final state = container.read(homeProvider);
+    expect(state.venues, searchResults);
+    expect(state.isLoading, false);
   });
 }

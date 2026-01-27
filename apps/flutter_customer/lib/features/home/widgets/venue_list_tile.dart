@@ -11,7 +11,7 @@ class VenueListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Material(
@@ -37,7 +37,7 @@ class VenueListTile extends StatelessWidget {
               children: [
                 // Image placeholder with gradient
                 _VenueImagePlaceholder(venueName: venue.name),
-                
+
                 // Content section
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -63,21 +63,22 @@ class VenueListTile extends StatelessWidget {
                           _RatingBadge(rating: 4.5), // TODO: Use venue.rating
                         ],
                       ),
-                      
+
                       const SizedBox(height: 6),
-                      
+
                       // Description/meta
                       if (venue.description != null)
                         Text(
                           venue.description!,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.7),
                             height: 1.3,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      
+
                       // Tags
                       if (venue.amenities.isNotEmpty) ...[
                         const SizedBox(height: 12),
@@ -105,15 +106,15 @@ class VenueListTile extends StatelessWidget {
 /// Gradient image placeholder based on venue name
 class _VenueImagePlaceholder extends StatelessWidget {
   final String venueName;
-  
+
   const _VenueImagePlaceholder({required this.venueName});
-  
+
   @override
   Widget build(BuildContext context) {
     // Generate consistent gradient based on venue name
     final hash = venueName.hashCode;
     final hue = (hash % 360).abs().toDouble();
-    
+
     return Container(
       height: 140,
       width: double.infinity,
@@ -164,17 +165,17 @@ class _DotPatternPainter extends CustomPainter {
     final paint = Paint()
       ..color = Colors.white.withValues(alpha: 0.08)
       ..style = PaintingStyle.fill;
-    
+
     const spacing = 24.0;
     const radius = 1.5;
-    
+
     for (double x = 0; x < size.width; x += spacing) {
       for (double y = 0; y < size.height; y += spacing) {
         canvas.drawCircle(Offset(x, y), radius, paint);
       }
     }
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
@@ -182,9 +183,9 @@ class _DotPatternPainter extends CustomPainter {
 /// Rating badge (Uber Eats style)
 class _RatingBadge extends StatelessWidget {
   final double rating;
-  
+
   const _RatingBadge({required this.rating});
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(

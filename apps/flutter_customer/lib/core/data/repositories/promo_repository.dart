@@ -21,13 +21,13 @@ class SupabasePromoRepository implements PromoRepository {
           .from('promotions')
           .select('*, venues!inner(country)')
           .eq('is_active', true);
-      
+
       if (country != null) {
         query = query.eq('venues.country', country);
       }
-      
+
       final response = await query;
-      
+
       return (response as List)
           .map((e) => Promo.fromJson(e as Map<String, dynamic>))
           .toList();

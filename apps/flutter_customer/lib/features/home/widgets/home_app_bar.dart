@@ -16,7 +16,7 @@ class HomeAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     // Ensure status bar is dark for light background
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
-    
+
     return SliverToBoxAdapter(
       child: SafeArea(
         bottom: false,
@@ -26,9 +26,9 @@ class HomeAppBar extends StatelessWidget {
             children: [
               // Brand name with accent
               const _BrandLogo(),
-              
+
               const Spacer(),
-              
+
               // Country toggle
               _CountryToggle(
                 activeCountry: activeCountry,

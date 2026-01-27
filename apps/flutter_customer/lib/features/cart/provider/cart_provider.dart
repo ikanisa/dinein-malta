@@ -31,8 +31,11 @@ class CartState {
 }
 
 // Notifier
-class CartNotifier extends StateNotifier<CartState> {
-  CartNotifier() : super(const CartState());
+class CartNotifier extends Notifier<CartState> {
+  @override
+  CartState build() {
+    return const CartState();
+  }
 
   void addItem(MenuItem item, String venueId, {String? currencyCode}) {
     // If adding from a different venue, clear cart first
@@ -40,14 +43,16 @@ class CartNotifier extends StateNotifier<CartState> {
       clear();
     }
 
-    final existingIndex = state.items.indexWhere((i) => i.menuItem.id == item.id);
+    final existingIndex =
+        state.items.indexWhere((i) => i.menuItem.id == item.id);
     List<CartItem> newItems;
 
     if (existingIndex != -1) {
       // Increment quantity
       final existingItem = state.items[existingIndex];
       newItems = List.from(state.items);
-      newItems[existingIndex] = existingItem.copyWith(quantity: existingItem.quantity + 1);
+      newItems[existingIndex] =
+          existingItem.copyWith(quantity: existingItem.quantity + 1);
     } else {
       // Add new item
       newItems = [...state.items, CartItem(menuItem: item)];
@@ -60,21 +65,54 @@ class CartNotifier extends StateNotifier<CartState> {
     );
   }
 
+  /// Add a CartItem object directly (with notes/modifiers)
+  void addCartItem(CartItem cartItem, String venueId, {String? currencyCode}) {
+    // If adding from a different venue, clear cart first
+    if (state.venueId != null && state.venueId != venueId) {
+      clear();
+    }
+
+    // Find existing item with same modifiers/notes combination
+    final existingIndex =
+        state.items.indexWhere((i) => i.uniqueKey == cartItem.uniqueKey);
+    List<CartItem> newItems;
+
+    if (existingIndex != -1) {
+      // Increment quantity
+      final existingItem = state.items[existingIndex];
+      newItems = List.from(state.items);
+      newItems[existingIndex] = existingItem.copyWith(
+          quantity: existingItem.quantity + cartItem.quantity);
+    } else {
+      // Add new item
+      newItems = [...state.items, cartItem];
+    }
+
+    state = state.copyWith(
+      items: newItems,
+      venueId: venueId,
+      currencyCode: currencyCode ?? state.currencyCode,
+    );
+  }
+
+
   void removeItem(MenuItem item) {
-    final existingIndex = state.items.indexWhere((i) => i.menuItem.id == item.id);
+    final existingIndex =
+        state.items.indexWhere((i) => i.menuItem.id == item.id);
     if (existingIndex == -1) return;
 
     final existingItem = state.items[existingIndex];
     List<CartItem> newItems = List.from(state.items);
 
     if (existingItem.quantity > 1) {
-      newItems[existingIndex] = existingItem.copyWith(quantity: existingItem.quantity - 1);
+      newItems[existingIndex] =
+          existingItem.copyWith(quantity: existingItem.quantity - 1);
       state = state.copyWith(items: newItems);
     } else {
       newItems.removeAt(existingIndex);
       // If empty, clear venue scope too
       state = CartState(
-        items: newItems, 
+        items: newItems,
         venueId: newItems.isEmpty ? null : state.venueId,
         currencyCode: newItems.isEmpty ? 'EUR' : state.currencyCode,
       );
@@ -87,6 +125,4 @@ class CartNotifier extends StateNotifier<CartState> {
 }
 
 // Provider
-final cartProvider = StateNotifierProvider<CartNotifier, CartState>((ref) {
-  return CartNotifier();
-});
+final cartProvider = NotifierProvider<CartNotifier, CartState>(CartNotifier.new);

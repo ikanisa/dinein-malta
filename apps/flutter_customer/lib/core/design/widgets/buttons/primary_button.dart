@@ -20,7 +20,8 @@ class PrimaryButton extends StatefulWidget {
   State<PrimaryButton> createState() => _PrimaryButtonState();
 }
 
-class _PrimaryButtonState extends State<PrimaryButton> with SingleTickerProviderStateMixin {
+class _PrimaryButtonState extends State<PrimaryButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -78,7 +79,8 @@ class _PrimaryButtonState extends State<PrimaryButton> with SingleTickerProvider
               shape: RoundedRectangleBorder(borderRadius: Radii.r12),
               padding: const EdgeInsets.symmetric(horizontal: Spacing.xl20),
               elevation: 0,
-              splashFactory: NoSplash.splashFactory, // Disable default ripple for cleaner scale
+              splashFactory: NoSplash
+                  .splashFactory, // Disable default ripple for cleaner scale
             ),
             onPressed: disabled ? null : widget.onPressed,
             child: widget.isLoading

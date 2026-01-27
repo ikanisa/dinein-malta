@@ -13,78 +13,85 @@ class ClayFloatingCart extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(cartProvider);
-    
+
     if (cart.items.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return GestureDetector(
-      onTap: () {
-        Haptics.mediumImpact();
-        context.push('/cart');
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: ClaySpacing.lg),
-        padding: const EdgeInsets.symmetric(
-          horizontal: ClaySpacing.lg,
-          vertical: ClaySpacing.md,
-        ),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [ClayColors.primary, ClayColors.primaryDark],
+    final itemCount = cart.items.fold<int>(0, (sum, item) => sum + item.quantity);
+    final totalFormatted = CurrencyUtils.format(cart.total, cart.currencyCode);
+
+    return Semantics(
+      button: true,
+      label: 'View cart with $itemCount items, total $totalFormatted',
+      child: GestureDetector(
+        onTap: () {
+          Haptics.mediumImpact();
+          context.push('/cart');
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: ClaySpacing.lg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: ClaySpacing.lg,
+            vertical: ClaySpacing.md,
           ),
-          borderRadius: BorderRadius.circular(ClayRadius.pill),
-          boxShadow: [
-            BoxShadow(
-              color: ClayColors.primary.withValues(alpha: 0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [ClayColors.primary, ClayColors.primaryDark],
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(ClayRadius.pill),
+            borderRadius: BorderRadius.circular(ClayRadius.pill),
+            boxShadow: [
+              BoxShadow(
+                color: ClayColors.primary.withValues(alpha: 0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
-              child: Text(
-                '${cart.items.fold<int>(0, (sum, item) => sum + item.quantity)}',
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(ClayRadius.pill),
+                ),
+                child: Text(
+                  '$itemCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'View Cart',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                totalFormatted,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
-                  fontSize: 14,
+                  fontSize: 16,
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'View Cart',
-              style: TextStyle(
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.arrow_forward_rounded,
                 color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
+                size: 20,
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              CurrencyUtils.format(cart.total, cart.currencyCode),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.arrow_forward_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

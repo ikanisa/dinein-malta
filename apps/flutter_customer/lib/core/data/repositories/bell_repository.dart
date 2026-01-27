@@ -34,9 +34,6 @@ class SupabaseBellRepository implements BellRepository {
         },
       );
 
-      if (response.error != null) {
-        throw Exception(response.error!.message);
-      }
 
       // Function usually returns { success: true }
       final data = _normalizePayload(response.data);

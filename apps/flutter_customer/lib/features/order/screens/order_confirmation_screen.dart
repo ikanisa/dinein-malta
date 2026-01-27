@@ -24,10 +24,12 @@ class OrderConfirmationScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<OrderConfirmationScreen> createState() => _OrderConfirmationScreenState();
+  ConsumerState<OrderConfirmationScreen> createState() =>
+      _OrderConfirmationScreenState();
 }
 
-class _OrderConfirmationScreenState extends ConsumerState<OrderConfirmationScreen> {
+class _OrderConfirmationScreenState
+    extends ConsumerState<OrderConfirmationScreen> {
   Timer? _poller;
   OrderStatus? _status;
   String? _orderCode;
@@ -47,11 +49,13 @@ class _OrderConfirmationScreenState extends ConsumerState<OrderConfirmationScree
       return;
     }
     await _fetchStatus();
-    _poller = Timer.periodic(const Duration(seconds: 15), (_) => _fetchStatus());
+    _poller =
+        Timer.periodic(const Duration(seconds: 15), (_) => _fetchStatus());
   }
 
   Future<void> _loadCachedOrder() async {
-    final cached = await ref.read(localCacheServiceProvider).getOrderById(widget.orderId);
+    final cached =
+        await ref.read(localCacheServiceProvider).getOrderById(widget.orderId);
     if (!mounted || cached == null) return;
     try {
       final order = Order.fromJson(cached);
@@ -91,8 +95,9 @@ class _OrderConfirmationScreenState extends ConsumerState<OrderConfirmationScree
   @override
   Widget build(BuildContext context) {
     final statusText = _status?.status.toUpperCase() ?? 'PLACED';
-    final fallbackId =
-        widget.orderId.length > 8 ? widget.orderId.substring(0, 8) : widget.orderId;
+    final fallbackId = widget.orderId.length > 8
+        ? widget.orderId.substring(0, 8)
+        : widget.orderId;
     final orderLabel = _status?.orderCode ?? _orderCode ?? fallbackId;
 
     return Scaffold(
@@ -104,7 +109,7 @@ class _OrderConfirmationScreenState extends ConsumerState<OrderConfirmationScree
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              
+
               // Success Icon with ripple effect
               Container(
                 width: 120,
@@ -129,9 +134,9 @@ class _OrderConfirmationScreenState extends ConsumerState<OrderConfirmationScree
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: ClaySpacing.xl),
-              
+
               Text(
                 'Order Placed! 🎉',
                 style: ClayTypography.h2,
@@ -145,9 +150,9 @@ class _OrderConfirmationScreenState extends ConsumerState<OrderConfirmationScree
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: ClaySpacing.xl),
-              
+
               // Order Details Card
               ClayCard(
                 child: Column(
@@ -159,7 +164,8 @@ class _OrderConfirmationScreenState extends ConsumerState<OrderConfirmationScree
                       const SizedBox(height: ClaySpacing.md),
                       _buildRow(
                         'Total',
-                        CurrencyUtils.format(_status!.totalAmount, _status!.currency),
+                        CurrencyUtils.format(
+                            _status!.totalAmount, _status!.currency),
                       ),
                     ],
                     const SizedBox(height: ClaySpacing.md),
@@ -180,9 +186,9 @@ class _OrderConfirmationScreenState extends ConsumerState<OrderConfirmationScree
                   ],
                 ),
               ),
-              
+
               const Spacer(),
-              
+
               // Actions
               ClayButton(
                 label: 'Track Order',

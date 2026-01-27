@@ -14,8 +14,10 @@ class DineInBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(ClaySpacing.md, 0, ClaySpacing.md, ClaySpacing.md),
-      padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md, vertical: ClaySpacing.sm),
+      margin: const EdgeInsets.fromLTRB(
+          ClaySpacing.md, 0, ClaySpacing.md, ClaySpacing.md),
+      padding: const EdgeInsets.symmetric(
+          horizontal: ClaySpacing.md, vertical: ClaySpacing.sm),
       decoration: BoxDecoration(
         color: ClayColors.surface,
         borderRadius: BorderRadius.circular(ClayRadius.xl),

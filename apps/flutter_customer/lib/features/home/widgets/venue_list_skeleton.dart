@@ -13,7 +13,8 @@ class VenueListSkeleton extends StatelessWidget {
       id: '1',
       slug: 'dummy',
       name: 'Restaurant Name Placeholder',
-      description: 'A brief description of the venue goes here to simulate text layout.',
+      description:
+          'A brief description of the venue goes here to simulate text layout.',
       country: 'RW',
       amenities: ['Wifi', 'Parking', 'Outdoor'],
     );

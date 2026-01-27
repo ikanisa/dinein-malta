@@ -17,7 +17,7 @@ class Radii {
 
   static const double xl24 = 24.0;
   static final BorderRadius r24 = BorderRadius.circular(xl24);
-  
+
   // Bottom Sheet Top corners
   static const double sheet32 = 32.0;
   static const BorderRadius rSheetTop = BorderRadius.vertical(

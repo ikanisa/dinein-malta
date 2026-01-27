@@ -45,7 +45,8 @@ class _BellScreenState extends ConsumerState<BellScreen> {
     if (tableNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please enter table number', style: TextStyle(color: Colors.white)),
+          content: Text('Please enter table number',
+              style: TextStyle(color: Colors.white)),
           backgroundColor: ClayColors.error,
         ),
       );
@@ -54,15 +55,16 @@ class _BellScreenState extends ConsumerState<BellScreen> {
 
     setState(() => _isLoading = true);
     Haptics.mediumImpact();
-    
+
     try {
-      final sessionId = await ref.read(localCacheServiceProvider).getOrCreateSessionId();
-      
+      final sessionId =
+          await ref.read(localCacheServiceProvider).getOrCreateSessionId();
+
       await ref.read(bellRepositoryProvider).ringBell(
-        sessionId: sessionId,
-        venueId: widget.venueId,
-        tableNumber: tableNumber,
-      );
+            sessionId: sessionId,
+            venueId: widget.venueId,
+            tableNumber: tableNumber,
+          );
 
       await ref
           .read(localCacheServiceProvider)
@@ -72,7 +74,8 @@ class _BellScreenState extends ConsumerState<BellScreen> {
         // Success feedback
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Waiter notified!', style: TextStyle(color: Colors.white)),
+            content:
+                Text('Waiter notified!', style: TextStyle(color: Colors.white)),
             backgroundColor: ClayColors.success,
           ),
         );
@@ -107,7 +110,8 @@ class _BellScreenState extends ConsumerState<BellScreen> {
               borderRadius: BorderRadius.circular(ClayRadius.sm),
               boxShadow: ClayShadows.subtle,
             ),
-            child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: ClayColors.textPrimary),
+            child: const Icon(Icons.arrow_back_ios_new_rounded,
+                size: 18, color: ClayColors.textPrimary),
           ),
           onPressed: () => context.pop(),
         ),
@@ -119,7 +123,7 @@ class _BellScreenState extends ConsumerState<BellScreen> {
         child: Column(
           children: [
             const SizedBox(height: ClaySpacing.xl),
-            
+
             // Main Card
             ClayCard(
               child: Padding(
@@ -139,7 +143,6 @@ class _BellScreenState extends ConsumerState<BellScreen> {
                       ),
                     ),
                     const SizedBox(height: ClaySpacing.lg),
-                    
                     Text(
                       'Need assistance?',
                       style: ClayTypography.h2,
@@ -148,20 +151,18 @@ class _BellScreenState extends ConsumerState<BellScreen> {
                     const SizedBox(height: ClaySpacing.sm),
                     Text(
                       'Enter your table number to alert the staff.',
-                      style: ClayTypography.body.copyWith(color: ClayColors.textSecondary),
+                      style: ClayTypography.body
+                          .copyWith(color: ClayColors.textSecondary),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: ClaySpacing.xl),
-                    
                     ClayTextField(
                       controller: _tableController,
                       hintText: 'Table Number (e.g. 12)',
                       keyboardType: TextInputType.number,
                       autofocus: true,
                     ),
-                    
                     const SizedBox(height: ClaySpacing.xl),
-                    
                     ClayButton(
                       label: 'Ring Bell',
                       icon: Icons.notifications_on_outlined,
@@ -172,9 +173,9 @@ class _BellScreenState extends ConsumerState<BellScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: ClaySpacing.xl),
-            
+
             Text(
               'Waiters are usually quick!',
               style: ClayTypography.caption,

@@ -92,7 +92,8 @@ class CartScreen extends ConsumerWidget {
                                       ClayColors.accent.withValues(alpha: 0.2),
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(ClayRadius.md),
+                                  borderRadius:
+                                      BorderRadius.circular(ClayRadius.md),
                                 ),
                                 child: const Center(
                                   child: Icon(
@@ -129,7 +130,8 @@ class CartScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    CurrencyUtils.format(itemTotal, cartState.currencyCode),
+                                    CurrencyUtils.format(
+                                        itemTotal, cartState.currencyCode),
                                     style: ClayTypography.price,
                                   ),
                                   const SizedBox(height: 8),
@@ -137,17 +139,20 @@ class CartScreen extends ConsumerWidget {
                                   Container(
                                     decoration: BoxDecoration(
                                       color: ClayColors.background,
-                                      borderRadius: BorderRadius.circular(ClayRadius.pill),
+                                      borderRadius: BorderRadius.circular(
+                                          ClayRadius.pill),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         _QuantityButton(
                                           icon: Icons.remove,
-                                          onTap: () => notifier.removeItem(item.menuItem),
+                                          onTap: () => notifier
+                                              .removeItem(item.menuItem),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12),
                                           child: Text(
                                             '${item.quantity}',
                                             style: ClayTypography.bodyMedium,
@@ -158,7 +163,8 @@ class CartScreen extends ConsumerWidget {
                                           onTap: () => notifier.addItem(
                                             item.menuItem,
                                             cartState.venueId ?? '',
-                                            currencyCode: cartState.currencyCode,
+                                            currencyCode:
+                                                cartState.currencyCode,
                                           ),
                                         ),
                                       ],
@@ -200,7 +206,8 @@ class CartScreen extends ConsumerWidget {
                           children: [
                             Text('Total', style: ClayTypography.h3),
                             Text(
-                              CurrencyUtils.format(cartState.total, cartState.currencyCode),
+                              CurrencyUtils.format(
+                                  cartState.total, cartState.currencyCode),
                               style: ClayTypography.h2.copyWith(
                                 color: ClayColors.primary,
                               ),
@@ -208,7 +215,7 @@ class CartScreen extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: ClaySpacing.md),
-                        
+
                         // Checkout button
                         ClayButton(
                           label: 'Proceed to Checkout',

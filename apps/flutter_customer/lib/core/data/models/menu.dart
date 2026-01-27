@@ -23,7 +23,8 @@ class Category with _$Category {
     @Default([]) List<MenuItem> items,
   }) = _Category;
 
-  factory Category.fromJson(Map<String, dynamic> json) => _$CategoryFromJson(json);
+  factory Category.fromJson(Map<String, dynamic> json) =>
+      _$CategoryFromJson(json);
 }
 
 @freezed
@@ -36,7 +37,39 @@ class MenuItem with _$MenuItem {
     @JsonKey(name: 'image_url') String? imageUrl,
     @Default([]) List<String> tags, // e.g., 'spicy', 'vegan'
     @Default(true) @JsonKey(name: 'is_available') bool isAvailable,
+    @Default([]) List<ItemModifier> modifiers,
   }) = _MenuItem;
 
-  factory MenuItem.fromJson(Map<String, dynamic> json) => _$MenuItemFromJson(json);
+  factory MenuItem.fromJson(Map<String, dynamic> json) =>
+      _$MenuItemFromJson(json);
+}
+
+/// A modifier group for a menu item (e.g., "Size", "Add-ons", "Remove")
+@freezed
+class ItemModifier with _$ItemModifier {
+  const factory ItemModifier({
+    required String id,
+    required String name, // e.g., "Size", "Extras", "Remove ingredients"
+    @Default(false) bool required, // Must select at least one?
+    @Default(false) @JsonKey(name: 'allow_multiple') bool allowMultiple, // Can select multiple?
+    @Default(1) @JsonKey(name: 'max_selections') int maxSelections,
+    @Default([]) List<ModifierOption> options,
+  }) = _ItemModifier;
+
+  factory ItemModifier.fromJson(Map<String, dynamic> json) =>
+      _$ItemModifierFromJson(json);
+}
+
+/// A single option within a modifier group
+@freezed
+class ModifierOption with _$ModifierOption {
+  const factory ModifierOption({
+    required String id,
+    required String name, // e.g., "Small", "Large", "Extra cheese"
+    @Default(0.0) @JsonKey(name: 'price_adjustment') double priceAdjustment,
+    @Default(true) @JsonKey(name: 'is_available') bool isAvailable,
+  }) = _ModifierOption;
+
+  factory ModifierOption.fromJson(Map<String, dynamic> json) =>
+      _$ModifierOptionFromJson(json);
 }

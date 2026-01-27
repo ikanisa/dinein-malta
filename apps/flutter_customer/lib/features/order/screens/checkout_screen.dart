@@ -101,20 +101,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     Haptics.mediumImpact();
 
     try {
-      final itemsPayload = cart.items.map((i) => {
-        'menu_item_id': i.menuItem.id,
-        'qty': i.quantity,
-      }).toList();
+      final itemsPayload = cart.items
+          .map((i) => {
+                'menu_item_id': i.menuItem.id,
+                'qty': i.quantity,
+              })
+          .toList();
 
-      final sessionId = await ref.read(localCacheServiceProvider).getOrCreateSessionId();
+      final sessionId =
+          await ref.read(localCacheServiceProvider).getOrCreateSessionId();
 
       final order = await ref.read(orderRepositoryProvider).createOrder(
-        sessionId: sessionId,
-        venueId: cart.venueId!,
-        items: itemsPayload,
-        paymentMethod: _paymentMethod,
-        tableNumber: _tableController.text.trim(),
-      );
+            sessionId: sessionId,
+            venueId: cart.venueId!,
+            items: itemsPayload,
+            paymentMethod: _paymentMethod,
+            tableNumber: _tableController.text.trim(),
+          );
 
       ref.read(cartProvider.notifier).clear();
       await ref.read(localCacheServiceProvider).saveOrder(order.toJson());
@@ -218,52 +221,56 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.receipt_long_rounded, color: ClayColors.primary),
+                      Icon(Icons.receipt_long_rounded,
+                          color: ClayColors.primary),
                       const SizedBox(width: 8),
                       Text('Order Summary', style: ClayTypography.h3),
                     ],
                   ),
                   const SizedBox(height: ClaySpacing.md),
-                  
+
                   // Items
                   ...cart.items.map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: ClayColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(ClayRadius.sm),
-                          ),
-                          child: Text(
-                            '${item.quantity}x',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: ClayColors.primary,
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color:
+                                    ClayColors.primary.withValues(alpha: 0.1),
+                                borderRadius:
+                                    BorderRadius.circular(ClayRadius.sm),
+                              ),
+                              child: Text(
+                                '${item.quantity}x',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: ClayColors.primary,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                item.menuItem.name,
+                                style: ClayTypography.body,
+                              ),
+                            ),
+                            Text(
+                              CurrencyUtils.format(
+                                item.menuItem.price * item.quantity,
+                                cart.currencyCode,
+                              ),
+                              style: ClayTypography.bodyMedium,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            item.menuItem.name,
-                            style: ClayTypography.body,
-                          ),
-                        ),
-                        Text(
-                          CurrencyUtils.format(
-                            item.menuItem.price * item.quantity,
-                            cart.currencyCode,
-                          ),
-                          style: ClayTypography.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  )),
-                  
+                      )),
+
                   const Divider(height: 24),
-                  
+
                   // Total
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -271,7 +278,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       Text('Total', style: ClayTypography.h3),
                       Text(
                         CurrencyUtils.format(cart.total, cart.currencyCode),
-                        style: ClayTypography.h2.copyWith(color: ClayColors.primary),
+                        style: ClayTypography.h2
+                            .copyWith(color: ClayColors.primary),
                       ),
                     ],
                   ),
@@ -294,24 +302,25 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             // Payment method
             Text('Payment Method', style: ClayTypography.h3),
             const SizedBox(height: ClaySpacing.sm),
-            
+
             ...paymentOptions.map((option) => Padding(
-              padding: const EdgeInsets.only(bottom: ClaySpacing.sm),
-              child: _ClayPaymentOption(
-                icon: option.icon,
-                label: option.label,
-                subtitle: option.subtitle,
-                value: option.value,
-                groupValue: _paymentMethod,
-                color: option.color,
-                onChanged: (v) => setState(() => _paymentMethod = v),
-              ),
-            )),
+                  padding: const EdgeInsets.only(bottom: ClaySpacing.sm),
+                  child: _ClayPaymentOption(
+                    icon: option.icon,
+                    label: option.label,
+                    subtitle: option.subtitle,
+                    value: option.value,
+                    groupValue: _paymentMethod,
+                    color: option.color,
+                    onChanged: (v) => setState(() => _paymentMethod = v),
+                  ),
+                )),
 
             if (_paymentMethod != 'cash') ...[
               const SizedBox(height: ClaySpacing.md),
               ClayButtonSecondary(
-                label: 'Open ${_paymentMethod == 'momo_ussd' ? 'USSD' : 'Revolut'}',
+                label:
+                    'Open ${_paymentMethod == 'momo_ussd' ? 'USSD' : 'Revolut'}',
                 icon: Icons.open_in_new_rounded,
                 onPressed: _launchPayment,
               ),
@@ -322,7 +331,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 textAlign: TextAlign.center,
               ),
             ],
-            
+
             const SizedBox(height: 120), // Space for bottom button
           ],
         ),
@@ -377,7 +386,7 @@ class _ClayPaymentOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = value == groupValue;
-    
+
     return GestureDetector(
       onTap: () => onChanged(value),
       child: AnimatedContainer(

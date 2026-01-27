@@ -27,13 +27,13 @@ class DineInScaffold extends StatelessWidget {
       appBar: appBar,
       body: Container(
         decoration: BoxDecoration(
-          gradient: isDark 
-              ? DineInGradients.candlelightScaffold 
+          gradient: isDark
+              ? DineInGradients.candlelightScaffold
               : DineInGradients.brightBistroScaffold,
         ),
         child: SafeArea(
           // Allow override? Maybe. For now safety first.
-          bottom: !extendBody, 
+          bottom: !extendBody,
           child: body ?? const SizedBox.shrink(),
         ),
       ),

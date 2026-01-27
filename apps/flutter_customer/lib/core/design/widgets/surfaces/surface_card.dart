@@ -31,7 +31,7 @@ class SurfaceCard extends StatelessWidget {
         child: content,
       );
     }
-    
+
     return content;
   }
 }

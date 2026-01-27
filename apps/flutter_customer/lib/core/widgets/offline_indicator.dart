@@ -8,7 +8,7 @@ class OfflineIndicator extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOffline = ref.watch(isOfflineProvider);
-    
+
     // We can animate the height or opacity
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -25,7 +25,10 @@ class OfflineIndicator extends ConsumerWidget {
                   SizedBox(width: 8),
                   Text(
                     'Offline Mode',
-                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
                   ),
                 ],
               ),

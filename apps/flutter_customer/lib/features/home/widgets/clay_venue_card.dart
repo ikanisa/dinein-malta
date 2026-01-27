@@ -139,7 +139,7 @@ class ClayVenueCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
-                  
+
                   // Location
                   Row(
                     children: [

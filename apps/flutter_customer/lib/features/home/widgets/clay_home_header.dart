@@ -75,13 +75,15 @@ class ClayHomeHeader extends ConsumerWidget {
                   emoji: '🇷🇼',
                   code: 'RW',
                   isActive: homeState.activeCountry == 'RW',
-                  onTap: () => ref.read(homeProvider.notifier).switchCountry('RW'),
+                  onTap: () =>
+                      ref.read(homeProvider.notifier).switchCountry('RW'),
                 ),
                 _CountryPill(
                   emoji: '🇲🇹',
                   code: 'MT',
                   isActive: homeState.activeCountry == 'MT',
-                  onTap: () => ref.read(homeProvider.notifier).switchCountry('MT'),
+                  onTap: () =>
+                      ref.read(homeProvider.notifier).switchCountry('MT'),
                 ),
               ],
             ),

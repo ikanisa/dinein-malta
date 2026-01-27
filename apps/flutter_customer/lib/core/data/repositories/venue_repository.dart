@@ -1,4 +1,3 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../supabase/supabase_client.dart';
@@ -11,7 +10,8 @@ abstract class VenueRepository {
   Stream<Venue?> streamVenueBySlug(String slug);
   Future<List<Venue>> listActiveVenues({String? country});
   Stream<List<Venue>> streamActiveVenues({String? country});
-  Future<List<Venue>> searchVenues({required String country, required String query});
+  Future<List<Venue>> searchVenues(
+      {required String country, required String query});
 }
 
 // Implementation
@@ -23,13 +23,10 @@ class SupabaseVenueRepository implements VenueRepository {
 
   @override
   Future<Venue?> getVenueBySlug(String slug) async {
-     // Legacy future call - prefer stream
+    // Legacy future call - prefer stream
     try {
-      final response = await _client
-          .from('venues')
-          .select()
-          .eq('slug', slug)
-          .maybeSingle(); 
+      final response =
+          await _client.from('venues').select().eq('slug', slug).maybeSingle();
       if (response == null) return null;
       _cache.cacheVenue(slug, response);
       final venueId = response['id']?.toString();
@@ -55,11 +52,8 @@ class SupabaseVenueRepository implements VenueRepository {
 
     // 2. Fetch Network
     try {
-      final response = await _client
-          .from('venues')
-          .select()
-          .eq('slug', slug)
-          .maybeSingle();
+      final response =
+          await _client.from('venues').select().eq('slug', slug).maybeSingle();
 
       if (response != null) {
         await _cache.cacheVenue(slug, response);
@@ -90,24 +84,22 @@ class SupabaseVenueRepository implements VenueRepository {
     // Cache policy says key: venues_list_{country}
     // We need to implement list caching in LocalCacheService or here manually
     // For now let's assume valid key.
-    // Actually LocalCacheService doesn't have list helper yet. 
+    // Actually LocalCacheService doesn't have list helper yet.
     // Let's use generic getData.
     final cacheKey = 'venues_list_${country ?? 'all'}';
     final cachedList = _cache.getData(cacheKey, ignoreExpiration: true);
     if (cachedList != null && cachedList['list'] is List) {
-       yield (cachedList['list'] as List)
-          .map((e) => Venue.fromJson(e))
-          .toList();
+      yield (cachedList['list'] as List).map((e) => Venue.fromJson(e)).toList();
     }
 
     try {
       final fresh = await _fetchVenues(country);
-      
+
       // Cache it
-      await _cache.cacheData(cacheKey, {
-        'list': fresh.map((v) => v.toJson()).toList()
-      }, ttl: const Duration(hours: 1));
-      
+      await _cache.cacheData(
+          cacheKey, {'list': fresh.map((v) => v.toJson()).toList()},
+          ttl: const Duration(hours: 1));
+
       yield fresh;
     } catch (e) {
       if (cachedList == null) rethrow;
@@ -115,17 +107,18 @@ class SupabaseVenueRepository implements VenueRepository {
   }
 
   Future<List<Venue>> _fetchVenues(String? country) async {
-      // Table is 'venues' in the Supabase schema
-      var query = _client.from('venues').select().eq('status', 'active');
-      if (country != null) query = query.eq('country', country);
-      final response = await query;
-      return (response as List)
-          .map((e) => Venue.fromJson(e as Map<String, dynamic>))
-          .toList();
+    // Table is 'venues' in the Supabase schema
+    var query = _client.from('venues').select().eq('status', 'active');
+    if (country != null) query = query.eq('country', country);
+    final response = await query;
+    return (response as List)
+        .map((e) => Venue.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  Future<List<Venue>> searchVenues({required String country, required String query}) async {
-    // Search is usually network-only or strictly filtered cache. 
+  Future<List<Venue>> searchVenues(
+      {required String country, required String query}) async {
+    // Search is usually network-only or strictly filtered cache.
     // Network-only is fine for now.
     try {
       final response = await _client
@@ -134,7 +127,7 @@ class SupabaseVenueRepository implements VenueRepository {
           .eq('country', country)
           .eq('status', 'active')
           .ilike('name', '%$query%');
-      
+
       return (response as List)
           .map((e) => Venue.fromJson(e as Map<String, dynamic>))
           .toList();

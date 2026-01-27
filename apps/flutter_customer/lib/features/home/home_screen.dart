@@ -40,101 +40,109 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: ClayColors.background,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // Header with logo and country toggle
-            const SliverToBoxAdapter(
-              child: ClayHomeHeader(),
-            ),
+        child: RefreshIndicator(
+          color: ClayColors.primary,
+          onRefresh: () async {
+            ref.invalidate(venuesProvider);
+            await ref.read(homeProvider.notifier).refresh();
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // Header with logo and country toggle
+              const SliverToBoxAdapter(
+                child: ClayHomeHeader(),
+              ),
 
-            // Search bar
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md),
-                child: ClaySearchBar(
-                  hint: 'Search restaurants...',
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
+              // Search bar
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md),
+                  child: ClaySearchBar(
+                    hint: 'Search restaurants...',
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                  ),
                 ),
               ),
-            ),
 
-            const SliverToBoxAdapter(
-              child: SizedBox(height: ClaySpacing.lg),
-            ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: ClaySpacing.lg),
+              ),
 
-            // Section title
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md),
-                child: Text(
-                  '🍽️ Restaurants Near You',
-                  style: ClayTypography.h2,
+              // Section title
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md),
+                  child: Text(
+                    '🍽️ Restaurants Near You',
+                    style: ClayTypography.h2,
+                  ),
                 ),
               ),
-            ),
 
-            const SliverToBoxAdapter(
-              child: SizedBox(height: ClaySpacing.md),
-            ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: ClaySpacing.md),
+              ),
 
-            // Venues list
-            if (homeState.isLoading && homeState.venues.isEmpty)
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => const Padding(
-                      padding: EdgeInsets.only(bottom: ClaySpacing.md),
-                      child: ClayVenueCardSkeleton(),
+              // Venues list
+              if (homeState.isLoading && homeState.venues.isEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => const Padding(
+                        padding: EdgeInsets.only(bottom: ClaySpacing.md),
+                        child: ClayVenueCardSkeleton(),
+                      ),
+                      childCount: 3,
                     ),
-                    childCount: 3,
+                  ),
+                )
+              else if (homeState.error != null && homeState.venues.isEmpty)
+                SliverFillRemaining(
+                  child: ClayEmptyState(
+                    icon: Icons.error_outline_rounded,
+                    title: 'Something went wrong',
+                    subtitle: 'Please try again later',
+                    action: ClayButtonSecondary(
+                      label: 'Retry',
+                      fullWidth: false,
+                      onPressed: () => ref.read(homeProvider.notifier).refresh(),
+                    ),
+                  ),
+                )
+              else if (homeState.venues.isEmpty)
+                const SliverFillRemaining(
+                  child: ClayEmptyState(
+                    icon: Icons.restaurant_menu_rounded,
+                    title: 'No restaurants yet',
+                    subtitle: 'Check back soon for delicious options!',
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final venue = homeState.venues[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: ClaySpacing.md),
+                          child: ClayVenueCard(venue: venue),
+                        );
+                      },
+                      childCount: homeState.venues.length,
+                    ),
                   ),
                 ),
-              )
-            else if (homeState.error != null && homeState.venues.isEmpty)
-              SliverFillRemaining(
-                child: ClayEmptyState(
-                  icon: Icons.error_outline_rounded,
-                  title: 'Something went wrong',
-                  subtitle: 'Please try again later',
-                  action: ClayButtonSecondary(
-                    label: 'Retry',
-                    fullWidth: false,
-                    onPressed: () => ref.read(homeProvider.notifier).refresh(),
-                  ),
-                ),
-              )
-            else if (homeState.venues.isEmpty)
-              const SliverFillRemaining(
-                child: ClayEmptyState(
-                  icon: Icons.restaurant_menu_rounded,
-                  title: 'No restaurants yet',
-                  subtitle: 'Check back soon for delicious options!',
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final venue = homeState.venues[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: ClaySpacing.md),
-                        child: ClayVenueCard(venue: venue),
-                      );
-                    },
-                    childCount: homeState.venues.length,
-                  ),
-                ),
-              ),
 
-            // Bottom padding for nav bar
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 100),
-            ),
-          ],
+              // Bottom padding for nav bar
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -12,7 +12,8 @@ class FloatingCartPill extends ConsumerStatefulWidget {
   ConsumerState<FloatingCartPill> createState() => _FloatingCartPillState();
 }
 
-class _FloatingCartPillState extends ConsumerState<FloatingCartPill> with SingleTickerProviderStateMixin {
+class _FloatingCartPillState extends ConsumerState<FloatingCartPill>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   int? _prevItemCount;
@@ -72,25 +73,32 @@ class _FloatingCartPillState extends ConsumerState<FloatingCartPill> with Single
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '${cartState.itemCount}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(width: 12),
                   const Text(
                     'View Cart',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16),
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    CurrencyUtils.format(cartState.total, cartState.currencyCode),
-                    style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
+                    CurrencyUtils.format(
+                        cartState.total, cartState.currencyCode),
+                    style: const TextStyle(
+                        color: Colors.white70, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),

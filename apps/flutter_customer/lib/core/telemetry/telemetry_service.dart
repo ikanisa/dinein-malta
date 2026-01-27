@@ -21,7 +21,7 @@ class TelemetryService {
       scope.setUser(SentryUser(id: _sessionId));
       scope.setTag('session_id', _sessionId ?? 'unknown');
     });
-    
+
     Logger.info('Telemetry Initialized', scope: 'Telemetry');
   }
 
@@ -52,14 +52,15 @@ class TelemetryService {
 
   void trackOrderPlaced(String venueId, String orderId) {
     // PII Check: Do NOT log order contents or notes.
-    _trackEvent('order_placed', data: {'venue_id': venueId, 'order_id': orderId});
+    _trackEvent('order_placed',
+        data: {'venue_id': venueId, 'order_id': orderId});
   }
 
   void _trackEvent(String name, {Map<String, dynamic>? data}) {
     if (!_enabled) return;
-    
+
     Logger.info('Event: $name', scope: 'Analytics');
-    
+
     // Add breadcrumb for crash context
     Sentry.addBreadcrumb(
       Breadcrumb(
@@ -69,7 +70,7 @@ class TelemetryService {
         level: SentryLevel.info,
       ),
     );
-    
+
     // In a real setup, we might send this to a separate Analytics backend (PostHog/Mixpanel).
     // For now, Sentry Transaction or Breadcrumb is sufficient for minimal observability.
   }

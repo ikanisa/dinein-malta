@@ -22,7 +22,7 @@ class SupabaseMenuRepository implements MenuRepository {
     try {
       final data = await _fetchMenu(venueId);
       if (data == null) return null;
-      
+
       await _cache.cacheMenu(venueId, data);
       return Menu.fromJson(data);
     } catch (e) {
@@ -39,7 +39,7 @@ class SupabaseMenuRepository implements MenuRepository {
     if (cached != null) {
       yield Menu.fromJson(cached);
     }
-    
+
     // 2. Network
     try {
       final data = await _fetchMenu(venueId);
@@ -47,7 +47,7 @@ class SupabaseMenuRepository implements MenuRepository {
         await _cache.cacheMenu(venueId, data);
         yield Menu.fromJson(data);
       } else if (cached == null) {
-        yield null; 
+        yield null;
       }
     } catch (e) {
       if (cached == null) rethrow; // If no cache, bubble error
@@ -64,11 +64,11 @@ class SupabaseMenuRepository implements MenuRepository {
         .eq('is_available', true)
         .order('category')
         .order('name');
-    
+
     if (response == null || (response as List).isEmpty) {
       return null;
     }
-    
+
     // Group items by category
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     for (final item in response) {
@@ -84,22 +84,24 @@ class SupabaseMenuRepository implements MenuRepository {
         'is_available': item['is_available'] ?? true,
       });
     }
-    
+
     // Build categories list
-    final categories = grouped.entries.map((entry) => {
-      'id': entry.key.hashCode.toString(),
-      'name': entry.key,
-      'sortOrder': 0,
-      'items': entry.value,
-    }).toList();
-    
+    final categories = grouped.entries
+        .map((entry) => {
+              'id': entry.key.hashCode.toString(),
+              'name': entry.key,
+              'sortOrder': 0,
+              'items': entry.value,
+            })
+        .toList();
+
     return {
       'id': venueId,
       'venue_id': venueId,
       'categories': categories,
     };
   }
-  
+
   /// Parse tags from JSON
   List<String> _parseTags(dynamic tagsJson) {
     if (tagsJson == null) return [];

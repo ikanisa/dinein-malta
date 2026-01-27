@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class DineInTypography {
   // Using 'Outfit' for headings and 'Inter' for body for that premium feel
   // Fallback to standard if offline or package issue
-  
+
   static TextTheme textTheme(Color text0, Color text1) {
     return TextTheme(
       // Headings (Outfit)
@@ -25,7 +25,7 @@ class DineInTypography {
         fontWeight: FontWeight.w600,
         color: text0,
       ),
-      
+
       // Body (Inter)
       bodyLarge: GoogleFonts.inter(
         fontSize: 16,
@@ -42,7 +42,7 @@ class DineInTypography {
         fontWeight: FontWeight.w400,
         color: text1,
       ),
-      
+
       // Labels (Buttons/Chips)
       labelLarge: GoogleFonts.inter(
         fontSize: 14,

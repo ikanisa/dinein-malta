@@ -19,6 +19,8 @@ abstract class OrderRepository {
     required String orderId,
     required String orderCode,
   });
+
+  Stream<List<Order>> streamOrderHistory({required String sessionId});
 }
 
 // Implementation - Edge Function order_create (no direct table insert)
@@ -44,14 +46,16 @@ class SupabaseOrderRepository implements OrderRepository {
       }
 
       final sanitizedItems = items.map((item) {
-        final menuItemId = item['menu_item_id'] ?? item['id'] ?? item['item_id'];
+        final menuItemId =
+            item['menu_item_id'] ?? item['id'] ?? item['item_id'];
         if (menuItemId == null) {
           throw Exception('Invalid item payload');
         }
         return {
           'menu_item_id': menuItemId,
           'qty': item['qty'] ?? item['quantity'] ?? 1,
-          if (item['modifiers_json'] != null) 'modifiers_json': item['modifiers_json'],
+          if (item['modifiers_json'] != null)
+            'modifiers_json': item['modifiers_json'],
         };
       }).toList();
 
@@ -64,10 +68,6 @@ class SupabaseOrderRepository implements OrderRepository {
         },
       );
 
-      if (response.error != null) {
-        throw Exception(response.error!.message);
-      }
-
       final payload = _normalizePayload(response.data);
       if (payload['success'] != true || payload['order'] == null) {
         throw Exception(payload['error'] ?? 'Failed to create order');
@@ -79,10 +79,19 @@ class SupabaseOrderRepository implements OrderRepository {
       final orderItems = itemsList.map((item) {
         final map = Map<String, dynamic>.from(item as Map);
         return OrderItem(
-          itemId: map['menu_item_id']?.toString() ?? map['item_id']?.toString() ?? map['id']?.toString() ?? '',
-          name: map['name_snapshot']?.toString() ?? map['name']?.toString() ?? 'Unknown',
-          quantity: (map['qty'] as num?)?.toInt() ?? (map['quantity'] as num?)?.toInt() ?? 1,
-          price: (map['price_snapshot'] as num?)?.toDouble() ?? (map['price'] as num?)?.toDouble() ?? 0,
+          itemId: map['menu_item_id']?.toString() ??
+              map['item_id']?.toString() ??
+              map['id']?.toString() ??
+              '',
+          name: map['name_snapshot']?.toString() ??
+              map['name']?.toString() ??
+              'Unknown',
+          quantity: (map['qty'] as num?)?.toInt() ??
+              (map['quantity'] as num?)?.toInt() ??
+              1,
+          price: (map['price_snapshot'] as num?)?.toDouble() ??
+              (map['price'] as num?)?.toDouble() ??
+              0,
         );
       }).toList();
 
@@ -126,10 +135,6 @@ class SupabaseOrderRepository implements OrderRepository {
         },
       );
 
-      if (response.error != null) {
-        throw Exception(response.error!.message);
-      }
-
       final payload = _normalizePayload(response.data);
       if (payload['success'] != true || payload['order'] == null) {
         throw Exception(payload['error'] ?? 'Failed to fetch order');
@@ -150,9 +155,67 @@ class SupabaseOrderRepository implements OrderRepository {
     }
     throw Exception('Unexpected response format');
   }
+
+  @override
+  Stream<List<Order>> streamOrderHistory({required String sessionId}) {
+    return _client
+        .from('orders')
+        .stream(primaryKey: ['id'])
+        .eq('session_id', sessionId)
+        .order('created_at', ascending: false)
+        .map((rows) {
+          return rows.map((row) {
+            final itemsList = row['items'] as List<dynamic>? ?? [];
+            final orderItems = itemsList.map((item) {
+              final map = Map<String, dynamic>.from(item as Map);
+              return OrderItem(
+                itemId: map['menu_item_id']?.toString() ??
+                    map['item_id']?.toString() ??
+                    map['id']?.toString() ??
+                    '',
+                name: map['name_snapshot']?.toString() ??
+                    map['name']?.toString() ??
+                    'Unknown',
+                quantity: (map['qty'] as num?)?.toInt() ??
+                    (map['quantity'] as num?)?.toInt() ??
+                    1,
+                price: (map['price_snapshot'] as num?)?.toDouble() ??
+                    (map['price'] as num?)?.toDouble() ??
+                    0,
+              );
+            }).toList();
+
+            final createdAtRaw = row['created_at'];
+            final createdAt = createdAtRaw is String
+                ? DateTime.parse(createdAtRaw)
+                : DateTime.now().toUtc();
+
+            return Order(
+              id: row['id'] as String,
+              venueId: row['venue_id'] as String,
+              sessionId: row['session_id'] as String,
+              tableNumber: row['table_number']?.toString(),
+              status: row['status']?.toString() ?? 'placed',
+              totalAmount: (row['total_amount'] as num?)?.toDouble() ?? 0,
+              currency: row['currency']?.toString() ?? 'EUR',
+              paymentMethod: row['payment_method']?.toString() ?? 'Cash',
+              orderCode: row['order_code']?.toString(),
+              items: orderItems,
+              createdAt: createdAt,
+            );
+          }).toList();
+        });
+  }
 }
 
 // Provider
 final orderRepositoryProvider = Provider<OrderRepository>((ref) {
   return SupabaseOrderRepository(ref.watch(supabaseClientProvider));
+});
+
+// Order history stream provider - requires sessionId
+final orderHistoryProvider =
+    StreamProvider.family<List<Order>, String>((ref, sessionId) {
+  final repo = ref.watch(orderRepositoryProvider);
+  return repo.streamOrderHistory(sessionId: sessionId);
 });

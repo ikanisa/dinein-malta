@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 class ErrorMapper {
   static String getErrorMessage(Object error) {
     final message = error.toString();
-    
-    if (message.contains('SocketException') || message.contains('ClientException')) {
+
+    if (message.contains('SocketException') ||
+        message.contains('ClientException')) {
       return 'No internet connection. Please check your network.';
     }
-    
+
     if (message.contains('429')) {
       return 'You are doing that too fast. Please wait a moment.';
     }

@@ -91,7 +91,8 @@ class _ClayButtonState extends State<ClayButton> {
             ],
           ),
           borderRadius: BorderRadius.circular(ClayRadius.xl),
-          boxShadow: _isPressed ? ClayShadows.buttonPressed : ClayShadows.button,
+          boxShadow:
+              _isPressed ? ClayShadows.buttonPressed : ClayShadows.button,
         ),
         child: widget.isLoading
             ? const Center(
@@ -106,7 +107,8 @@ class _ClayButtonState extends State<ClayButton> {
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
+                mainAxisSize:
+                    widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
                 children: [
                   if (widget.icon != null) ...[
                     Icon(widget.icon, color: Colors.white, size: 20),
@@ -166,7 +168,8 @@ class _ClayButtonSecondaryState extends State<ClayButtonSecondary> {
             color: ClayColors.primary.withValues(alpha: 0.3),
             width: 2,
           ),
-          boxShadow: _isPressed ? ClayShadows.buttonPressed : ClayShadows.subtle,
+          boxShadow:
+              _isPressed ? ClayShadows.buttonPressed : ClayShadows.subtle,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -196,6 +199,8 @@ class ClayTextField extends StatelessWidget {
   final IconData? prefixIcon;
   final bool obscureText;
   final bool autofocus;
+  final int? maxLines;
+  final int? minLines;
 
   const ClayTextField({
     super.key,
@@ -206,6 +211,8 @@ class ClayTextField extends StatelessWidget {
     this.prefixIcon,
     this.obscureText = false,
     this.autofocus = false,
+    this.maxLines = 1,
+    this.minLines,
   });
 
   @override
@@ -228,6 +235,8 @@ class ClayTextField extends StatelessWidget {
             keyboardType: keyboardType,
             obscureText: obscureText,
             autofocus: autofocus,
+            maxLines: obscureText ? 1 : maxLines,
+            minLines: minLines,
             style: ClayTypography.body,
             decoration: InputDecoration(
               hintText: hintText,
@@ -269,7 +278,7 @@ class ClayChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chipColor = color ?? ClayColors.secondary;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: ClaySpacing.sm + 4,

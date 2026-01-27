@@ -23,20 +23,22 @@ class MenuItemTile extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: item.imageUrl != null 
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: item.imageUrl!,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                memCacheWidth: 120, // Optimization: Decode at needed size
-                placeholder: (context, url) => Container(color: Colors.grey[200]),
-                errorWidget: (context, url, error) => const Icon(Icons.broken_image, color: Colors.grey),
-              ),
-            )
-          : null,
+        leading: item.imageUrl != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: item.imageUrl!,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  memCacheWidth: 120, // Optimization: Decode at needed size
+                  placeholder: (context, url) =>
+                      Container(color: Colors.grey[200]),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.broken_image, color: Colors.grey),
+                ),
+              )
+            : null,
         title: Text(
           item.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -59,24 +61,28 @@ class MenuItemTile extends StatelessWidget {
               children: [
                 Text(
                   CurrencyUtils.format(item.price, currencyCode),
-                  style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, color: Colors.black87),
                 ),
                 const Spacer(),
                 if (!item.isAvailable)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text('Sold Out', style: TextStyle(fontSize: 10)),
+                    child:
+                        const Text('Sold Out', style: TextStyle(fontSize: 10)),
                   )
                 else
                   InkWell(
                     onTap: onAdd,
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(8),
@@ -84,7 +90,10 @@ class MenuItemTile extends StatelessWidget {
                       ),
                       child: const Text(
                         'ADD',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue),
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue),
                       ),
                     ),
                   ),

@@ -9,10 +9,10 @@ class ClayColors {
   // === BACKGROUNDS ===
   /// Warm cream background
   static const Color background = Color(0xFFFFF8F0);
-  
+
   /// Soft beige alternative background
   static const Color backgroundAlt = Color(0xFFFAF5F0);
-  
+
   /// Pure white for cards
   static const Color surface = Color(0xFFFFFFFF);
 
@@ -37,10 +37,10 @@ class ClayColors {
   // === TEXT COLORS ===
   /// Warm dark brown for primary text
   static const Color textPrimary = Color(0xFF3E2723);
-  
+
   /// Warm gray for secondary text
   static const Color textSecondary = Color(0xFF8D6E63);
-  
+
   /// Muted text
   static const Color textMuted = Color(0xFFBCAAA4);
 
@@ -53,7 +53,7 @@ class ClayColors {
   // === SHADOWS ===
   /// Soft shadow color
   static const Color shadowColor = Color(0x18000000);
-  
+
   /// Light inner shadow color
   static const Color innerShadow = Color(0xFFFFFFFF);
 }

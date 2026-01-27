@@ -127,7 +127,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       iconColor: ClayColors.primary,
                       title: 'Order History',
                       subtitle: 'View your past orders',
-                      onTap: () => context.push('${Routes.settings}/${Routes.ordersHistory}'),
+                      onTap: () => context
+                          .push('${Routes.settings}/${Routes.ordersHistory}'),
                     ),
                     const Divider(height: 1),
                     _SettingsTile(
@@ -135,7 +136,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       iconColor: ClayColors.error,
                       title: 'Favorites',
                       subtitle: 'Your saved restaurants',
-                      onTap: () {},
+                      onTap: () => context
+                          .push('${Routes.settings}/${Routes.favorites}'),
                     ),
                   ],
                 ),
@@ -197,7 +199,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       iconColor: ClayColors.info,
                       title: 'Help & FAQ',
                       subtitle: 'Get answers to common questions',
-                      onTap: () {},
+                      onTap: () => context
+                          .push('${Routes.settings}/${Routes.help}'),
                     ),
                     const Divider(height: 1),
                     _SettingsTile(
@@ -223,14 +226,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       icon: Icons.description_outlined,
                       iconColor: ClayColors.textSecondary,
                       title: 'Terms of Service',
-                      onTap: () {},
+                      onTap: () => context
+                          .push('${Routes.settings}/${Routes.privacy}'),
                     ),
                     const Divider(height: 1),
                     _SettingsTile(
                       icon: Icons.shield_outlined,
                       iconColor: ClayColors.textSecondary,
                       title: 'Privacy Policy',
-                      onTap: () {},
+                      onTap: () => context
+                          .push('${Routes.settings}/${Routes.privacy}'),
                     ),
                   ],
                 ),

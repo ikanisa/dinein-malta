@@ -3,7 +3,8 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import '../telemetry/telemetry_config.dart';
 
 class Logger {
-  static void log(String message, {String? scope, Object? error, StackTrace? stackTrace}) {
+  static void log(String message,
+      {String? scope, Object? error, StackTrace? stackTrace}) {
     // 1. Console Log (Dev)
     if (kDebugMode) {
       debugPrint('[${scope ?? 'App'}] $message');
@@ -32,9 +33,11 @@ class Logger {
       );
     }
   }
-  
-  static void info(String message, {String? scope}) => log(message, scope: scope);
-  
-  static void error(String message, Object error, {String? scope, StackTrace? stackTrace}) => 
+
+  static void info(String message, {String? scope}) =>
+      log(message, scope: scope);
+
+  static void error(String message, Object error,
+          {String? scope, StackTrace? stackTrace}) =>
       log(message, scope: scope, error: error, stackTrace: stackTrace);
 }

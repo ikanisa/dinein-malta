@@ -64,10 +64,14 @@ class _VenueMenuScreenState extends ConsumerState<VenueMenuScreen> {
         });
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(localCacheServiceProvider).cacheVenueById(venue.id, venue.toJson());
+          ref
+              .read(localCacheServiceProvider)
+              .cacheVenueById(venue.id, venue.toJson());
           final tableNumber = widget.tableNumber?.trim();
           if (tableNumber != null && tableNumber.isNotEmpty) {
-            ref.read(localCacheServiceProvider).cacheTableNumber(venue.id, tableNumber);
+            ref
+                .read(localCacheServiceProvider)
+                .cacheTableNumber(venue.id, tableNumber);
           }
         });
 
@@ -125,9 +129,12 @@ class _VenueMenuScreenState extends ConsumerState<VenueMenuScreen> {
                           unselectedLabelColor: ClayColors.textSecondary,
                           indicatorColor: ClayColors.primary,
                           indicatorWeight: 3,
-                          indicatorPadding: const EdgeInsets.symmetric(horizontal: 8),
+                          indicatorPadding:
+                              const EdgeInsets.symmetric(horizontal: 8),
                           labelStyle: ClayTypography.bodyMedium,
-                          tabs: menu.categories.map((c) => Tab(text: c.name)).toList(),
+                          tabs: menu.categories
+                              .map((c) => Tab(text: c.name))
+                              .toList(),
                         ),
                       ),
                     ),
@@ -145,16 +152,22 @@ class _VenueMenuScreenState extends ConsumerState<VenueMenuScreen> {
                         itemBuilder: (context, index) {
                           final item = category.items[index];
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: ClaySpacing.md),
+                            padding:
+                                const EdgeInsets.only(bottom: ClaySpacing.md),
                             child: ClayMenuItemTile(
                               item: item,
-                              currencyCode: CurrencyUtils.currencyCodeForCountry(venue.country),
+                              venueId: venue.id,
+                              currencyCode:
+                                  CurrencyUtils.currencyCodeForCountry(
+                                      venue.country),
                               onAdd: () {
                                 Haptics.mediumImpact();
                                 ref.read(cartProvider.notifier).addItem(
                                       item,
                                       venue.id,
-                                      currencyCode: CurrencyUtils.currencyCodeForCountry(venue.country),
+                                      currencyCode:
+                                          CurrencyUtils.currencyCodeForCountry(
+                                              venue.country),
                                     );
                               },
                             ),
@@ -165,7 +178,8 @@ class _VenueMenuScreenState extends ConsumerState<VenueMenuScreen> {
                   ),
                 ),
                 floatingActionButton: const ClayFloatingCart(),
-                floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+                floatingActionButtonLocation:
+                    FloatingActionButtonLocation.centerFloat,
               ),
             );
           },
@@ -292,7 +306,8 @@ class _VenueHeader extends StatelessWidget {
                     children: [
                       _InfoChip(icon: Icons.star_rounded, label: '4.8'),
                       const SizedBox(width: 8),
-                      _InfoChip(icon: Icons.access_time_rounded, label: '15-25 min'),
+                      _InfoChip(
+                          icon: Icons.access_time_rounded, label: '15-25 min'),
                     ],
                   ),
                 ],
@@ -372,7 +387,8 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: ClayColors.background,
       child: _tabBar,

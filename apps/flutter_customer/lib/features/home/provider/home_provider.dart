@@ -39,50 +39,50 @@ class HomeState {
   }
 }
 
-
 // Notifier
-class HomeNotifier extends StateNotifier<HomeState> {
-  final VenueRepository _venueRepository;
-  final PromoRepository _promoRepository;
-  final MenuRepository _menuRepository; // Added for prefetch
-  
+class HomeNotifier extends Notifier<HomeState> {
+  late final VenueRepository _venueRepository;
+  late final PromoRepository _promoRepository;
+  late final MenuRepository _menuRepository;
+
   StreamSubscription? _venuesSubscription;
 
-  HomeNotifier({
-    required VenueRepository venueRepository,
-    required PromoRepository promoRepository,
-    required MenuRepository menuRepository,
-  })  : _venueRepository = venueRepository,
-        _promoRepository = promoRepository,
-        _menuRepository = menuRepository,
-        super(const HomeState()) {
-    refresh();
-  }
-  
   @override
-  void dispose() {
-    _venuesSubscription?.cancel();
-    super.dispose();
+  HomeState build() {
+    _venueRepository = ref.watch(venueRepositoryProvider);
+    _promoRepository = ref.watch(promoRepositoryProvider);
+    _menuRepository = ref.watch(menuRepositoryProvider);
+    
+    ref.onDispose(() {
+      _venuesSubscription?.cancel();
+    });
+    
+    // Trigger initial load
+    Future.microtask(() => refresh());
+    
+    return const HomeState();
   }
 
   Future<void> refresh() async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     // Switch to Stream for SWR (Cache -> Network)
     _venuesSubscription?.cancel();
-    _venuesSubscription = _venueRepository.streamActiveVenues(country: state.activeCountry)
+    _venuesSubscription = _venueRepository
+        .streamActiveVenues(country: state.activeCountry)
         .listen((venues) {
-           state = state.copyWith(venues: venues, isLoading: false);
-           _prefetchTopVenue(venues);
-        }, onError: (e) {
-           // If we have data, maybe just show snackbar? For now set error state if empty.
-           if (state.venues.isEmpty) {
-             state = state.copyWith(error: e.toString(), isLoading: false);
-           }
-        });
+      state = state.copyWith(venues: venues, isLoading: false);
+      _prefetchTopVenue(venues);
+    }, onError: (e) {
+      // If we have data, maybe just show snackbar? For now set error state if empty.
+      if (state.venues.isEmpty) {
+        state = state.copyWith(error: e.toString(), isLoading: false);
+      }
+    });
 
     try {
-      final promos = await _promoRepository.listActivePromos(country: state.activeCountry);
+      final promos =
+          await _promoRepository.listActivePromos(country: state.activeCountry);
       state = state.copyWith(promos: promos);
     } catch (e) {
       // Promos optional
@@ -94,16 +94,16 @@ class HomeNotifier extends StateNotifier<HomeState> {
     final topVenue = venues.first;
     // Low priority prefetch
     Future.microtask(() async {
-       try {
-         // Just trigger fetch to warm cache
-         await _menuRepository.getActiveMenu(topVenue.id); 
-       } catch (_) {}
+      try {
+        // Just trigger fetch to warm cache
+        await _menuRepository.getActiveMenu(topVenue.id);
+      } catch (_) {}
     });
   }
 
   void switchCountry(String country) {
     if (state.activeCountry == country) return;
-    state = state.copyWith(activeCountry: country, venues: [], promos: []); 
+    state = state.copyWith(activeCountry: country, venues: [], promos: []);
     refresh();
   }
 
@@ -112,7 +112,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
       refresh();
       return;
     }
-    
+
     // Search is still Future-based for now
     _venuesSubscription?.cancel();
     state = state.copyWith(isLoading: true, error: null);
@@ -129,10 +129,4 @@ class HomeNotifier extends StateNotifier<HomeState> {
 }
 
 // Provider
-final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
-  return HomeNotifier(
-    venueRepository: ref.watch(venueRepositoryProvider),
-    promoRepository: ref.watch(promoRepositoryProvider),
-    menuRepository: ref.watch(menuRepositoryProvider),
-  );
-});
+final homeProvider = NotifierProvider<HomeNotifier, HomeState>(HomeNotifier.new);

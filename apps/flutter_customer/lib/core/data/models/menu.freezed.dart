@@ -418,6 +418,7 @@ mixin _$MenuItem {
       throw _privateConstructorUsedError; // e.g., 'spicy', 'vegan'
   @JsonKey(name: 'is_available')
   bool get isAvailable => throw _privateConstructorUsedError;
+  List<ItemModifier> get modifiers => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -437,7 +438,8 @@ abstract class $MenuItemCopyWith<$Res> {
       double price,
       @JsonKey(name: 'image_url') String? imageUrl,
       List<String> tags,
-      @JsonKey(name: 'is_available') bool isAvailable});
+      @JsonKey(name: 'is_available') bool isAvailable,
+      List<ItemModifier> modifiers});
 }
 
 /// @nodoc
@@ -460,6 +462,7 @@ class _$MenuItemCopyWithImpl<$Res, $Val extends MenuItem>
     Object? imageUrl = freezed,
     Object? tags = null,
     Object? isAvailable = null,
+    Object? modifiers = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -490,6 +493,10 @@ class _$MenuItemCopyWithImpl<$Res, $Val extends MenuItem>
           ? _value.isAvailable
           : isAvailable // ignore: cast_nullable_to_non_nullable
               as bool,
+      modifiers: null == modifiers
+          ? _value.modifiers
+          : modifiers // ignore: cast_nullable_to_non_nullable
+              as List<ItemModifier>,
     ) as $Val);
   }
 }
@@ -509,7 +516,8 @@ abstract class _$$MenuItemImplCopyWith<$Res>
       double price,
       @JsonKey(name: 'image_url') String? imageUrl,
       List<String> tags,
-      @JsonKey(name: 'is_available') bool isAvailable});
+      @JsonKey(name: 'is_available') bool isAvailable,
+      List<ItemModifier> modifiers});
 }
 
 /// @nodoc
@@ -530,6 +538,7 @@ class __$$MenuItemImplCopyWithImpl<$Res>
     Object? imageUrl = freezed,
     Object? tags = null,
     Object? isAvailable = null,
+    Object? modifiers = null,
   }) {
     return _then(_$MenuItemImpl(
       id: null == id
@@ -560,6 +569,10 @@ class __$$MenuItemImplCopyWithImpl<$Res>
           ? _value.isAvailable
           : isAvailable // ignore: cast_nullable_to_non_nullable
               as bool,
+      modifiers: null == modifiers
+          ? _value._modifiers
+          : modifiers // ignore: cast_nullable_to_non_nullable
+              as List<ItemModifier>,
     ));
   }
 }
@@ -574,8 +587,10 @@ class _$MenuItemImpl implements _MenuItem {
       required this.price,
       @JsonKey(name: 'image_url') this.imageUrl,
       final List<String> tags = const [],
-      @JsonKey(name: 'is_available') this.isAvailable = true})
-      : _tags = tags;
+      @JsonKey(name: 'is_available') this.isAvailable = true,
+      final List<ItemModifier> modifiers = const []})
+      : _tags = tags,
+        _modifiers = modifiers;
 
   factory _$MenuItemImpl.fromJson(Map<String, dynamic> json) =>
       _$$MenuItemImplFromJson(json);
@@ -604,10 +619,18 @@ class _$MenuItemImpl implements _MenuItem {
   @override
   @JsonKey(name: 'is_available')
   final bool isAvailable;
+  final List<ItemModifier> _modifiers;
+  @override
+  @JsonKey()
+  List<ItemModifier> get modifiers {
+    if (_modifiers is EqualUnmodifiableListView) return _modifiers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_modifiers);
+  }
 
   @override
   String toString() {
-    return 'MenuItem(id: $id, name: $name, description: $description, price: $price, imageUrl: $imageUrl, tags: $tags, isAvailable: $isAvailable)';
+    return 'MenuItem(id: $id, name: $name, description: $description, price: $price, imageUrl: $imageUrl, tags: $tags, isAvailable: $isAvailable, modifiers: $modifiers)';
   }
 
   @override
@@ -624,13 +647,23 @@ class _$MenuItemImpl implements _MenuItem {
                 other.imageUrl == imageUrl) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
             (identical(other.isAvailable, isAvailable) ||
-                other.isAvailable == isAvailable));
+                other.isAvailable == isAvailable) &&
+            const DeepCollectionEquality()
+                .equals(other._modifiers, _modifiers));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, description, price,
-      imageUrl, const DeepCollectionEquality().hash(_tags), isAvailable);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      description,
+      price,
+      imageUrl,
+      const DeepCollectionEquality().hash(_tags),
+      isAvailable,
+      const DeepCollectionEquality().hash(_modifiers));
 
   @JsonKey(ignore: true)
   @override
@@ -654,7 +687,8 @@ abstract class _MenuItem implements MenuItem {
       required final double price,
       @JsonKey(name: 'image_url') final String? imageUrl,
       final List<String> tags,
-      @JsonKey(name: 'is_available') final bool isAvailable}) = _$MenuItemImpl;
+      @JsonKey(name: 'is_available') final bool isAvailable,
+      final List<ItemModifier> modifiers}) = _$MenuItemImpl;
 
   factory _MenuItem.fromJson(Map<String, dynamic> json) =
       _$MenuItemImpl.fromJson;
@@ -676,7 +710,492 @@ abstract class _MenuItem implements MenuItem {
   @JsonKey(name: 'is_available')
   bool get isAvailable;
   @override
+  List<ItemModifier> get modifiers;
+  @override
   @JsonKey(ignore: true)
   _$$MenuItemImplCopyWith<_$MenuItemImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+ItemModifier _$ItemModifierFromJson(Map<String, dynamic> json) {
+  return _ItemModifier.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ItemModifier {
+  String get id => throw _privateConstructorUsedError;
+  String get name =>
+      throw _privateConstructorUsedError; // e.g., "Size", "Extras", "Remove ingredients"
+  bool get required =>
+      throw _privateConstructorUsedError; // Must select at least one?
+  @JsonKey(name: 'allow_multiple')
+  bool get allowMultiple =>
+      throw _privateConstructorUsedError; // Can select multiple?
+  @JsonKey(name: 'max_selections')
+  int get maxSelections => throw _privateConstructorUsedError;
+  List<ModifierOption> get options => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ItemModifierCopyWith<ItemModifier> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ItemModifierCopyWith<$Res> {
+  factory $ItemModifierCopyWith(
+          ItemModifier value, $Res Function(ItemModifier) then) =
+      _$ItemModifierCopyWithImpl<$Res, ItemModifier>;
+  @useResult
+  $Res call(
+      {String id,
+      String name,
+      bool required,
+      @JsonKey(name: 'allow_multiple') bool allowMultiple,
+      @JsonKey(name: 'max_selections') int maxSelections,
+      List<ModifierOption> options});
+}
+
+/// @nodoc
+class _$ItemModifierCopyWithImpl<$Res, $Val extends ItemModifier>
+    implements $ItemModifierCopyWith<$Res> {
+  _$ItemModifierCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? required = null,
+    Object? allowMultiple = null,
+    Object? maxSelections = null,
+    Object? options = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      required: null == required
+          ? _value.required
+          : required // ignore: cast_nullable_to_non_nullable
+              as bool,
+      allowMultiple: null == allowMultiple
+          ? _value.allowMultiple
+          : allowMultiple // ignore: cast_nullable_to_non_nullable
+              as bool,
+      maxSelections: null == maxSelections
+          ? _value.maxSelections
+          : maxSelections // ignore: cast_nullable_to_non_nullable
+              as int,
+      options: null == options
+          ? _value.options
+          : options // ignore: cast_nullable_to_non_nullable
+              as List<ModifierOption>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ItemModifierImplCopyWith<$Res>
+    implements $ItemModifierCopyWith<$Res> {
+  factory _$$ItemModifierImplCopyWith(
+          _$ItemModifierImpl value, $Res Function(_$ItemModifierImpl) then) =
+      __$$ItemModifierImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String id,
+      String name,
+      bool required,
+      @JsonKey(name: 'allow_multiple') bool allowMultiple,
+      @JsonKey(name: 'max_selections') int maxSelections,
+      List<ModifierOption> options});
+}
+
+/// @nodoc
+class __$$ItemModifierImplCopyWithImpl<$Res>
+    extends _$ItemModifierCopyWithImpl<$Res, _$ItemModifierImpl>
+    implements _$$ItemModifierImplCopyWith<$Res> {
+  __$$ItemModifierImplCopyWithImpl(
+      _$ItemModifierImpl _value, $Res Function(_$ItemModifierImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? required = null,
+    Object? allowMultiple = null,
+    Object? maxSelections = null,
+    Object? options = null,
+  }) {
+    return _then(_$ItemModifierImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      required: null == required
+          ? _value.required
+          : required // ignore: cast_nullable_to_non_nullable
+              as bool,
+      allowMultiple: null == allowMultiple
+          ? _value.allowMultiple
+          : allowMultiple // ignore: cast_nullable_to_non_nullable
+              as bool,
+      maxSelections: null == maxSelections
+          ? _value.maxSelections
+          : maxSelections // ignore: cast_nullable_to_non_nullable
+              as int,
+      options: null == options
+          ? _value._options
+          : options // ignore: cast_nullable_to_non_nullable
+              as List<ModifierOption>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ItemModifierImpl implements _ItemModifier {
+  const _$ItemModifierImpl(
+      {required this.id,
+      required this.name,
+      this.required = false,
+      @JsonKey(name: 'allow_multiple') this.allowMultiple = false,
+      @JsonKey(name: 'max_selections') this.maxSelections = 1,
+      final List<ModifierOption> options = const []})
+      : _options = options;
+
+  factory _$ItemModifierImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ItemModifierImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  final String name;
+// e.g., "Size", "Extras", "Remove ingredients"
+  @override
+  @JsonKey()
+  final bool required;
+// Must select at least one?
+  @override
+  @JsonKey(name: 'allow_multiple')
+  final bool allowMultiple;
+// Can select multiple?
+  @override
+  @JsonKey(name: 'max_selections')
+  final int maxSelections;
+  final List<ModifierOption> _options;
+  @override
+  @JsonKey()
+  List<ModifierOption> get options {
+    if (_options is EqualUnmodifiableListView) return _options;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_options);
+  }
+
+  @override
+  String toString() {
+    return 'ItemModifier(id: $id, name: $name, required: $required, allowMultiple: $allowMultiple, maxSelections: $maxSelections, options: $options)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ItemModifierImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.required, required) ||
+                other.required == required) &&
+            (identical(other.allowMultiple, allowMultiple) ||
+                other.allowMultiple == allowMultiple) &&
+            (identical(other.maxSelections, maxSelections) ||
+                other.maxSelections == maxSelections) &&
+            const DeepCollectionEquality().equals(other._options, _options));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      required,
+      allowMultiple,
+      maxSelections,
+      const DeepCollectionEquality().hash(_options));
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ItemModifierImplCopyWith<_$ItemModifierImpl> get copyWith =>
+      __$$ItemModifierImplCopyWithImpl<_$ItemModifierImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ItemModifierImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ItemModifier implements ItemModifier {
+  const factory _ItemModifier(
+      {required final String id,
+      required final String name,
+      final bool required,
+      @JsonKey(name: 'allow_multiple') final bool allowMultiple,
+      @JsonKey(name: 'max_selections') final int maxSelections,
+      final List<ModifierOption> options}) = _$ItemModifierImpl;
+
+  factory _ItemModifier.fromJson(Map<String, dynamic> json) =
+      _$ItemModifierImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  String get name;
+  @override // e.g., "Size", "Extras", "Remove ingredients"
+  bool get required;
+  @override // Must select at least one?
+  @JsonKey(name: 'allow_multiple')
+  bool get allowMultiple;
+  @override // Can select multiple?
+  @JsonKey(name: 'max_selections')
+  int get maxSelections;
+  @override
+  List<ModifierOption> get options;
+  @override
+  @JsonKey(ignore: true)
+  _$$ItemModifierImplCopyWith<_$ItemModifierImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+ModifierOption _$ModifierOptionFromJson(Map<String, dynamic> json) {
+  return _ModifierOption.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ModifierOption {
+  String get id => throw _privateConstructorUsedError;
+  String get name =>
+      throw _privateConstructorUsedError; // e.g., "Small", "Large", "Extra cheese"
+  @JsonKey(name: 'price_adjustment')
+  double get priceAdjustment => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_available')
+  bool get isAvailable => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $ModifierOptionCopyWith<ModifierOption> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ModifierOptionCopyWith<$Res> {
+  factory $ModifierOptionCopyWith(
+          ModifierOption value, $Res Function(ModifierOption) then) =
+      _$ModifierOptionCopyWithImpl<$Res, ModifierOption>;
+  @useResult
+  $Res call(
+      {String id,
+      String name,
+      @JsonKey(name: 'price_adjustment') double priceAdjustment,
+      @JsonKey(name: 'is_available') bool isAvailable});
+}
+
+/// @nodoc
+class _$ModifierOptionCopyWithImpl<$Res, $Val extends ModifierOption>
+    implements $ModifierOptionCopyWith<$Res> {
+  _$ModifierOptionCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? priceAdjustment = null,
+    Object? isAvailable = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      priceAdjustment: null == priceAdjustment
+          ? _value.priceAdjustment
+          : priceAdjustment // ignore: cast_nullable_to_non_nullable
+              as double,
+      isAvailable: null == isAvailable
+          ? _value.isAvailable
+          : isAvailable // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ModifierOptionImplCopyWith<$Res>
+    implements $ModifierOptionCopyWith<$Res> {
+  factory _$$ModifierOptionImplCopyWith(_$ModifierOptionImpl value,
+          $Res Function(_$ModifierOptionImpl) then) =
+      __$$ModifierOptionImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String id,
+      String name,
+      @JsonKey(name: 'price_adjustment') double priceAdjustment,
+      @JsonKey(name: 'is_available') bool isAvailable});
+}
+
+/// @nodoc
+class __$$ModifierOptionImplCopyWithImpl<$Res>
+    extends _$ModifierOptionCopyWithImpl<$Res, _$ModifierOptionImpl>
+    implements _$$ModifierOptionImplCopyWith<$Res> {
+  __$$ModifierOptionImplCopyWithImpl(
+      _$ModifierOptionImpl _value, $Res Function(_$ModifierOptionImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? priceAdjustment = null,
+    Object? isAvailable = null,
+  }) {
+    return _then(_$ModifierOptionImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      priceAdjustment: null == priceAdjustment
+          ? _value.priceAdjustment
+          : priceAdjustment // ignore: cast_nullable_to_non_nullable
+              as double,
+      isAvailable: null == isAvailable
+          ? _value.isAvailable
+          : isAvailable // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ModifierOptionImpl implements _ModifierOption {
+  const _$ModifierOptionImpl(
+      {required this.id,
+      required this.name,
+      @JsonKey(name: 'price_adjustment') this.priceAdjustment = 0.0,
+      @JsonKey(name: 'is_available') this.isAvailable = true});
+
+  factory _$ModifierOptionImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ModifierOptionImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  final String name;
+// e.g., "Small", "Large", "Extra cheese"
+  @override
+  @JsonKey(name: 'price_adjustment')
+  final double priceAdjustment;
+  @override
+  @JsonKey(name: 'is_available')
+  final bool isAvailable;
+
+  @override
+  String toString() {
+    return 'ModifierOption(id: $id, name: $name, priceAdjustment: $priceAdjustment, isAvailable: $isAvailable)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ModifierOptionImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.priceAdjustment, priceAdjustment) ||
+                other.priceAdjustment == priceAdjustment) &&
+            (identical(other.isAvailable, isAvailable) ||
+                other.isAvailable == isAvailable));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, id, name, priceAdjustment, isAvailable);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ModifierOptionImplCopyWith<_$ModifierOptionImpl> get copyWith =>
+      __$$ModifierOptionImplCopyWithImpl<_$ModifierOptionImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ModifierOptionImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _ModifierOption implements ModifierOption {
+  const factory _ModifierOption(
+          {required final String id,
+          required final String name,
+          @JsonKey(name: 'price_adjustment') final double priceAdjustment,
+          @JsonKey(name: 'is_available') final bool isAvailable}) =
+      _$ModifierOptionImpl;
+
+  factory _ModifierOption.fromJson(Map<String, dynamic> json) =
+      _$ModifierOptionImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  String get name;
+  @override // e.g., "Small", "Large", "Extra cheese"
+  @JsonKey(name: 'price_adjustment')
+  double get priceAdjustment;
+  @override
+  @JsonKey(name: 'is_available')
+  bool get isAvailable;
+  @override
+  @JsonKey(ignore: true)
+  _$$ModifierOptionImplCopyWith<_$ModifierOptionImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

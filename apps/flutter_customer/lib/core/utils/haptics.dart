@@ -28,6 +28,6 @@ class Haptics {
 
   /// Error feedback
   static Future<void> error() async {
-    await HapticFeedback.vibrate(); 
+    await HapticFeedback.vibrate();
   }
 }

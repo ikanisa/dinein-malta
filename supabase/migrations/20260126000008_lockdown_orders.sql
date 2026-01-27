@@ -8,9 +8,15 @@ begin
   revoke insert on table public.orders from anon;
   revoke insert on table public.orders from authenticated;
 
-  -- Revoke INSERT on bell_requests
-  revoke insert on table public.bell_requests from anon;
-  revoke insert on table public.bell_requests from authenticated;
+
+  -- Revoke INSERT on bell_requests (if exists)
+  IF to_regclass('public.bell_requests') IS NOT NULL THEN
+    revoke insert on table public.bell_requests from anon;
+    revoke insert on table public.bell_requests from authenticated;
+  ELSIF to_regclass('public.service_requests') IS NOT NULL THEN
+    revoke insert on table public.service_requests from anon;
+    revoke insert on table public.service_requests from authenticated;
+  END IF;
   
   -- Revoke UPDATE on orders (Customers shouldn't directly update statuses anyway)
   revoke update on table public.orders from anon;
@@ -22,4 +28,12 @@ end $$;
 
 -- Verify RLS is enabled
 alter table public.orders enable row level security;
-alter table public.bell_requests enable row level security;
+
+DO $$
+BEGIN
+  IF to_regclass('public.bell_requests') IS NOT NULL THEN
+    ALTER TABLE public.bell_requests ENABLE ROW LEVEL SECURITY;
+  ELSIF to_regclass('public.service_requests') IS NOT NULL THEN
+    ALTER TABLE public.service_requests ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
