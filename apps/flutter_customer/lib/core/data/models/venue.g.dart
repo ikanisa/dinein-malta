@@ -20,6 +20,7 @@ _$VenueImpl _$$VenueImplFromJson(Map<String, dynamic> json) => _$VenueImpl(
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      revolutLink: json['revolut_link'] as String?,
       logoUrl: json['logo_url'] as String?,
       bannerUrl: json['banner_url'] as String?,
     );
@@ -33,6 +34,7 @@ Map<String, dynamic> _$$VenueImplToJson(_$VenueImpl instance) =>
       'description': instance.description,
       'special_features': instance.amenities,
       'payment_methods': instance.paymentMethods,
+      'revolut_link': instance.revolutLink,
       'logo_url': instance.logoUrl,
       'banner_url': instance.bannerUrl,
     };

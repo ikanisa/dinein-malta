@@ -6,6 +6,7 @@ import '../provider/cart_provider.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/design/tokens/clay_design.dart';
 import '../../../core/design/widgets/clay_components.dart';
+import '../../../core/utils/currency.dart';
 
 /// Cart screen with claymorphism design
 class CartScreen extends ConsumerWidget {
@@ -116,7 +117,7 @@ class CartScreen extends ConsumerWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '€${item.menuItem.price.toStringAsFixed(2)} each',
+                                      '${CurrencyUtils.format(item.menuItem.price, cartState.currencyCode)} each',
                                       style: ClayTypography.caption,
                                     ),
                                   ],
@@ -128,7 +129,7 @@ class CartScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    '€${itemTotal.toStringAsFixed(2)}',
+                                    CurrencyUtils.format(itemTotal, cartState.currencyCode),
                                     style: ClayTypography.price,
                                   ),
                                   const SizedBox(height: 8),
@@ -154,7 +155,11 @@ class CartScreen extends ConsumerWidget {
                                         ),
                                         _QuantityButton(
                                           icon: Icons.add,
-                                          onTap: () => notifier.addItem(item.menuItem, cartState.venueId ?? ''),
+                                          onTap: () => notifier.addItem(
+                                            item.menuItem,
+                                            cartState.venueId ?? '',
+                                            currencyCode: cartState.currencyCode,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -195,7 +200,7 @@ class CartScreen extends ConsumerWidget {
                           children: [
                             Text('Total', style: ClayTypography.h3),
                             Text(
-                              '€${cartState.total.toStringAsFixed(2)}',
+                              CurrencyUtils.format(cartState.total, cartState.currencyCode),
                               style: ClayTypography.h2.copyWith(
                                 color: ClayColors.primary,
                               ),

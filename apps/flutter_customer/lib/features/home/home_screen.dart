@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/design/tokens/clay_design.dart';
@@ -7,11 +8,33 @@ import 'widgets/clay_venue_card.dart';
 import 'widgets/clay_home_header.dart';
 
 /// Home screen with claymorphism design
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      ref.read(homeProvider.notifier).performSearch(value.trim());
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final homeState = ref.watch(homeProvider);
 
     return Scaffold(
@@ -30,9 +53,8 @@ class HomeScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: ClaySpacing.md),
                 child: ClaySearchBar(
                   hint: 'Search restaurants...',
-                  onTap: () {
-                    debugPrint('Search tapped');
-                  },
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
                 ),
               ),
             ),
@@ -122,56 +144,63 @@ class HomeScreen extends ConsumerWidget {
 /// Claymorphism search bar
 class ClaySearchBar extends StatelessWidget {
   final String hint;
-  final VoidCallback? onTap;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   const ClaySearchBar({
     super.key,
     required this.hint,
-    this.onTap,
+    required this.controller,
+    required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: ClaySpacing.md,
-          vertical: ClaySpacing.md,
-        ),
-        decoration: BoxDecoration(
-          color: ClayColors.surface,
-          borderRadius: BorderRadius.circular(ClayRadius.xl),
-          boxShadow: ClayShadows.card,
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.search_rounded,
-              color: ClayColors.textSecondary,
-              size: 24,
-            ),
-            const SizedBox(width: ClaySpacing.sm),
-            Expanded(
-              child: Text(
-                hint,
-                style: ClayTypography.caption,
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: ClaySpacing.md,
+        vertical: ClaySpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: ClayColors.surface,
+        borderRadius: BorderRadius.circular(ClayRadius.xl),
+        boxShadow: ClayShadows.card,
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.search_rounded,
+            color: ClayColors.textSecondary,
+            size: 24,
+          ),
+          const SizedBox(width: ClaySpacing.sm),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              textInputAction: TextInputAction.search,
+              style: ClayTypography.body,
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: ClayTypography.caption,
+                border: InputBorder.none,
+                isDense: true,
               ),
             ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: ClayColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(ClayRadius.sm),
-              ),
-              child: const Icon(
-                Icons.tune_rounded,
-                color: ClayColors.primary,
-                size: 18,
-              ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: ClayColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(ClayRadius.sm),
             ),
-          ],
-        ),
+            child: const Icon(
+              Icons.tune_rounded,
+              color: ClayColors.primary,
+              size: 18,
+            ),
+          ),
+        ],
       ),
     );
   }

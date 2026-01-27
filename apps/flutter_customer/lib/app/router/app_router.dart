@@ -20,6 +20,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: Routes.home,
+    redirect: (context, state) {
+      final uri = state.uri;
+      if (uri.scheme == 'dinein' && uri.host == 'v') {
+        final slug = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : '';
+        if (slug.isNotEmpty) {
+          final query = uri.query;
+          final target = '/v/$slug${query.isNotEmpty ? '?$query' : ''}';
+          if (state.matchedLocation != target) {
+            return target;
+          }
+        }
+      }
+      return null;
+    },
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -41,7 +55,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: rootNavigatorKey,
                     builder: (context, state) {
                       final slug = state.pathParameters[Routes.venueSlugParam]!;
-                      return VenueMenuScreen(slug: slug);
+                      final tableParam = state.uri.queryParameters['t'];
+                      return VenueMenuScreen(slug: slug, tableNumber: tableParam);
                     },
                   ),
                 ],
@@ -86,7 +101,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
          path: '${Routes.order}/:id',
          builder: (context, state) {
             final id = state.pathParameters['id']!;
-            return OrderConfirmationScreen(orderId: id);
+            final orderCode = state.uri.queryParameters['code'];
+            return OrderConfirmationScreen(orderId: id, orderCode: orderCode);
          },
       ),
       GoRoute(

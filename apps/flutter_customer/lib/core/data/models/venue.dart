@@ -13,6 +13,7 @@ class Venue with _$Venue {
     String? description,
     @Default([]) @JsonKey(name: 'special_features') List<String> amenities,
     @Default([]) @JsonKey(name: 'payment_methods') List<String> paymentMethods,
+    @JsonKey(name: 'revolut_link') String? revolutLink,
     @JsonKey(name: 'logo_url') String? logoUrl,
     @JsonKey(name: 'banner_url') String? bannerUrl,
   }) = _Venue;

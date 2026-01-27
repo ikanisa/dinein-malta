@@ -6,10 +6,12 @@ import '../models/cart_item.dart';
 class CartState {
   final List<CartItem> items;
   final String? venueId; // Cart is scoped to one venue
+  final String currencyCode;
 
   const CartState({
     this.items = const [],
     this.venueId,
+    this.currencyCode = 'EUR',
   });
 
   double get total => items.fold(0, (sum, item) => sum + item.total);
@@ -18,10 +20,12 @@ class CartState {
   CartState copyWith({
     List<CartItem>? items,
     String? venueId,
+    String? currencyCode,
   }) {
     return CartState(
       items: items ?? this.items,
       venueId: venueId ?? this.venueId,
+      currencyCode: currencyCode ?? this.currencyCode,
     );
   }
 }
@@ -30,7 +34,7 @@ class CartState {
 class CartNotifier extends StateNotifier<CartState> {
   CartNotifier() : super(const CartState());
 
-  void addItem(MenuItem item, String venueId) {
+  void addItem(MenuItem item, String venueId, {String? currencyCode}) {
     // If adding from a different venue, clear cart first
     if (state.venueId != null && state.venueId != venueId) {
       clear();
@@ -49,7 +53,11 @@ class CartNotifier extends StateNotifier<CartState> {
       newItems = [...state.items, CartItem(menuItem: item)];
     }
 
-    state = state.copyWith(items: newItems, venueId: venueId);
+    state = state.copyWith(
+      items: newItems,
+      venueId: venueId,
+      currencyCode: currencyCode ?? state.currencyCode,
+    );
   }
 
   void removeItem(MenuItem item) {
@@ -67,7 +75,8 @@ class CartNotifier extends StateNotifier<CartState> {
       // If empty, clear venue scope too
       state = CartState(
         items: newItems, 
-        venueId: newItems.isEmpty ? null : state.venueId
+        venueId: newItems.isEmpty ? null : state.venueId,
+        currencyCode: newItems.isEmpty ? 'EUR' : state.currencyCode,
       );
     }
   }

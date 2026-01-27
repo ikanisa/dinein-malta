@@ -21,6 +21,12 @@ android/
 ios/
 .capacitor/
 
+# Allow Flutter native projects
+!apps/flutter_customer/android/
+!apps/flutter_customer/android/**
+!apps/flutter_customer/ios/
+!apps/flutter_customer/ios/**
+
 # Firebase
 .firebase/
 firebase-debug.log

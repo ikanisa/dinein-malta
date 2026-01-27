@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app/router/routes.dart';
 import '../../../core/design/tokens/clay_design.dart';
 import '../../../core/data/models/venue.dart';
 
@@ -16,7 +17,7 @@ class ClayVenueCard extends StatelessWidget {
     final cardColor = HSLColor.fromAHSL(1.0, hue, 0.3, 0.85).toColor();
 
     return GestureDetector(
-      onTap: () => context.push('/venue/${venue.id}'),
+      onTap: () => context.push(Routes.venuePath(venue.slug)),
       child: Container(
         decoration: BoxDecoration(
           color: ClayColors.surface,

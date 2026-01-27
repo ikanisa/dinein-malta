@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import '../../telemetry/telemetry_service.dart';
 
 // Service - Singleton pattern for proper initialization
@@ -81,6 +82,14 @@ class LocalCacheService {
       
   Map<String, dynamic>? getVenue(String slug, {bool allowStale = false}) => 
       getData('venue_$slug', ignoreExpiration: allowStale);
+
+  Future<void> cacheVenueById(String venueId, Map<String, dynamic> json) async {
+    await cacheData('venue_id_$venueId', json, ttl: const Duration(hours: 6));
+    await _enforceLimit('venue_id_', 300);
+  }
+
+  Map<String, dynamic>? getVenueById(String venueId, {bool allowStale = false}) =>
+      getData('venue_id_$venueId', ignoreExpiration: allowStale);
   
   Future<void> cacheMenu(String venueId, Map<String, dynamic> json) async {
     await cacheData('menu_$venueId', json, ttl: const Duration(minutes: 30));
@@ -132,6 +141,50 @@ class LocalCacheService {
       return [];
     }
   }
+
+  Future<Map<String, dynamic>?> getOrderById(String orderId) async {
+    final orders = await getOrdersRaw();
+    for (final entry in orders) {
+      if (entry is Map<String, dynamic> && entry['id'] == orderId) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  Future<void> cacheTableNumber(String venueId, String tableNumber) async {
+    await cacheData('table_number_$venueId', {'table_no': tableNumber});
+  }
+
+  String? getTableNumber(String venueId) {
+    final data = getData('table_number_$venueId', ignoreExpiration: true);
+    final value = data?['table_no'];
+    return value is String ? value : null;
+  }
+
+  Future<void> setTelemetryEnabled(bool enabled) async {
+    await cacheData('telemetry_enabled', {'enabled': enabled});
+  }
+
+  bool? getTelemetryEnabled() {
+    final data = getData('telemetry_enabled', ignoreExpiration: true);
+    final value = data?['enabled'];
+    if (value is bool) return value;
+    if (value is String) return value.toLowerCase() == 'true';
+    return null;
+  }
+
+  Future<String> getOrCreateSessionId() async {
+    final cached = getData('session_id');
+    final cachedId = cached?['id'];
+    if (cachedId is String && cachedId.isNotEmpty) {
+      return cachedId;
+    }
+
+    final newId = const Uuid().v4();
+    await cacheData('session_id', {'id': newId}, ttl: const Duration(days: 90));
+    return newId;
+  }
 }
 
 // Provider - returns the pre-initialized singleton instance
@@ -143,4 +196,3 @@ final localCacheServiceProvider = Provider<LocalCacheService>((ref) {
 final telemetryServiceProvider = Provider<TelemetryService>((ref) {
   return TelemetryService(ref.watch(localCacheServiceProvider));
 });
-

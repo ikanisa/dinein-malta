@@ -60,7 +60,7 @@ class SupabaseMenuRepository implements MenuRepository {
     final response = await _client
         .from('menu_items')
         .select()
-        .eq('vendor_id', venueId)
+        .eq('venue_id', venueId)
         .eq('is_available', true)
         .order('category')
         .order('name');

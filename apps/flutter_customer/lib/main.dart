@@ -4,10 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/router/app_router.dart';
 import 'core/design/theme/app_theme.dart';
 
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/data/local/local_cache_service.dart';
+import 'core/telemetry/telemetry_config.dart';
 // Note: We need to ensure LocalCacheService is ready before app if needed, 
 // or let Providers handle it. TelemetryService also needs init.
 
@@ -35,16 +35,21 @@ Future<void> main() async {
   
   // Kill Switch via Dart Define (e.g. flutter run --dart-define=TELEMETRY_ENABLED=true)
   const bool telemetryEnabled = bool.fromEnvironment('TELEMETRY_ENABLED', defaultValue: true);
+  final cachedTelemetry = LocalCacheService.instance.getTelemetryEnabled();
+  TelemetryConfig.enabled = telemetryEnabled && (cachedTelemetry ?? true);
   
   // Sentry DSN (Replace with real one in prod via dart-define)
   const String sentryDsn = String.fromEnvironment('SENTRY_DSN', defaultValue: 'https://examplePublicKey@o0.ingest.sentry.io/0');
 
-  if (telemetryEnabled && sentryDsn.isNotEmpty && !sentryDsn.contains('example')) {
+  if (TelemetryConfig.enabled && sentryDsn.isNotEmpty && !sentryDsn.contains('example')) {
     await SentryFlutter.init(
       (options) {
         options.dsn = sentryDsn;
         options.tracesSampleRate = 1.0; // Adjust for prod
         options.environment = kReleaseMode ? 'production' : 'debug';
+        options.beforeSend = (event, _) => TelemetryConfig.enabled ? event : null;
+        options.beforeBreadcrumb = (breadcrumb, _) =>
+            TelemetryConfig.enabled ? breadcrumb : null;
       },
       appRunner: () => runApp(
         const ProviderScope(child: DineInApp()),
@@ -56,24 +61,29 @@ Future<void> main() async {
 }
 
 
-class DineInApp extends ConsumerWidget {
+class DineInApp extends ConsumerStatefulWidget {
   const DineInApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(goRouterProvider);
-    
-    // Initialize Telemetry
+  ConsumerState<DineInApp> createState() => _DineInAppState();
+}
+
+class _DineInAppState extends ConsumerState<DineInApp> {
+  @override
+  void initState() {
+    super.initState();
     ref.read(telemetryServiceProvider).init();
-    
-    // Simple theme mode logic placeholder - in real app this connects to a provider
-    final isDark = true; 
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final router = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
       title: 'DineIn',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+      themeMode: ThemeMode.system,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../cart/provider/cart_provider.dart';
+import '../../../core/utils/currency.dart';
 
 class FloatingCartPill extends ConsumerStatefulWidget {
   const FloatingCartPill({super.key});
@@ -87,8 +88,8 @@ class _FloatingCartPillState extends ConsumerState<FloatingCartPill> with Single
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(width: 12),
-                   Text(
-                    '€${cartState.total.toStringAsFixed(2)}',
+                  Text(
+                    CurrencyUtils.format(cartState.total, cartState.currencyCode),
                     style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
                   ),
                 ],

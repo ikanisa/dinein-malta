@@ -13,7 +13,9 @@ _$OrderImpl _$$OrderImplFromJson(Map<String, dynamic> json) => _$OrderImpl(
       tableNumber: json['table_number'] as String?,
       status: json['status'] as String,
       totalAmount: (json['total_amount'] as num).toDouble(),
+      currency: json['currency'] as String? ?? 'EUR',
       paymentMethod: json['payment_method'] as String,
+      orderCode: json['order_code'] as String?,
       items: (json['items'] as List<dynamic>?)
               ?.map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -29,7 +31,9 @@ Map<String, dynamic> _$$OrderImplToJson(_$OrderImpl instance) =>
       'table_number': instance.tableNumber,
       'status': instance.status,
       'total_amount': instance.totalAmount,
+      'currency': instance.currency,
       'payment_method': instance.paymentMethod,
+      'order_code': instance.orderCode,
       'items': instance.items,
       'created_at': instance.createdAt.toIso8601String(),
     };

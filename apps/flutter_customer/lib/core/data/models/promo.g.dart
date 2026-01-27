@@ -9,7 +9,7 @@ part of 'promo.dart';
 _$PromoImpl _$$PromoImplFromJson(Map<String, dynamic> json) => _$PromoImpl(
       id: json['id'] as String,
       title: json['title'] as String,
-      description: json['description'] as String?,
+      description: json['body'] as String?,
       venueId: json['venue_id'] as String?,
       imageUrl: json['image_url'] as String?,
       tags:
@@ -23,7 +23,7 @@ Map<String, dynamic> _$$PromoImplToJson(_$PromoImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'title': instance.title,
-      'description': instance.description,
+      'body': instance.description,
       'venue_id': instance.venueId,
       'image_url': instance.imageUrl,
       'tags': instance.tags,

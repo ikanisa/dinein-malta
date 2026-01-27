@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:uuid/uuid.dart';
-import '../../../../core/data/repositories/bell_repository.dart';
+import '../../core/data/local/local_cache_service.dart';
+import '../../core/data/repositories/bell_repository.dart';
 import '../../core/design/tokens/clay_design.dart';
 import '../../core/design/widgets/clay_components.dart';
 import '../../core/utils/haptics.dart';
@@ -20,8 +20,29 @@ class _BellScreenState extends ConsumerState<BellScreen> {
   final TextEditingController _tableController = TextEditingController();
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _prefillTableNumber();
+  }
+
+  @override
+  void dispose() {
+    _tableController.dispose();
+    super.dispose();
+  }
+
+  void _prefillTableNumber() {
+    final cached =
+        ref.read(localCacheServiceProvider).getTableNumber(widget.venueId);
+    if (cached != null && cached.isNotEmpty) {
+      _tableController.text = cached;
+    }
+  }
+
   Future<void> _ringBell() async {
-    if (_tableController.text.isEmpty) {
+    final tableNumber = _tableController.text.trim();
+    if (tableNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please enter table number', style: TextStyle(color: Colors.white)),
@@ -35,13 +56,17 @@ class _BellScreenState extends ConsumerState<BellScreen> {
     Haptics.mediumImpact();
     
     try {
-      final sessionId = const Uuid().v4(); 
+      final sessionId = await ref.read(localCacheServiceProvider).getOrCreateSessionId();
       
       await ref.read(bellRepositoryProvider).ringBell(
         sessionId: sessionId,
         venueId: widget.venueId,
-        tableNumber: _tableController.text,
+        tableNumber: tableNumber,
       );
+
+      await ref
+          .read(localCacheServiceProvider)
+          .cacheTableNumber(widget.venueId, tableNumber);
 
       if (mounted) {
         // Success feedback

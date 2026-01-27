@@ -114,6 +114,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
     
     // Search is still Future-based for now
+    _venuesSubscription?.cancel();
     state = state.copyWith(isLoading: true, error: null);
     try {
       final venues = await _venueRepository.searchVenues(

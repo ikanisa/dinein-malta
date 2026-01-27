@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../supabase/supabase_client.dart';
@@ -33,12 +34,25 @@ class SupabaseBellRepository implements BellRepository {
         },
       );
 
+      if (response.error != null) {
+        throw Exception(response.error!.message);
+      }
+
       // Function usually returns { success: true }
-      final data = response.data as Map<String, dynamic>;
+      final data = _normalizePayload(response.data);
       return data['success'] == true;
     } catch (e) {
       throw Exception('Failed to ring bell: $e');
     }
+  }
+
+  Map<String, dynamic> _normalizePayload(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is String) {
+      return jsonDecode(data) as Map<String, dynamic>;
+    }
+    throw Exception('Unexpected response format');
   }
 }
 

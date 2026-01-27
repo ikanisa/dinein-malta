@@ -29,6 +29,8 @@ mixin _$Venue {
   List<String> get amenities => throw _privateConstructorUsedError;
   @JsonKey(name: 'payment_methods')
   List<String> get paymentMethods => throw _privateConstructorUsedError;
+  @JsonKey(name: 'revolut_link')
+  String? get revolutLink => throw _privateConstructorUsedError;
   @JsonKey(name: 'logo_url')
   String? get logoUrl => throw _privateConstructorUsedError;
   @JsonKey(name: 'banner_url')
@@ -52,6 +54,7 @@ abstract class $VenueCopyWith<$Res> {
       String? description,
       @JsonKey(name: 'special_features') List<String> amenities,
       @JsonKey(name: 'payment_methods') List<String> paymentMethods,
+      @JsonKey(name: 'revolut_link') String? revolutLink,
       @JsonKey(name: 'logo_url') String? logoUrl,
       @JsonKey(name: 'banner_url') String? bannerUrl});
 }
@@ -76,6 +79,7 @@ class _$VenueCopyWithImpl<$Res, $Val extends Venue>
     Object? description = freezed,
     Object? amenities = null,
     Object? paymentMethods = null,
+    Object? revolutLink = freezed,
     Object? logoUrl = freezed,
     Object? bannerUrl = freezed,
   }) {
@@ -108,6 +112,10 @@ class _$VenueCopyWithImpl<$Res, $Val extends Venue>
           ? _value.paymentMethods
           : paymentMethods // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      revolutLink: freezed == revolutLink
+          ? _value.revolutLink
+          : revolutLink // ignore: cast_nullable_to_non_nullable
+              as String?,
       logoUrl: freezed == logoUrl
           ? _value.logoUrl
           : logoUrl // ignore: cast_nullable_to_non_nullable
@@ -135,6 +143,7 @@ abstract class _$$VenueImplCopyWith<$Res> implements $VenueCopyWith<$Res> {
       String? description,
       @JsonKey(name: 'special_features') List<String> amenities,
       @JsonKey(name: 'payment_methods') List<String> paymentMethods,
+      @JsonKey(name: 'revolut_link') String? revolutLink,
       @JsonKey(name: 'logo_url') String? logoUrl,
       @JsonKey(name: 'banner_url') String? bannerUrl});
 }
@@ -157,6 +166,7 @@ class __$$VenueImplCopyWithImpl<$Res>
     Object? description = freezed,
     Object? amenities = null,
     Object? paymentMethods = null,
+    Object? revolutLink = freezed,
     Object? logoUrl = freezed,
     Object? bannerUrl = freezed,
   }) {
@@ -189,6 +199,10 @@ class __$$VenueImplCopyWithImpl<$Res>
           ? _value._paymentMethods
           : paymentMethods // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      revolutLink: freezed == revolutLink
+          ? _value.revolutLink
+          : revolutLink // ignore: cast_nullable_to_non_nullable
+              as String?,
       logoUrl: freezed == logoUrl
           ? _value.logoUrl
           : logoUrl // ignore: cast_nullable_to_non_nullable
@@ -214,6 +228,7 @@ class _$VenueImpl implements _Venue {
       final List<String> amenities = const [],
       @JsonKey(name: 'payment_methods')
       final List<String> paymentMethods = const [],
+      @JsonKey(name: 'revolut_link') this.revolutLink,
       @JsonKey(name: 'logo_url') this.logoUrl,
       @JsonKey(name: 'banner_url') this.bannerUrl})
       : _amenities = amenities,
@@ -252,6 +267,9 @@ class _$VenueImpl implements _Venue {
   }
 
   @override
+  @JsonKey(name: 'revolut_link')
+  final String? revolutLink;
+  @override
   @JsonKey(name: 'logo_url')
   final String? logoUrl;
   @override
@@ -260,7 +278,7 @@ class _$VenueImpl implements _Venue {
 
   @override
   String toString() {
-    return 'Venue(id: $id, slug: $slug, name: $name, country: $country, description: $description, amenities: $amenities, paymentMethods: $paymentMethods, logoUrl: $logoUrl, bannerUrl: $bannerUrl)';
+    return 'Venue(id: $id, slug: $slug, name: $name, country: $country, description: $description, amenities: $amenities, paymentMethods: $paymentMethods, revolutLink: $revolutLink, logoUrl: $logoUrl, bannerUrl: $bannerUrl)';
   }
 
   @override
@@ -278,6 +296,8 @@ class _$VenueImpl implements _Venue {
                 .equals(other._amenities, _amenities) &&
             const DeepCollectionEquality()
                 .equals(other._paymentMethods, _paymentMethods) &&
+            (identical(other.revolutLink, revolutLink) ||
+                other.revolutLink == revolutLink) &&
             (identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl) &&
             (identical(other.bannerUrl, bannerUrl) ||
                 other.bannerUrl == bannerUrl));
@@ -294,6 +314,7 @@ class _$VenueImpl implements _Venue {
       description,
       const DeepCollectionEquality().hash(_amenities),
       const DeepCollectionEquality().hash(_paymentMethods),
+      revolutLink,
       logoUrl,
       bannerUrl);
 
@@ -320,6 +341,7 @@ abstract class _Venue implements Venue {
       final String? description,
       @JsonKey(name: 'special_features') final List<String> amenities,
       @JsonKey(name: 'payment_methods') final List<String> paymentMethods,
+      @JsonKey(name: 'revolut_link') final String? revolutLink,
       @JsonKey(name: 'logo_url') final String? logoUrl,
       @JsonKey(name: 'banner_url') final String? bannerUrl}) = _$VenueImpl;
 
@@ -341,6 +363,9 @@ abstract class _Venue implements Venue {
   @override
   @JsonKey(name: 'payment_methods')
   List<String> get paymentMethods;
+  @override
+  @JsonKey(name: 'revolut_link')
+  String? get revolutLink;
   @override
   @JsonKey(name: 'logo_url')
   String? get logoUrl;

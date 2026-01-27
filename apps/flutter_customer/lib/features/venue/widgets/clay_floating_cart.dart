@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/design/tokens/clay_design.dart';
 import '../../cart/provider/cart_provider.dart';
 import '../../../core/utils/haptics.dart';
+import '../../../core/utils/currency.dart';
 
 /// Claymorphism floating cart pill
 class ClayFloatingCart extends ConsumerWidget {
@@ -70,7 +71,7 @@ class ClayFloatingCart extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              '€${cart.total.toStringAsFixed(2)}',
+              CurrencyUtils.format(cart.total, cart.currencyCode),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,

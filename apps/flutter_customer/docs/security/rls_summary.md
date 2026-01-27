@@ -13,13 +13,15 @@ The Customer App operates anonymously. Direct `INSERT` grants on public tables a
     *   Policy: `auth.uid() = user_id` (If using fake anon auth) OR `session_id = current_setting('app.current_session')`.
     *   *Better*: Only allow reading specific Order ID if you possess the UUID returned at creation.
 
-### `bell_requests` Table
+### `service_requests` Table
 *   **Direct Client INSERT**: `REVOKE`.
 *   **Edge Function Access**: `GRANT ALL` to `service_role`.
 
 ## 2. Transition Plan
-1.  **Deploy Edge Functions**: `create_customer_order` and `ring_bell`.
+1.  **Deploy Edge Functions**: `order_create` and `ring_bell`.
 2.  **Update Client**: Switch Flutter app to call `Supabase.functions.invoke(...)` instead of `supabase.from(...).insert(...)`.
+    *   Order creation: `order_create`
+    *   Order status read: `order_status` (by order UUID)
 3.  **Lockdown**: Run migration to revoke insert permissions from `anon` / `authenticated` roles on these tables.
 
 ## 3. Benefits

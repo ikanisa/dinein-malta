@@ -26,12 +26,16 @@ class SupabaseVenueRepository implements VenueRepository {
      // Legacy future call - prefer stream
     try {
       final response = await _client
-          .from('vendors')
+          .from('venues')
           .select()
           .eq('slug', slug)
           .maybeSingle(); 
       if (response == null) return null;
       _cache.cacheVenue(slug, response);
+      final venueId = response['id']?.toString();
+      if (venueId != null && venueId.isNotEmpty) {
+        _cache.cacheVenueById(venueId, response);
+      }
       return Venue.fromJson(response);
     } catch (e) {
       // Fallback to cache if network fails?
@@ -52,13 +56,17 @@ class SupabaseVenueRepository implements VenueRepository {
     // 2. Fetch Network
     try {
       final response = await _client
-          .from('vendors')
+          .from('venues')
           .select()
           .eq('slug', slug)
           .maybeSingle();
 
       if (response != null) {
         await _cache.cacheVenue(slug, response);
+        final venueId = response['id']?.toString();
+        if (venueId != null && venueId.isNotEmpty) {
+          await _cache.cacheVenueById(venueId, response);
+        }
         yield Venue.fromJson(response);
       } else if (cached == null) {
         yield null; // Not found anywhere
@@ -107,8 +115,8 @@ class SupabaseVenueRepository implements VenueRepository {
   }
 
   Future<List<Venue>> _fetchVenues(String? country) async {
-      // Table is 'vendors' in the actual Supabase schema
-      var query = _client.from('vendors').select().eq('status', 'active');
+      // Table is 'venues' in the Supabase schema
+      var query = _client.from('venues').select().eq('status', 'active');
       if (country != null) query = query.eq('country', country);
       final response = await query;
       return (response as List)
@@ -121,7 +129,7 @@ class SupabaseVenueRepository implements VenueRepository {
     // Network-only is fine for now.
     try {
       final response = await _client
-          .from('vendors')
+          .from('venues')
           .select()
           .eq('country', country)
           .eq('status', 'active')

@@ -10,11 +10,14 @@ import '../../core/design/widgets/clay_components.dart';
 import 'widgets/clay_menu_item_tile.dart';
 import 'widgets/clay_floating_cart.dart';
 import '../home/provider/home_provider.dart';
+import '../../core/utils/currency.dart';
+import '../../core/data/local/local_cache_service.dart';
 
 class VenueMenuScreen extends ConsumerStatefulWidget {
   final String slug;
+  final String? tableNumber;
 
-  const VenueMenuScreen({super.key, required this.slug});
+  const VenueMenuScreen({super.key, required this.slug, this.tableNumber});
 
   @override
   ConsumerState<VenueMenuScreen> createState() => _VenueMenuScreenState();
@@ -57,6 +60,14 @@ class _VenueMenuScreenState extends ConsumerState<VenueMenuScreen> {
           final currentCountry = ref.read(homeProvider).activeCountry;
           if (venue.country != currentCountry) {
             ref.read(homeProvider.notifier).switchCountry(venue.country);
+          }
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(localCacheServiceProvider).cacheVenueById(venue.id, venue.toJson());
+          final tableNumber = widget.tableNumber?.trim();
+          if (tableNumber != null && tableNumber.isNotEmpty) {
+            ref.read(localCacheServiceProvider).cacheTableNumber(venue.id, tableNumber);
           }
         });
 
@@ -137,9 +148,14 @@ class _VenueMenuScreenState extends ConsumerState<VenueMenuScreen> {
                             padding: const EdgeInsets.only(bottom: ClaySpacing.md),
                             child: ClayMenuItemTile(
                               item: item,
+                              currencyCode: CurrencyUtils.currencyCodeForCountry(venue.country),
                               onAdd: () {
                                 Haptics.mediumImpact();
-                                ref.read(cartProvider.notifier).addItem(item, venue.id);
+                                ref.read(cartProvider.notifier).addItem(
+                                      item,
+                                      venue.id,
+                                      currencyCode: CurrencyUtils.currencyCodeForCountry(venue.country),
+                                    );
                               },
                             ),
                           );

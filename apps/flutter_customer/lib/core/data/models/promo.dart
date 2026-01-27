@@ -8,7 +8,7 @@ class Promo with _$Promo {
   const factory Promo({
     required String id,
     required String title,
-    String? description,
+    @JsonKey(name: 'body') String? description,
     @JsonKey(name: 'venue_id') String? venueId, // Optional: if null, it's a platform promo
     @JsonKey(name: 'image_url') String? imageUrl,
     @Default([]) List<String> tags,

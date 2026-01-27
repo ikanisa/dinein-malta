@@ -383,9 +383,21 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 [functions.order_create]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/order_create/deno.json"
 entrypoint = "./functions/order_create/index.ts"
+
+[functions.order_status]
+enabled = true
+verify_jwt = false
+import_map = "./functions/order_status/deno.json"
+entrypoint = "./functions/order_status/index.ts"
+
+[functions.ring_bell]
+enabled = true
+verify_jwt = false
+import_map = "./functions/ring_bell/deno.json"
+entrypoint = "./functions/ring_bell/index.ts"
 
 [functions.order_update_status]
 enabled = true

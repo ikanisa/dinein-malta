@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../../core/design/tokens/clay_design.dart';
 import '../../../core/data/models/menu.dart';
+import '../../../core/utils/currency.dart';
 
 /// Claymorphism menu item tile
 class ClayMenuItemTile extends StatelessWidget {
   final MenuItem item;
   final VoidCallback onAdd;
+  final String currencyCode;
 
   const ClayMenuItemTile({
     super.key,
     required this.item,
     required this.onAdd,
+    required this.currencyCode,
   });
 
   @override
@@ -88,7 +91,7 @@ class ClayMenuItemTile extends StatelessWidget {
                   ],
                   const SizedBox(height: 8),
                   Text(
-                    '€${item.price.toStringAsFixed(2)}',
+                    CurrencyUtils.format(item.price, currencyCode),
                     style: ClayTypography.price,
                   ),
                 ],

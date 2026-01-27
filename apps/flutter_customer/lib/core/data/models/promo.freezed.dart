@@ -22,6 +22,7 @@ Promo _$PromoFromJson(Map<String, dynamic> json) {
 mixin _$Promo {
   String get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
+  @JsonKey(name: 'body')
   String? get description => throw _privateConstructorUsedError;
   @JsonKey(name: 'venue_id')
   String? get venueId =>
@@ -47,7 +48,7 @@ abstract class $PromoCopyWith<$Res> {
   $Res call(
       {String id,
       String title,
-      String? description,
+      @JsonKey(name: 'body') String? description,
       @JsonKey(name: 'venue_id') String? venueId,
       @JsonKey(name: 'image_url') String? imageUrl,
       List<String> tags,
@@ -124,7 +125,7 @@ abstract class _$$PromoImplCopyWith<$Res> implements $PromoCopyWith<$Res> {
   $Res call(
       {String id,
       String title,
-      String? description,
+      @JsonKey(name: 'body') String? description,
       @JsonKey(name: 'venue_id') String? venueId,
       @JsonKey(name: 'image_url') String? imageUrl,
       List<String> tags,
@@ -195,7 +196,7 @@ class _$PromoImpl implements _Promo {
   const _$PromoImpl(
       {required this.id,
       required this.title,
-      this.description,
+      @JsonKey(name: 'body') this.description,
       @JsonKey(name: 'venue_id') this.venueId,
       @JsonKey(name: 'image_url') this.imageUrl,
       final List<String> tags = const [],
@@ -211,6 +212,7 @@ class _$PromoImpl implements _Promo {
   @override
   final String title;
   @override
+  @JsonKey(name: 'body')
   final String? description;
   @override
   @JsonKey(name: 'venue_id')
@@ -281,7 +283,7 @@ abstract class _Promo implements Promo {
   const factory _Promo(
       {required final String id,
       required final String title,
-      final String? description,
+      @JsonKey(name: 'body') final String? description,
       @JsonKey(name: 'venue_id') final String? venueId,
       @JsonKey(name: 'image_url') final String? imageUrl,
       final List<String> tags,
@@ -295,6 +297,7 @@ abstract class _Promo implements Promo {
   @override
   String get title;
   @override
+  @JsonKey(name: 'body')
   String? get description;
   @override
   @JsonKey(name: 'venue_id')

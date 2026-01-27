@@ -31,8 +31,12 @@ mixin _$Order {
       throw _privateConstructorUsedError; // 'placed', 'received', 'served', 'cancelled'
   @JsonKey(name: 'total_amount')
   double get totalAmount => throw _privateConstructorUsedError;
+  @JsonKey(name: 'currency')
+  String get currency => throw _privateConstructorUsedError;
   @JsonKey(name: 'payment_method')
   String get paymentMethod => throw _privateConstructorUsedError;
+  @JsonKey(name: 'order_code')
+  String? get orderCode => throw _privateConstructorUsedError;
   List<OrderItem> get items => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
@@ -54,7 +58,9 @@ abstract class $OrderCopyWith<$Res> {
       @JsonKey(name: 'table_number') String? tableNumber,
       String status,
       @JsonKey(name: 'total_amount') double totalAmount,
+      @JsonKey(name: 'currency') String currency,
       @JsonKey(name: 'payment_method') String paymentMethod,
+      @JsonKey(name: 'order_code') String? orderCode,
       List<OrderItem> items,
       @JsonKey(name: 'created_at') DateTime createdAt});
 }
@@ -78,7 +84,9 @@ class _$OrderCopyWithImpl<$Res, $Val extends Order>
     Object? tableNumber = freezed,
     Object? status = null,
     Object? totalAmount = null,
+    Object? currency = null,
     Object? paymentMethod = null,
+    Object? orderCode = freezed,
     Object? items = null,
     Object? createdAt = null,
   }) {
@@ -107,10 +115,18 @@ class _$OrderCopyWithImpl<$Res, $Val extends Order>
           ? _value.totalAmount
           : totalAmount // ignore: cast_nullable_to_non_nullable
               as double,
+      currency: null == currency
+          ? _value.currency
+          : currency // ignore: cast_nullable_to_non_nullable
+              as String,
       paymentMethod: null == paymentMethod
           ? _value.paymentMethod
           : paymentMethod // ignore: cast_nullable_to_non_nullable
               as String,
+      orderCode: freezed == orderCode
+          ? _value.orderCode
+          : orderCode // ignore: cast_nullable_to_non_nullable
+              as String?,
       items: null == items
           ? _value.items
           : items // ignore: cast_nullable_to_non_nullable
@@ -137,7 +153,9 @@ abstract class _$$OrderImplCopyWith<$Res> implements $OrderCopyWith<$Res> {
       @JsonKey(name: 'table_number') String? tableNumber,
       String status,
       @JsonKey(name: 'total_amount') double totalAmount,
+      @JsonKey(name: 'currency') String currency,
       @JsonKey(name: 'payment_method') String paymentMethod,
+      @JsonKey(name: 'order_code') String? orderCode,
       List<OrderItem> items,
       @JsonKey(name: 'created_at') DateTime createdAt});
 }
@@ -159,7 +177,9 @@ class __$$OrderImplCopyWithImpl<$Res>
     Object? tableNumber = freezed,
     Object? status = null,
     Object? totalAmount = null,
+    Object? currency = null,
     Object? paymentMethod = null,
+    Object? orderCode = freezed,
     Object? items = null,
     Object? createdAt = null,
   }) {
@@ -188,10 +208,18 @@ class __$$OrderImplCopyWithImpl<$Res>
           ? _value.totalAmount
           : totalAmount // ignore: cast_nullable_to_non_nullable
               as double,
+      currency: null == currency
+          ? _value.currency
+          : currency // ignore: cast_nullable_to_non_nullable
+              as String,
       paymentMethod: null == paymentMethod
           ? _value.paymentMethod
           : paymentMethod // ignore: cast_nullable_to_non_nullable
               as String,
+      orderCode: freezed == orderCode
+          ? _value.orderCode
+          : orderCode // ignore: cast_nullable_to_non_nullable
+              as String?,
       items: null == items
           ? _value._items
           : items // ignore: cast_nullable_to_non_nullable
@@ -214,7 +242,9 @@ class _$OrderImpl implements _Order {
       @JsonKey(name: 'table_number') this.tableNumber,
       required this.status,
       @JsonKey(name: 'total_amount') required this.totalAmount,
+      @JsonKey(name: 'currency') this.currency = 'EUR',
       @JsonKey(name: 'payment_method') required this.paymentMethod,
+      @JsonKey(name: 'order_code') this.orderCode,
       final List<OrderItem> items = const [],
       @JsonKey(name: 'created_at') required this.createdAt})
       : _items = items;
@@ -240,8 +270,14 @@ class _$OrderImpl implements _Order {
   @JsonKey(name: 'total_amount')
   final double totalAmount;
   @override
+  @JsonKey(name: 'currency')
+  final String currency;
+  @override
   @JsonKey(name: 'payment_method')
   final String paymentMethod;
+  @override
+  @JsonKey(name: 'order_code')
+  final String? orderCode;
   final List<OrderItem> _items;
   @override
   @JsonKey()
@@ -257,7 +293,7 @@ class _$OrderImpl implements _Order {
 
   @override
   String toString() {
-    return 'Order(id: $id, venueId: $venueId, sessionId: $sessionId, tableNumber: $tableNumber, status: $status, totalAmount: $totalAmount, paymentMethod: $paymentMethod, items: $items, createdAt: $createdAt)';
+    return 'Order(id: $id, venueId: $venueId, sessionId: $sessionId, tableNumber: $tableNumber, status: $status, totalAmount: $totalAmount, currency: $currency, paymentMethod: $paymentMethod, orderCode: $orderCode, items: $items, createdAt: $createdAt)';
   }
 
   @override
@@ -274,8 +310,12 @@ class _$OrderImpl implements _Order {
             (identical(other.status, status) || other.status == status) &&
             (identical(other.totalAmount, totalAmount) ||
                 other.totalAmount == totalAmount) &&
+            (identical(other.currency, currency) ||
+                other.currency == currency) &&
             (identical(other.paymentMethod, paymentMethod) ||
                 other.paymentMethod == paymentMethod) &&
+            (identical(other.orderCode, orderCode) ||
+                other.orderCode == orderCode) &&
             const DeepCollectionEquality().equals(other._items, _items) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
@@ -291,7 +331,9 @@ class _$OrderImpl implements _Order {
       tableNumber,
       status,
       totalAmount,
+      currency,
       paymentMethod,
+      orderCode,
       const DeepCollectionEquality().hash(_items),
       createdAt);
 
@@ -317,7 +359,9 @@ abstract class _Order implements Order {
           @JsonKey(name: 'table_number') final String? tableNumber,
           required final String status,
           @JsonKey(name: 'total_amount') required final double totalAmount,
+          @JsonKey(name: 'currency') final String currency,
           @JsonKey(name: 'payment_method') required final String paymentMethod,
+          @JsonKey(name: 'order_code') final String? orderCode,
           final List<OrderItem> items,
           @JsonKey(name: 'created_at') required final DateTime createdAt}) =
       _$OrderImpl;
@@ -341,8 +385,14 @@ abstract class _Order implements Order {
   @JsonKey(name: 'total_amount')
   double get totalAmount;
   @override
+  @JsonKey(name: 'currency')
+  String get currency;
+  @override
   @JsonKey(name: 'payment_method')
   String get paymentMethod;
+  @override
+  @JsonKey(name: 'order_code')
+  String? get orderCode;
   @override
   List<OrderItem> get items;
   @override

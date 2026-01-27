@@ -4,12 +4,13 @@ import '../../cart/models/cart_item.dart';
 import '../../cart/provider/cart_provider.dart';
 import '../../../core/data/repositories/order_repository.dart';
 import 'package:go_router/go_router.dart';
-import 'package:uuid/uuid.dart';
 import '../../../core/data/local/local_cache_service.dart';
+import '../../../core/data/models/venue.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/design/tokens/clay_design.dart';
 import '../../../core/design/widgets/clay_components.dart';
 import '../../../core/utils/haptics.dart';
+import '../../../core/utils/currency.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -22,6 +23,39 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String _paymentMethod = 'cash';
   final TextEditingController _tableController = TextEditingController();
   bool _isLoading = false;
+  String? _revolutLink;
+
+  @override
+  void dispose() {
+    _tableController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillTableNumber();
+  }
+
+  void _prefillTableNumber() {
+    final cart = ref.read(cartProvider);
+    final venueId = cart.venueId;
+    if (venueId == null) return;
+
+    final cache = ref.read(localCacheServiceProvider);
+    final cachedTable = cache.getTableNumber(venueId);
+    if (cachedTable != null && cachedTable.isNotEmpty) {
+      _tableController.text = cachedTable;
+    }
+
+    final cachedVenue = cache.getVenueById(venueId, allowStale: true);
+    if (cachedVenue != null) {
+      try {
+        final venue = Venue.fromJson(cachedVenue);
+        _revolutLink = venue.revolutLink;
+      } catch (_) {}
+    }
+  }
 
   Future<void> _launchPayment() async {
     if (_paymentMethod == 'momo_ussd') {
@@ -30,7 +64,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         await launchUrl(launchUri);
       }
     } else if (_paymentMethod == 'revolut_link') {
-      final Uri launchUri = Uri.parse('https://revolut.me/r/dinein_example');
+      final link = _revolutLink;
+      if (link == null || link.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Revolut link unavailable. Please ask staff.'),
+              backgroundColor: ClayColors.error,
+            ),
+          );
+        }
+        return;
+      }
+      final Uri launchUri = Uri.parse(link);
       if (await canLaunchUrl(launchUri)) {
         await launchUrl(launchUri, mode: LaunchMode.externalApplication);
       }
@@ -41,32 +87,48 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final cart = ref.read(cartProvider);
     if (cart.items.isEmpty) return;
 
+    if (_tableController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter your table number.'),
+          backgroundColor: ClayColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     Haptics.mediumImpact();
 
     try {
-      final sessionId = const Uuid().v4();
       final itemsPayload = cart.items.map((i) => {
-        'item_id': i.menuItem.id,
-        'name': i.menuItem.name,
-        'quantity': i.quantity,
-        'price': i.menuItem.price,
+        'menu_item_id': i.menuItem.id,
+        'qty': i.quantity,
       }).toList();
+
+      final sessionId = await ref.read(localCacheServiceProvider).getOrCreateSessionId();
 
       final order = await ref.read(orderRepositoryProvider).createOrder(
         sessionId: sessionId,
         venueId: cart.venueId!,
         items: itemsPayload,
         paymentMethod: _paymentMethod,
-        tableNumber: _tableController.text.isNotEmpty ? _tableController.text : null,
+        tableNumber: _tableController.text.trim(),
       );
 
       ref.read(cartProvider.notifier).clear();
       await ref.read(localCacheServiceProvider).saveOrder(order.toJson());
+      await ref
+          .read(localCacheServiceProvider)
+          .cacheTableNumber(cart.venueId!, _tableController.text.trim());
 
       if (mounted) {
         Haptics.success();
-        context.go('/order/${order.id}');
+        final orderCode = order.orderCode;
+        final query = (orderCode != null && orderCode.isNotEmpty)
+            ? '?code=$orderCode'
+            : '';
+        context.go('/order/${order.id}$query');
       }
     } catch (e) {
       if (mounted) {
@@ -85,6 +147,40 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(cartProvider);
+    final isRwanda = cart.currencyCode.toUpperCase() == 'RWF';
+    final paymentOptions = <_PaymentOptionConfig>[
+      _PaymentOptionConfig(
+        value: 'cash',
+        icon: Icons.payments_outlined,
+        label: 'Cash',
+        subtitle: 'Pay at the counter',
+        color: ClayColors.secondary,
+      ),
+      if (isRwanda)
+        _PaymentOptionConfig(
+          value: 'momo_ussd',
+          icon: Icons.phone_android_rounded,
+          label: 'MoMo',
+          subtitle: 'MTN Mobile Money (Rwanda)',
+          color: const Color(0xFFFFCB05),
+        )
+      else
+        _PaymentOptionConfig(
+          value: 'revolut_link',
+          icon: Icons.credit_card_rounded,
+          label: 'Revolut',
+          subtitle: 'Pay via Revolut link (Malta)',
+          color: Colors.black,
+        ),
+    ];
+    final allowedMethods = paymentOptions.map((option) => option.value).toSet();
+    if (!allowedMethods.contains(_paymentMethod)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() => _paymentMethod = paymentOptions.first.value);
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: ClayColors.background,
@@ -156,7 +252,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           ),
                         ),
                         Text(
-                          '€${(item.menuItem.price * item.quantity).toStringAsFixed(2)}',
+                          CurrencyUtils.format(
+                            item.menuItem.price * item.quantity,
+                            cart.currencyCode,
+                          ),
                           style: ClayTypography.bodyMedium,
                         ),
                       ],
@@ -171,7 +270,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     children: [
                       Text('Total', style: ClayTypography.h3),
                       Text(
-                        '€${cart.total.toStringAsFixed(2)}',
+                        CurrencyUtils.format(cart.total, cart.currencyCode),
                         style: ClayTypography.h2.copyWith(color: ClayColors.primary),
                       ),
                     ],
@@ -185,7 +284,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             Text('Table Number', style: ClayTypography.h3),
             const SizedBox(height: ClaySpacing.sm),
             ClayTextField(
-              hintText: 'Enter your table number (optional)',
+              hintText: 'Enter your table number',
               controller: _tableController,
               keyboardType: TextInputType.number,
               prefixIcon: Icons.table_restaurant_rounded,
@@ -196,35 +295,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             Text('Payment Method', style: ClayTypography.h3),
             const SizedBox(height: ClaySpacing.sm),
             
-            _ClayPaymentOption(
-              icon: Icons.payments_outlined,
-              label: 'Cash',
-              subtitle: 'Pay at the counter',
-              value: 'cash',
-              groupValue: _paymentMethod,
-              color: ClayColors.secondary,
-              onChanged: (v) => setState(() => _paymentMethod = v),
-            ),
-            const SizedBox(height: ClaySpacing.sm),
-            _ClayPaymentOption(
-              icon: Icons.phone_android_rounded,
-              label: 'MoMo',
-              subtitle: 'MTN Mobile Money (Rwanda)',
-              value: 'momo_ussd',
-              groupValue: _paymentMethod,
-              color: const Color(0xFFFFCB05),
-              onChanged: (v) => setState(() => _paymentMethod = v),
-            ),
-            const SizedBox(height: ClaySpacing.sm),
-            _ClayPaymentOption(
-              icon: Icons.credit_card_rounded,
-              label: 'Revolut',
-              subtitle: 'Pay via Revolut link (Malta)',
-              value: 'revolut_link',
-              groupValue: _paymentMethod,
-              color: Colors.black,
-              onChanged: (v) => setState(() => _paymentMethod = v),
-            ),
+            ...paymentOptions.map((option) => Padding(
+              padding: const EdgeInsets.only(bottom: ClaySpacing.sm),
+              child: _ClayPaymentOption(
+                icon: option.icon,
+                label: option.label,
+                subtitle: option.subtitle,
+                value: option.value,
+                groupValue: _paymentMethod,
+                color: option.color,
+                onChanged: (v) => setState(() => _paymentMethod = v),
+              ),
+            )),
 
             if (_paymentMethod != 'cash') ...[
               const SizedBox(height: ClaySpacing.md),
@@ -350,4 +432,20 @@ class _ClayPaymentOption extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PaymentOptionConfig {
+  final String value;
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+
+  const _PaymentOptionConfig({
+    required this.value,
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+  });
 }

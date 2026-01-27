@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     // ========================================================================
     const { data: vendor, error: vendorError } = await supabaseAdmin
       .from("venues")
-      .select("id, status")
+      .select("id, status, country")
       .eq("id", input.venue_id)
       .single();
 
@@ -216,6 +216,7 @@ Deno.serve(async (req) => {
     // ========================================================================
     // STEP 6: Insert order and order items
     // ========================================================================
+    const currency = vendor.country === "RW" ? "RWF" : "EUR";
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .insert({
@@ -223,10 +224,10 @@ Deno.serve(async (req) => {
         table_id: table.id,
         client_auth_user_id: userId || null,
         order_code: orderCode,
-        status: "received",
+        status: "placed",
         payment_status: "unpaid",
         total_amount: totalAmount,
-        currency: "EUR",
+        currency,
         notes: input.notes || null,
       })
       .select()

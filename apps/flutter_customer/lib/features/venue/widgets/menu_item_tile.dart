@@ -1,12 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/data/models/menu.dart';
+import '../../../../core/utils/currency.dart';
 
 class MenuItemTile extends StatelessWidget {
   final MenuItem item;
   final VoidCallback onAdd;
+  final String currencyCode;
 
-  const MenuItemTile({super.key, required this.item, required this.onAdd});
+  const MenuItemTile({
+    super.key,
+    required this.item,
+    required this.onAdd,
+    this.currencyCode = 'EUR',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +58,7 @@ class MenuItemTile extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  '€${item.price.toStringAsFixed(2)}',
+                  CurrencyUtils.format(item.price, currencyCode),
                   style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
                 ),
                 const Spacer(),

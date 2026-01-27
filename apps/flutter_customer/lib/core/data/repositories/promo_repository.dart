@@ -17,10 +17,13 @@ class SupabasePromoRepository implements PromoRepository {
   @override
   Future<List<Promo>> listActivePromos({String? country}) async {
     try {
-      var query = _client.from('promos').select().eq('is_active', true);
+      var query = _client
+          .from('promotions')
+          .select('*, venues!inner(country)')
+          .eq('is_active', true);
       
       if (country != null) {
-        query = query.eq('country', country);
+        query = query.eq('venues.country', country);
       }
       
       final response = await query;

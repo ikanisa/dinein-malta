@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import '../telemetry/telemetry_config.dart';
 
 class Logger {
   static void log(String message, {String? scope, Object? error, StackTrace? stackTrace}) {
@@ -8,6 +9,8 @@ class Logger {
       debugPrint('[${scope ?? 'App'}] $message');
       if (error != null) debugPrint('Error: $error');
     }
+
+    if (!TelemetryConfig.enabled) return;
 
     // 2. Sentry Breadcrumb
     Sentry.addBreadcrumb(
@@ -21,11 +24,11 @@ class Logger {
     // 3. Capture Exception if error exists
     if (error != null) {
       Sentry.captureException(
-        error, 
-        stackTrace: stackTrace, 
+        error,
+        stackTrace: stackTrace,
         withScope: (scope) {
-           scope.setTag('logger_scope', scope.toString());
-        }
+          scope.setTag('logger_scope', scope.toString());
+        },
       );
     }
   }

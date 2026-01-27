@@ -12,7 +12,9 @@ class Order with _$Order {
     @JsonKey(name: 'table_number') String? tableNumber,
     required String status, // 'placed', 'received', 'served', 'cancelled'
     @JsonKey(name: 'total_amount') required double totalAmount,
+    @JsonKey(name: 'currency') @Default('EUR') String currency,
     @JsonKey(name: 'payment_method') required String paymentMethod,
+    @JsonKey(name: 'order_code') String? orderCode,
     @Default([]) List<OrderItem> items,
     @JsonKey(name: 'created_at') required DateTime createdAt,
   }) = _Order;

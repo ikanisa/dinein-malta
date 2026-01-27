@@ -5,6 +5,7 @@ import '../../../core/data/local/local_cache_service.dart';
 import '../../../core/data/models/order.dart';
 import '../../../core/design/tokens/clay_design.dart';
 import '../../../core/design/widgets/clay_components.dart';
+import '../../../core/utils/currency.dart';
 
 class OrdersHistoryScreen extends ConsumerWidget {
   const OrdersHistoryScreen({super.key});
@@ -90,7 +91,11 @@ class _OrderHistoryCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        context.push('/order/${order.id}');
+        final orderCode = order.orderCode;
+        final query = (orderCode != null && orderCode.isNotEmpty)
+            ? '?code=$orderCode'
+            : '';
+        context.push('/order/${order.id}$query');
       },
       child: ClayCard(
         child: Column(
@@ -117,8 +122,7 @@ class _OrderHistoryCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          // Use venue name if available, else static
-                          'Table Order', 
+                          order.orderCode ?? 'Table Order',
                           style: ClayTypography.bodyMedium,
                         ),
                         Text(
@@ -130,7 +134,7 @@ class _OrderHistoryCard extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  '€${order.totalAmount.toStringAsFixed(2)}',
+                  CurrencyUtils.format(order.totalAmount, order.currency),
                   style: ClayTypography.price,
                 ),
               ],

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../../app/router/routes.dart';
+import '../../core/data/local/local_cache_service.dart';
 import '../../core/design/tokens/clay_design.dart';
 import '../../core/design/widgets/clay_components.dart';
 
@@ -16,11 +18,13 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _version = '';
   String _buildNumber = '';
+  bool _telemetryEnabled = true;
 
   @override
   void initState() {
     super.initState();
     _loadAppInfo();
+    _loadTelemetryPreference();
   }
 
   Future<void> _loadAppInfo() async {
@@ -31,6 +35,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _buildNumber = info.buildNumber;
       });
     }
+  }
+
+  void _loadTelemetryPreference() {
+    final cached = ref.read(localCacheServiceProvider).getTelemetryEnabled();
+    setState(() => _telemetryEnabled = cached ?? true);
+  }
+
+  Future<void> _setTelemetryEnabled(bool value) async {
+    setState(() => _telemetryEnabled = value);
+    await ref.read(localCacheServiceProvider).setTelemetryEnabled(value);
+    ref.read(telemetryServiceProvider).setEnabled(value);
   }
 
   @override
@@ -112,7 +127,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       iconColor: ClayColors.primary,
                       title: 'Order History',
                       subtitle: 'View your past orders',
-                      onTap: () => context.push('/orders-history'),
+                      onTap: () => context.push('${Routes.settings}/${Routes.ordersHistory}'),
                     ),
                     const Divider(height: 1),
                     _SettingsTile(
@@ -142,6 +157,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       trailing: Switch(
                         value: true,
                         onChanged: (v) {},
+                        activeColor: ClayColors.primary,
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    _SettingsTile(
+                      icon: Icons.insights_rounded,
+                      iconColor: ClayColors.secondary,
+                      title: 'Share Usage Data',
+                      subtitle: 'Anonymous analytics to improve the app',
+                      trailing: Switch(
+                        value: _telemetryEnabled,
+                        onChanged: _setTelemetryEnabled,
                         activeColor: ClayColors.primary,
                       ),
                     ),

@@ -1,25 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:uuid/uuid.dart';
 import '../data/local/local_cache_service.dart';
 import '../utils/logger.dart';
+import 'telemetry_config.dart';
 
 class TelemetryService {
   final LocalCacheService _cache;
   String? _sessionId;
-  bool _enabled = true; // Default to true, controlled by kill switch
+  bool _enabled = TelemetryConfig.enabled;
 
   TelemetryService(this._cache);
 
   Future<void> init() async {
+    _enabled = TelemetryConfig.enabled;
     // 1. Session ID (Anonymous)
-    var sid = _cache.getData('session_id');
-    if (sid == null) {
-      _sessionId = const Uuid().v4();
-      await _cache.cacheData('session_id', {'id': _sessionId}, ttl: const Duration(days: 90));
-    } else {
-      _sessionId = sid['id'];
-    }
+    _sessionId = await _cache.getOrCreateSessionId();
 
     // 2. Set User Context (Anonymous)
     Sentry.configureScope((scope) {
@@ -32,6 +27,7 @@ class TelemetryService {
 
   void setEnabled(bool enabled) {
     _enabled = enabled;
+    TelemetryConfig.enabled = enabled;
     // Sentry SDK doesn't have a simple runtime disable, typically configured at init.
     // But we can filter events effectively here.
   }
