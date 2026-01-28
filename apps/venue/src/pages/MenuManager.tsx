@@ -15,7 +15,7 @@ export default function MenuManager() {
     const { venue } = useOwner()
     const { categories, addCategory, deleteCategory, loading: loadingCat } = useCategories()
     const { items, addItem, updateItem, deleteItem, loading: loadingItems } = useMenuItems()
-    const { drafts, createDraft, deleteDraft, submitForApproval, loading: loadingDrafts } = useMenuDrafts()
+    const { drafts, createDraft, deleteDraft, submitForApproval, loading: _loadingDrafts } = useMenuDrafts()
 
     // UI State
     const [activeCategory, setActiveCategory] = useState<string | undefined>()

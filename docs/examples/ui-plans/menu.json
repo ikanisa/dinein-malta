@@ -1,0 +1,159 @@
+{
+    "version": "ui_plan.v1",
+    "planId": "plan_menu_xyz",
+    "generatedAt": "2026-01-28T10:05:00Z",
+    "tenant": {
+        "tenantId": "dinein",
+        "venueId": "venue_001"
+    },
+    "session": {
+        "sessionKey": "sess_visit_abc123",
+        "actor": {
+            "actorType": "guest",
+            "actorId": "anon_xyz789",
+            "locale": "en-RW",
+            "currency": "RWF"
+        }
+    },
+    "screen": {
+        "name": "menu",
+        "title": "The Hut",
+        "layout": "scroll",
+        "breadcrumbs": [
+            {
+                "label": "Home",
+                "actionRef": "act_home"
+            },
+            {
+                "label": "The Hut"
+            }
+        ]
+    },
+    "sections": [
+        {
+            "id": "sec_categories",
+            "type": "chips",
+            "title": null,
+            "items": [
+                {
+                    "kind": "category",
+                    "id": "cat_burgers",
+                    "primaryText": "Burgers",
+                    "actionRef": "act_cat_burgers"
+                },
+                {
+                    "kind": "category",
+                    "id": "cat_pizza",
+                    "primaryText": "Pizza",
+                    "actionRef": "act_cat_pizza"
+                },
+                {
+                    "kind": "category",
+                    "id": "cat_drinks",
+                    "primaryText": "Drinks",
+                    "actionRef": "act_cat_drinks"
+                }
+            ]
+        },
+        {
+            "id": "sec_items",
+            "type": "list",
+            "title": "Burgers",
+            "items": [
+                {
+                    "kind": "menu_item",
+                    "id": "item_001",
+                    "primaryText": "Classic Burger",
+                    "secondaryText": "Beef patty, lettuce, tomato, cheese",
+                    "meta": {
+                        "priceText": "8,500 RWF",
+                        "badge": "Best seller"
+                    },
+                    "actionRef": "act_add_item_001"
+                },
+                {
+                    "kind": "menu_item",
+                    "id": "item_002",
+                    "primaryText": "Veggie Burger",
+                    "secondaryText": "Plant-based patty, avocado, sprouts",
+                    "meta": {
+                        "priceText": "7,500 RWF"
+                    },
+                    "actionRef": "act_add_item_002"
+                },
+                {
+                    "kind": "menu_item",
+                    "id": "item_003",
+                    "primaryText": "Double Cheese",
+                    "secondaryText": "Two patties, double cheddar",
+                    "meta": {
+                        "priceText": "12,000 RWF"
+                    },
+                    "actionRef": "act_add_item_003"
+                }
+            ]
+        }
+    ],
+    "actions": {
+        "byId": {
+            "act_home": {
+                "intent": "openHome",
+                "params": {}
+            },
+            "act_cat_burgers": {
+                "intent": "openMenu",
+                "params": {
+                    "venueId": "venue_001",
+                    "categoryId": "cat_burgers"
+                }
+            },
+            "act_cat_pizza": {
+                "intent": "openMenu",
+                "params": {
+                    "venueId": "venue_001",
+                    "categoryId": "cat_pizza"
+                }
+            },
+            "act_cat_drinks": {
+                "intent": "openMenu",
+                "params": {
+                    "venueId": "venue_001",
+                    "categoryId": "cat_drinks"
+                }
+            },
+            "act_add_item_001": {
+                "intent": "addToCart",
+                "params": {
+                    "visitId": "visit_abc",
+                    "itemId": "item_001",
+                    "qty": 1
+                },
+                "requiresConfirmation": false
+            },
+            "act_add_item_002": {
+                "intent": "addToCart",
+                "params": {
+                    "visitId": "visit_abc",
+                    "itemId": "item_002",
+                    "qty": 1
+                },
+                "requiresConfirmation": false
+            },
+            "act_add_item_003": {
+                "intent": "addToCart",
+                "params": {
+                    "visitId": "visit_abc",
+                    "itemId": "item_003",
+                    "qty": 1
+                },
+                "requiresConfirmation": false
+            }
+        }
+    },
+    "cache": {
+        "ttlSeconds": 600,
+        "varyBy": [
+            "venueId"
+        ]
+    }
+}

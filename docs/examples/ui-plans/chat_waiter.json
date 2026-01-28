@@ -1,0 +1,114 @@
+{
+    "version": "ui_plan.v1",
+    "planId": "plan_waiter_abc",
+    "generatedAt": "2026-01-28T10:15:00Z",
+    "tenant": {
+        "tenantId": "dinein",
+        "venueId": "venue_001"
+    },
+    "session": {
+        "sessionKey": "sess_visit_abc123",
+        "actor": {
+            "actorType": "guest",
+            "actorId": "anon_xyz789",
+            "locale": "en-RW",
+            "currency": "RWF"
+        }
+    },
+    "screen": {
+        "name": "chat_waiter",
+        "title": "AI Waiter",
+        "layout": "sheet"
+    },
+    "sections": [
+        {
+            "id": "sec_messages",
+            "type": "list",
+            "title": null,
+            "items": [
+                {
+                    "kind": "info",
+                    "id": "msg_001",
+                    "primaryText": "Welcome to The Hut! How can I help you today?",
+                    "meta": {
+                        "badge": "Waiter"
+                    }
+                },
+                {
+                    "kind": "info",
+                    "id": "msg_002",
+                    "primaryText": "I'd like some water please",
+                    "meta": {
+                        "badge": "You"
+                    }
+                },
+                {
+                    "kind": "info",
+                    "id": "msg_003",
+                    "primaryText": "Of course! I've called a staff member to bring water to your table.",
+                    "meta": {
+                        "badge": "Waiter"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "sec_quick_actions",
+            "type": "chips",
+            "title": "Quick actions",
+            "items": [
+                {
+                    "kind": "action",
+                    "id": "qa_water",
+                    "primaryText": "🚰 Water",
+                    "actionRef": "act_call_water"
+                },
+                {
+                    "kind": "action",
+                    "id": "qa_bill",
+                    "primaryText": "🧾 Bill",
+                    "actionRef": "act_request_bill"
+                },
+                {
+                    "kind": "action",
+                    "id": "qa_help",
+                    "primaryText": "🙋 Help",
+                    "actionRef": "act_call_help"
+                }
+            ]
+        }
+    ],
+    "actions": {
+        "byId": {
+            "act_call_water": {
+                "intent": "callStaff",
+                "params": {
+                    "visitId": "visit_abc",
+                    "reason": "water"
+                },
+                "requiresConfirmation": true,
+                "confirmationText": "Call staff for water?"
+            },
+            "act_request_bill": {
+                "intent": "requestBill",
+                "params": {
+                    "visitId": "visit_abc"
+                },
+                "requiresConfirmation": true,
+                "confirmationText": "Request your bill?"
+            },
+            "act_call_help": {
+                "intent": "callStaff",
+                "params": {
+                    "visitId": "visit_abc",
+                    "reason": "assistance"
+                },
+                "requiresConfirmation": true,
+                "confirmationText": "Call staff for assistance?"
+            }
+        }
+    },
+    "cache": {
+        "ttlSeconds": 30
+    }
+}

@@ -27,6 +27,8 @@ import {
     type PreferenceType,
 } from "./guest_intelligence.ts";
 
+import { validateIntent } from "./ui_intent_validators.ts";
+
 // =============================================================================
 // CLAUDE TOOL DEFINITIONS (schema for Claude API)
 // =============================================================================
@@ -348,10 +350,30 @@ export async function executeGuestTool(
                 return await checkOrderStatus(input, context, supabase);
 
             case "call_staff":
+                // Validate intent first
+                const callVal = await validateIntent(
+                    "callStaff",
+                    input,
+                    { userId: context.user_id, venueId: context.venue_id },
+                    supabase
+                );
+                if (!callVal.valid) {
+                    return { success: false, error: `Validation failed: ${callVal.errors.join(", ")}` };
+                }
                 return await callStaff(input, context, supabase);
 
             // Cart tools (Moltbot Phase 1)
             case "add_to_cart":
+                // Validate intent first
+                const cartVal = await validateIntent(
+                    "addToCart",
+                    input,
+                    { userId: context.user_id, venueId: context.venue_id },
+                    supabase
+                );
+                if (!cartVal.valid) {
+                    return { success: false, error: `Validation failed: ${cartVal.errors.join(", ")}` };
+                }
                 return await addToCart(
                     input as { item_id: string; quantity?: number; notes?: string },
                     { venue_id: context.venue_id!, user_id: context.user_id, table_no: context.table_no },
@@ -372,6 +394,28 @@ export async function executeGuestTool(
                 );
 
             case "place_order":
+                // Find active cart first for validation
+                // (We know placeOrder logic finds it too, but we need it for validation)
+                const { data: activeCart } = await supabase
+                    .from("carts")
+                    .select("id")
+                    .eq("user_id", context.user_id)
+                    .eq("venue_id", context.venue_id)
+                    .eq("status", "active")
+                    .single();
+
+                // Validate intent first
+                const orderVal = await validateIntent(
+                    "confirmOrder",
+                    { ...input, cart_id: activeCart?.id },
+                    { userId: context.user_id, venueId: context.venue_id },
+                    supabase
+                );
+
+                if (!orderVal.valid) {
+                    return { success: false, error: `Validation failed: ${orderVal.errors.join(", ")}` };
+                }
+
                 return await placeOrder(
                     input as { payment_method: string },
                     { venue_id: context.venue_id!, user_id: context.user_id, table_no: context.table_no },

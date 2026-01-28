@@ -11,8 +11,12 @@ import Users from './pages/Users'
 import AuditLogs from './pages/AuditLogs'
 import Settings from './pages/Settings'
 import AIAnalytics from './pages/AIAnalytics'
+import AIMonitoring from './pages/AIMonitoring'
 import Approvals from './pages/Approvals'
+import RiskControls from './pages/RiskControls'
+import RolloutDashboard from './pages/RolloutDashboard'
 import { AdminLayout } from './layouts/AdminLayout'
+
 
 function App() {
     return (
@@ -37,8 +41,11 @@ function App() {
                                 <Route path="users" element={<Users />} />
                                 <Route path="approvals" element={<Approvals />} />
                                 <Route path="audit" element={<AuditLogs />} />
+                                <Route path="risk" element={<RiskControls />} />
                                 <Route path="settings" element={<Settings />} />
                                 <Route path="ai" element={<AIAnalytics />} />
+                                <Route path="ai/monitoring" element={<AIMonitoring />} />
+                                <Route path="ai/rollout" element={<RolloutDashboard />} />
                             </Route>
 
                             <Route path="*" element={<Navigate to="/" replace />} />

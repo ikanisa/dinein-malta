@@ -6,11 +6,14 @@ import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderStatus from './pages/OrderStatus'
 import Settings from './pages/Settings'
+import UIPlanDemo from './pages/UIPlanDemo'
 import { Toaster } from 'sonner'
 import { useA2HS, ErrorBoundary, IOSInstallSheet } from '@dinein/ui'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { Download } from 'lucide-react'
+import { SessionProvider } from './context/SessionContext'
+import OfflineBanner from './components/OfflineBanner'
 
 function App() {
     const {
@@ -42,32 +45,38 @@ function App() {
 
     return (
         <ErrorBoundary>
-            <BrowserRouter>
-                <Toaster position="bottom-center" />
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/home" element={<Navigate to="/" replace />} />
-                    <Route path="/settings" element={<Settings />} />
+            <SessionProvider>
+                <BrowserRouter>
+                    <Toaster position="bottom-center" />
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/home" element={<Navigate to="/" replace />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/ui-plan-demo" element={<UIPlanDemo />} />
 
-                    <Route path="/v/:slug" element={<VenueLayout />}>
-                        <Route index element={<VenueMenu />} />
-                        <Route path="cart" element={<Cart />} />
-                        <Route path="checkout" element={<Checkout />} />
-                        <Route path="orders/:orderId" element={<OrderStatus />} />
-                        {/* Settings can also be accessed from venue context */}
-                        <Route path="settings" element={<Settings />} />
-                    </Route>
+                        <Route path="/v/:slug" element={<VenueLayout />}>
+                            <Route index element={<VenueMenu />} />
+                            <Route path="cart" element={<Cart />} />
+                            <Route path="checkout" element={<Checkout />} />
+                            <Route path="orders/:orderId" element={<OrderStatus />} />
+                            {/* Settings can also be accessed from venue context */}
+                            <Route path="settings" element={<Settings />} />
+                        </Route>
 
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
 
-                {/* iOS Safari install sheet */}
-                <IOSInstallSheet
-                    isOpen={showIOSSheet}
-                    onClose={closeIOSSheet}
-                    appName="DineIn"
-                />
-            </BrowserRouter>
+                    {/* iOS Safari install sheet */}
+                    <IOSInstallSheet
+                        isOpen={showIOSSheet}
+                        onClose={closeIOSSheet}
+                        appName="DineIn"
+                    />
+
+                    {/* Offline indicator */}
+                    <OfflineBanner />
+                </BrowserRouter>
+            </SessionProvider>
         </ErrorBoundary>
     )
 }

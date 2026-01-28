@@ -1,0 +1,124 @@
+{
+    "version": "ui_plan.v1",
+    "planId": "plan_checkout_abc",
+    "generatedAt": "2026-01-28T10:10:00Z",
+    "tenant": {
+        "tenantId": "dinein",
+        "venueId": "venue_001"
+    },
+    "session": {
+        "sessionKey": "sess_visit_abc123",
+        "actor": {
+            "actorType": "guest",
+            "actorId": "anon_xyz789",
+            "locale": "en-RW",
+            "currency": "RWF"
+        }
+    },
+    "screen": {
+        "name": "checkout",
+        "title": "Review Order",
+        "layout": "scroll"
+    },
+    "sections": [
+        {
+            "id": "sec_cart",
+            "type": "list",
+            "title": "Your order",
+            "items": [
+                {
+                    "kind": "menu_item",
+                    "id": "line_001",
+                    "primaryText": "Classic Burger × 2",
+                    "secondaryText": "No onions",
+                    "meta": {
+                        "priceText": "17,000 RWF"
+                    },
+                    "actionRef": "act_edit_line_001"
+                },
+                {
+                    "kind": "menu_item",
+                    "id": "line_002",
+                    "primaryText": "Fanta Orange × 1",
+                    "meta": {
+                        "priceText": "1,500 RWF"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "sec_totals",
+            "type": "metrics",
+            "title": null,
+            "items": [
+                {
+                    "kind": "info",
+                    "id": "subtotal",
+                    "primaryText": "Subtotal",
+                    "meta": {
+                        "priceText": "18,500 RWF"
+                    }
+                },
+                {
+                    "kind": "info",
+                    "id": "discount",
+                    "primaryText": "First order discount",
+                    "meta": {
+                        "priceText": "-3,700 RWF",
+                        "badge": "-20%"
+                    }
+                },
+                {
+                    "kind": "info",
+                    "id": "total",
+                    "primaryText": "Total",
+                    "meta": {
+                        "priceText": "14,800 RWF"
+                    }
+                }
+            ],
+            "style": {
+                "emphasis": "high"
+            }
+        },
+        {
+            "id": "sec_cta",
+            "type": "cta",
+            "title": null,
+            "items": [
+                {
+                    "kind": "action",
+                    "id": "confirm",
+                    "primaryText": "Place Order",
+                    "actionRef": "act_confirm"
+                }
+            ]
+        }
+    ],
+    "actions": {
+        "byId": {
+            "act_edit_line_001": {
+                "intent": "updateCartItem",
+                "params": {
+                    "visitId": "visit_abc",
+                    "lineId": "line_001",
+                    "patch": {}
+                },
+                "requiresConfirmation": true,
+                "confirmationText": "Edit this item?"
+            },
+            "act_confirm": {
+                "intent": "confirmOrder",
+                "params": {
+                    "visitId": "visit_abc",
+                    "paymentMethod": "cash"
+                },
+                "requiresConfirmation": true,
+                "confirmationText": "Place your order for 14,800 RWF?"
+            }
+        }
+    },
+    "cache": {
+        "ttlSeconds": 60
+    }
+}

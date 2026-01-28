@@ -32,6 +32,10 @@ import {
     executeResearchTool,
 } from "../_lib/research_tools.ts";
 import {
+    FOUNDATION_TOOLS,
+    executeFoundationTool,
+} from "../_lib/foundation_tools.ts";
+import {
     type AgentType as PolicyAgentType,
     checkPolicy,
     generateCorrelationId,
@@ -42,6 +46,17 @@ import {
     type TenantContext,
     logTenantContext,
 } from "../_lib/tenant_isolation.ts";
+import {
+    checkBlockingKillSwitches,
+    isOrderSubmitBlocked,
+    isServiceCallsBlocked,
+    shouldReduceRateLimits,
+} from "../_lib/kill_switches.ts";
+import {
+    getVenueBehavior,
+    type ModeBehavior,
+} from "../_lib/rollout_mode.ts";
+
 
 /**
  * Agent Chat Edge Function with Tool Calling
@@ -181,6 +196,58 @@ serve(async (req) => {
         // Initialize Supabase client
         const supabase = createClient(supabaseUrl, supabaseKey);
 
+        // ====================================================================
+        // ROLLOUT INFRASTRUCTURE: Kill switches and mode checks
+        // ====================================================================
+        const venueId = context.venue_id;
+
+        // Check kill switches first (immediate shutdown)
+        const killSwitchResult = await checkBlockingKillSwitches(supabase, venueId);
+        if (killSwitchResult.blocked) {
+            log('info', 'AI blocked by kill switch', { reason: killSwitchResult.reason, venueId });
+            return new Response(
+                JSON.stringify({
+                    error: 'AI_DISABLED',
+                    fallback: true,
+                    content: "I'm temporarily unavailable. Please try again later or ask staff for assistance.",
+                    reason: killSwitchResult.reason,
+                }),
+                { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
+        // Check rollout mode for venue (if applicable)
+        let venueBehavior: ModeBehavior | null = null;
+        if (venueId) {
+            venueBehavior = await getVenueBehavior(supabase, venueId);
+
+            // Check if waiter (chat) is enabled for this mode
+            if (agentType === 'guest' && !venueBehavior.waiterEnabled) {
+                log('info', 'Waiter not enabled for venue rollout mode', { venueId });
+                return new Response(
+                    JSON.stringify({
+                        error: 'WAITER_DISABLED',
+                        fallback: true,
+                        content: "Ordering assistance is not available yet. Please browse the menu and order at the counter.",
+                    }),
+                    { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+        }
+
+        // Check reduced rate limits if kill switch is active
+        if (await shouldReduceRateLimits(supabase, venueId)) {
+            // Reduce limit to 10 requests per minute
+            const strictCheck = checkRateLimit(clientId + '_strict');
+            if (!strictCheck.allowed || rateCheck.remaining < 20) {
+                log('warn', 'Throttled due to reduced rate limits', { clientId });
+                return new Response(
+                    JSON.stringify({ error: "Service is busy. Please wait a moment." }),
+                    { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+        }
+
         // Resolve tenant context for isolation and audit
         const tenantContext: TenantContext = await resolveTenantContext(req, body, supabase);
 
@@ -206,28 +273,30 @@ serve(async (req) => {
         }
 
         // Select tools based on agent type (ClaudeTool defined in agent_tools.ts)
+        // Foundation tools are available to all agents per Moltbot spec
         // deno-lint-ignore no-explicit-any
         let tools: any[];
         switch (agentType) {
             case "guest":
-                tools = GUEST_TOOLS;
+                tools = [...FOUNDATION_TOOLS, ...GUEST_TOOLS];
                 break;
             case "bar_manager":
-                // Combine base bar manager tools with expanded ops/drafts tools
-                tools = [...BAR_MANAGER_TOOLS, ...EXPANDED_BAR_MANAGER_TOOLS];
+                // Combine foundation + base bar manager + expanded ops/drafts tools
+                tools = [...FOUNDATION_TOOLS, ...BAR_MANAGER_TOOLS, ...EXPANDED_BAR_MANAGER_TOOLS];
                 break;
             case "ui_orchestrator":
-                tools = UI_ORCHESTRATOR_TOOLS;
+                tools = [...FOUNDATION_TOOLS, ...UI_ORCHESTRATOR_TOOLS];
                 break;
             case "admin":
-                tools = ADMIN_TOOLS;
+                tools = [...FOUNDATION_TOOLS, ...ADMIN_TOOLS];
                 break;
             case "research_intel":
-                tools = RESEARCH_TOOLS;
+                tools = [...FOUNDATION_TOOLS, ...RESEARCH_TOOLS];
                 break;
             default:
-                tools = [];
+                tools = [...FOUNDATION_TOOLS];
         }
+
 
         // Build context string
         let contextString = "";
@@ -362,7 +431,23 @@ Always search the menu before making recommendations. Be accurate about prices a
                 log('info', `Executing tool: ${toolCall.name}`, { correlationId, agentType });
 
                 let result;
-                if (agentType === "guest") {
+
+                // Check if this is a foundation tool (available to all agents)
+                const foundationToolNames = FOUNDATION_TOOLS.map(t => t.name);
+                if (foundationToolNames.includes(toolCall.name)) {
+                    result = await executeFoundationTool(
+                        toolCall.name,
+                        toolCall.input,
+                        {
+                            session_id: context.session_id,
+                            user_id: userId,
+                            venue_id: context.venue_id,
+                            tenant_id: tenantContext.tenantId,
+                            correlation_id: correlationId,
+                        },
+                        supabase
+                    );
+                } else if (agentType === "guest") {
                     result = await executeGuestTool(toolCall.name, toolCall.input, toolContext, supabase);
                 } else if (agentType === "bar_manager") {
                     // Try expanded tools first, then base tools
@@ -395,6 +480,7 @@ Always search the menu before making recommendations. Be accurate about prices a
                 } else {
                     result = { success: false, error: "No tools available for this agent type" };
                 }
+
 
                 toolResults.push({ tool: toolCall.name, result });
 

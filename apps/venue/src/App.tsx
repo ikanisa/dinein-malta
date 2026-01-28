@@ -5,8 +5,11 @@ import Claim from './pages/Claim'
 import Overview from './pages/Overview'
 import MenuManager from './pages/MenuManager'
 import OrdersQueue from './pages/OrdersQueue'
+import DraftEditor from './pages/DraftEditor'
 import IngestMenu from './pages/IngestMenu'
 import Settings from './pages/Settings'
+import ApprovalsInbox from './pages/ApprovalsInbox'
+import AuditTrace from './pages/AuditTrace'
 import { DashboardLayout } from './layouts/DashboardLayout'
 import { ThemeProvider, ErrorBoundary } from '@dinein/ui'
 
@@ -24,7 +27,10 @@ function App() {
                                 <Route index element={<Overview />} />
                                 <Route path="orders" element={<OrdersQueue />} />
                                 <Route path="menu" element={<MenuManager />} />
+                                <Route path="draft/:type/:draftId" element={<DraftEditor />} />
                                 <Route path="ingest/:jobId" element={<IngestMenu />} />
+                                <Route path="approvals" element={<ApprovalsInbox />} />
+                                <Route path="audit" element={<AuditTrace />} />
                                 <Route path="settings" element={<Settings />} />
                             </Route>
 

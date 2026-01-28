@@ -28,8 +28,15 @@ export type AgentType =
 const TOOL_POLICIES: Record<AgentType, Set<string>> = {
     // Guest agent (AI Waiter): menu browsing, cart, orders, preferences
     guest: new Set([
-        // Foundation tools
+        // Foundation tools (per Moltbot spec)
         "health.ping",
+        "auth.whoami",
+        "auth.get_roles",
+        "session.get",
+        "session.set",
+        "rate_limit.check",
+        "tenant.resolve_context",
+        "audit.log",
 
         // Menu & catalog
         "menu_search",
@@ -53,10 +60,18 @@ const TOOL_POLICIES: Record<AgentType, Set<string>> = {
         "get_recommendations",
     ]),
 
+
     // Bar Manager agent: operations, orders, analytics, drafts
     bar_manager: new Set([
-        // Foundation tools
+        // Foundation tools (per Moltbot spec)
         "health.ping",
+        "auth.whoami",
+        "auth.get_roles",
+        "session.get",
+        "session.set",
+        "rate_limit.check",
+        "tenant.resolve_context",
+        "audit.log",
 
         // Order management (existing tools)
         "get_active_orders",
@@ -79,6 +94,7 @@ const TOOL_POLICIES: Record<AgentType, Set<string>> = {
         "inventory_low_stock",
         "reviews_fetch",
         "service_kpi_snapshot",
+
 
         // Menu drafts (requires approval to publish)
         "menu.draft.create",
@@ -112,8 +128,15 @@ const TOOL_POLICIES: Record<AgentType, Set<string>> = {
 
     // Admin agent: platform ops, support, compliance
     admin: new Set([
-        // Foundation tools
+        // Foundation tools (per Moltbot spec)
         "health.ping",
+        "auth.whoami",
+        "auth.get_roles",
+        "session.get",
+        "session.set",
+        "rate_limit.check",
+        "tenant.resolve_context",
+        "audit.log",
 
         // Platform operations
         "platform.venue.onboard",
@@ -145,6 +168,7 @@ const TOOL_POLICIES: Record<AgentType, Set<string>> = {
         "approval.status",
         "approval.resolve",
 
+
         // Admin tools - underscore notation (actual tool names)
         "platform_venue_list",
         "platform_venue_verify",
@@ -163,8 +187,15 @@ const TOOL_POLICIES: Record<AgentType, Set<string>> = {
 
     // UI Orchestrator: discovery, personalization, UIPlan composition
     ui_orchestrator: new Set([
-        // Foundation tools
+        // Foundation tools (per Moltbot spec)
         "health.ping",
+        "auth.whoami",
+        "auth.get_roles",
+        "session.get",
+        "session.set",
+        "rate_limit.check",
+        "tenant.resolve_context",
+        "audit.log",
 
         // Discovery - dot notation
         "venues.search",
@@ -177,6 +208,7 @@ const TOOL_POLICIES: Record<AgentType, Set<string>> = {
         "venues_search",
         "venues_list",
         "venues_get",
+
 
         // Menu catalog (read-only)
         "menu.get",
@@ -217,8 +249,15 @@ const TOOL_POLICIES: Record<AgentType, Set<string>> = {
 
     // Research Intel: browser tools + proposals ONLY (no mutations)
     research_intel: new Set([
-        // Foundation tools
+        // Foundation tools (per Moltbot spec)
         "health.ping",
+        "auth.whoami",
+        "auth.get_roles",
+        "session.get",
+        "session.set",
+        "rate_limit.check",
+        "tenant.resolve_context",
+        "audit.log",
 
         // Research browser (geo-fenced)
         "research.search_web",
@@ -234,6 +273,7 @@ const TOOL_POLICIES: Record<AgentType, Set<string>> = {
 
         // Citations
         "research.cite",
+
 
         // Proposals only (no direct execution)
         "research_to_ops.propose_actions",

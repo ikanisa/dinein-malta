@@ -39,13 +39,13 @@ export {
     subscribeToServiceRequests,
 } from './service-requests';
 
-// Claims (onboarding_requests table)
+// Claims (venue_claims table)
 export {
     createVenueClaim,
     getClaimStatus,
     getPendingClaims,
-    type OnboardingRequest,
-    type OnboardingStatus,
+    type VenueClaim,
+    type ClaimStatus,
 } from './claims';
 
 // Ingest (OCR pipeline)

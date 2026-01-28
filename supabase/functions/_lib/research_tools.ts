@@ -9,28 +9,90 @@ import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ClaudeTool, ToolResult } from "./agent_tools.ts";
 
 // =============================================================================
-// DOMAIN ALLOWLIST & GEO-FENCING
+// DOMAIN ALLOWLIST & GEO-FENCING (per WF-NEXT-02 spec)
 // =============================================================================
 
-const ALLOWED_DOMAINS = [
-    "news.google.com",
-    "google.com/search",
-    "tripadvisor.com",
-    "thefork.com",
-    "facebook.com/events",
+/**
+ * Domain allowlists for research agent browsing.
+ * Deny-by-default: any domain not listed is blocked.
+ */
+
+// Global reputable domains (accessible for all geos)
+const GLOBAL_REPUTABLE_DOMAINS = [
+    "eventbrite.com",
+    "meetup.com",
+    "timeout.com",
     "visitrwanda.com",
     "visitmalta.com",
-    "timesfm.com",
-    "ktpress.rw",
-    "timesofmalta.com",
-    "maltatoday.com.mt",
-    "wikipedia.org"
+    "tripadvisor.com",
+    "facebook.com",
+    "instagram.com",
+    "theculturetrip.com",
+    "foodandwine.com",
+    "worlds50best.com",
+    "michelin.com",
+    "restaurantbusinessonline.com",
+    "nrn.com",
+    "google.com",
+    "wikipedia.org",
 ];
 
-const GEO_DOMAINS = {
-    RW: ["visitrwanda.com", "timesfm.com", "ktpress.rw"],
-    MT: ["visitmalta.com", "timesofmalta.com", "maltatoday.com.mt"]
+// Rwanda-specific local sources
+const RWANDA_LOCAL_DOMAINS = [
+    "kcc.gov.rw",
+    "rdb.rw",
+    "rura.rw",
+    "rra.gov.rw",
+    "newtimes.co.rw",
+    "ktpress.rw",
+    "igihe.com",
+    "taarifa.rw",
+];
+
+// Malta-specific local sources
+const MALTA_LOCAL_DOMAINS = [
+    "mta.com.mt",
+    "visitmalta.com",
+    "timesofmalta.com",
+    "maltatoday.com.mt",
+    "independent.com.mt",
+    "lovinmalta.com",
+];
+
+// Combined allowlist
+const ALLOWED_DOMAINS = [
+    ...GLOBAL_REPUTABLE_DOMAINS,
+    ...RWANDA_LOCAL_DOMAINS,
+    ...MALTA_LOCAL_DOMAINS,
+];
+
+// Geo-specific domains (preferred for context)
+const GEO_DOMAINS: Record<string, string[]> = {
+    RW: RWANDA_LOCAL_DOMAINS,
+    MT: MALTA_LOCAL_DOMAINS,
 };
+
+// Blocked content types (never fetch these)
+const BLOCKED_CONTENT_TYPES = [
+    "application/zip",
+    "application/octet-stream",
+    "application/x-msdownload",
+    "application/x-executable",
+    "application/vnd.ms-excel",
+    "application/x-rar-compressed",
+];
+
+// Research mode constraints
+const RESEARCH_CONSTRAINTS = {
+    timeWindow: {
+        default: 30,     // days for trends
+        events: 180,     // days for upcoming events
+    },
+    minSourceScore: 0.55,
+    maxUrlsPerSession: 20,
+};
+
+
 
 // =============================================================================
 // CLAUDE TOOL DEFINITIONS

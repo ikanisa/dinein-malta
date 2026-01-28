@@ -1,0 +1,33 @@
+/* OfflineBanner.css */
+
+.offline-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9999;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.offline-icon {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.offline-text {
+    text-align: center;
+}
+
+/* Add bottom padding to main content when banner is visible */
+body:has(.offline-banner) main {
+    padding-bottom: 60px;
+}

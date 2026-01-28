@@ -1,0 +1,193 @@
+{
+    "version": "ui_plan.v1",
+    "planId": "plan_venue_abc",
+    "generatedAt": "2026-01-28T10:02:00Z",
+    "tenant": {
+        "tenantId": "dinein",
+        "venueId": "venue_001"
+    },
+    "session": {
+        "sessionKey": "sess_guest_abc123",
+        "actor": {
+            "actorType": "guest",
+            "actorId": "anon_xyz789",
+            "locale": "en-RW",
+            "currency": "RWF"
+        }
+    },
+    "screen": {
+        "name": "venue",
+        "title": "The Hut",
+        "layout": "scroll",
+        "breadcrumbs": [
+            {
+                "label": "Home",
+                "actionRef": "act_home"
+            },
+            {
+                "label": "The Hut"
+            }
+        ]
+    },
+    "sections": [
+        {
+            "id": "sec_hero",
+            "type": "hero",
+            "title": "The Hut",
+            "subtitle": "Burgers • Pizza • Kigali",
+            "items": [
+                {
+                    "kind": "info",
+                    "id": "venue_info",
+                    "primaryText": "Open now",
+                    "secondaryText": "Closes at 10 PM",
+                    "meta": {
+                        "ratingText": "4.8 ★ (245 reviews)",
+                        "badge": "Popular"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "sec_categories",
+            "type": "chips",
+            "title": "Menu",
+            "items": [
+                {
+                    "kind": "category",
+                    "id": "cat_burgers",
+                    "primaryText": "Burgers",
+                    "actionRef": "act_menu_burgers"
+                },
+                {
+                    "kind": "category",
+                    "id": "cat_pizza",
+                    "primaryText": "Pizza",
+                    "actionRef": "act_menu_pizza"
+                },
+                {
+                    "kind": "category",
+                    "id": "cat_drinks",
+                    "primaryText": "Drinks",
+                    "actionRef": "act_menu_drinks"
+                }
+            ]
+        },
+        {
+            "id": "sec_featured",
+            "type": "carousel",
+            "title": "Featured",
+            "style": {
+                "emphasis": "medium"
+            },
+            "items": [
+                {
+                    "kind": "menu_item",
+                    "id": "item_001",
+                    "primaryText": "Classic Burger",
+                    "meta": {
+                        "priceText": "8,500 RWF",
+                        "badge": "Best seller"
+                    },
+                    "actionRef": "act_item_001"
+                },
+                {
+                    "kind": "menu_item",
+                    "id": "item_004",
+                    "primaryText": "Margherita Pizza",
+                    "meta": {
+                        "priceText": "10,000 RWF"
+                    },
+                    "actionRef": "act_item_004"
+                }
+            ]
+        },
+        {
+            "id": "sec_promo",
+            "type": "banner",
+            "title": null,
+            "items": [
+                {
+                    "kind": "offer",
+                    "id": "offer_001",
+                    "primaryText": "20% off your first order!",
+                    "secondaryText": "Use code WELCOME20",
+                    "meta": {
+                        "badge": "LIMITED"
+                    },
+                    "actionRef": "act_start_visit"
+                }
+            ]
+        },
+        {
+            "id": "sec_cta",
+            "type": "cta",
+            "title": null,
+            "items": [
+                {
+                    "kind": "action",
+                    "id": "start",
+                    "primaryText": "Start Ordering",
+                    "actionRef": "act_start_visit"
+                }
+            ]
+        }
+    ],
+    "actions": {
+        "byId": {
+            "act_home": {
+                "intent": "openHome",
+                "params": {}
+            },
+            "act_menu_burgers": {
+                "intent": "openMenu",
+                "params": {
+                    "venueId": "venue_001",
+                    "categoryId": "cat_burgers"
+                }
+            },
+            "act_menu_pizza": {
+                "intent": "openMenu",
+                "params": {
+                    "venueId": "venue_001",
+                    "categoryId": "cat_pizza"
+                }
+            },
+            "act_menu_drinks": {
+                "intent": "openMenu",
+                "params": {
+                    "venueId": "venue_001",
+                    "categoryId": "cat_drinks"
+                }
+            },
+            "act_item_001": {
+                "intent": "openItem",
+                "params": {
+                    "itemId": "item_001",
+                    "venueId": "venue_001"
+                }
+            },
+            "act_item_004": {
+                "intent": "openItem",
+                "params": {
+                    "itemId": "item_004",
+                    "venueId": "venue_001"
+                }
+            },
+            "act_start_visit": {
+                "intent": "startVisit",
+                "params": {
+                    "venueId": "venue_001"
+                },
+                "requiresConfirmation": true,
+                "confirmationText": "Start your order at The Hut?"
+            }
+        }
+    },
+    "cache": {
+        "ttlSeconds": 300,
+        "varyBy": [
+            "venueId"
+        ]
+    }
+}

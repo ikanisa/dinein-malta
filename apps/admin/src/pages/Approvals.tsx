@@ -1,15 +1,40 @@
 import { useState } from 'react'
 import { Card, Button, Badge, BottomSheet } from '@dinein/ui'
-import { Check, X, Clock, AlertTriangle, FileText, Info, Building2, User } from 'lucide-react'
+import { Check, X, Clock, FileText, Info, Building2, User, Shield, ExternalLink, AlertTriangle } from 'lucide-react'
 import { useApprovals, ApprovalRequest } from '../hooks/useApprovals'
+
+// Risk assessment helper
+function getRiskLevel(request: ApprovalRequest): { level: 'low' | 'medium' | 'high'; reason: string } {
+    // High risk: access grants, refunds, venue deletions
+    if (request.request_type.includes('access') || request.request_type.includes('refund')) {
+        return { level: 'high', reason: 'Sensitive operation' };
+    }
+    // Medium risk: menu/promo changes from new venues
+    if (request.priority === 'urgent') {
+        return { level: 'medium', reason: 'Urgent request' };
+    }
+    return { level: 'low', reason: 'Standard operation' };
+}
+
+function RiskBadge({ request }: { request: ApprovalRequest }) {
+    const risk = getRiskLevel(request);
+    const colors = {
+        low: 'bg-green-500/10 text-green-500 border-green-500/20',
+        medium: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+        high: 'bg-red-500/10 text-red-500 border-red-500/20',
+    };
+    return (
+        <Badge variant="outline" className={`${colors[risk.level]} text-xs`}>
+            <Shield className="h-3 w-3 mr-1" />
+            {risk.level}
+        </Badge>
+    );
+}
 
 export default function Approvals() {
     const { requests, loading, approveRequest, rejectRequest, stats } = useApprovals()
     const [selectedRequest, setSelectedRequest] = useState<ApprovalRequest | null>(null)
     const [rejectionNotes, setRejectionNotes] = useState('')
-    const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending')
-    // Note: 'history' tab would need a different fetch query since pending_approvals view only shows pending.
-    // For MVP we just show Pending.
 
     if (loading) {
         return (
@@ -36,6 +61,18 @@ export default function Approvals() {
         return <Info className="h-5 w-5" />
     }
 
+    // Build evidence link based on entity type
+    const getEvidenceLink = (request: ApprovalRequest): string | null => {
+        if (!request.entity_id) return null;
+        if (request.entity_type === 'menu_item_draft' || request.entity_type === 'promo_draft') {
+            return `/dashboard/audit?entity=${request.entity_id}`;
+        }
+        if (request.entity_type === 'venue_claim') {
+            return `/dashboard/claims?id=${request.entity_id}`;
+        }
+        return null;
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500" data-testid="admin-approvals:page">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -46,11 +83,15 @@ export default function Approvals() {
 
                 {/* Stats Cards */}
                 <div className="flex gap-3">
-                    <Card className="px-4 py-2 bg-orange-500/10 border-orange-500/20 flex flex-col items-center justify-center min-w-[100px]">
+                    <Card className="px-4 py-2 bg-red-500/10 border-red-500/20 flex flex-col items-center justify-center min-w-[80px]">
+                        <span className="text-red-600 font-bold text-xl">{requests.filter(r => getRiskLevel(r).level === 'high').length}</span>
+                        <span className="text-xs text-red-600/80 uppercase font-semibold">High Risk</span>
+                    </Card>
+                    <Card className="px-4 py-2 bg-orange-500/10 border-orange-500/20 flex flex-col items-center justify-center min-w-[80px]">
                         <span className="text-orange-600 font-bold text-xl">{stats.urgent}</span>
                         <span className="text-xs text-orange-600/80 uppercase font-semibold">Urgent</span>
                     </Card>
-                    <Card className="px-4 py-2 bg-card border-border flex flex-col items-center justify-center min-w-[100px]">
+                    <Card className="px-4 py-2 bg-card border-border flex flex-col items-center justify-center min-w-[80px]">
                         <span className="text-foreground font-bold text-xl">{stats.pending}</span>
                         <span className="text-xs text-muted-foreground uppercase font-semibold">Total</span>
                     </Card>
@@ -65,54 +106,60 @@ export default function Approvals() {
                 </Card>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {requests.map(request => (
-                        <Card
-                            key={request.id}
-                            className="p-5 bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer relative group"
-                            onClick={() => setSelectedRequest(request)}
-                        >
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                        {getIconForType(request.request_type)}
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold capitalize">{request.request_type.replace('_', ' ')}</h3>
-                                        <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                                            <Building2 className="h-3 w-3" />
-                                            {request.venue_name || 'System'}
+                    {requests.map(request => {
+                        const risk = getRiskLevel(request);
+                        return (
+                            <Card
+                                key={request.id}
+                                className={`p-5 bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer relative group ${risk.level === 'high' ? 'ring-1 ring-red-500/30' : ''}`}
+                                onClick={() => setSelectedRequest(request)}
+                            >
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                            {getIconForType(request.request_type)}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold capitalize">{request.request_type.replace('_', ' ')}</h3>
+                                            <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                                                <Building2 className="h-3 w-3" />
+                                                {request.venue_name || 'System'}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <Badge variant="outline" className={getPriorityColor(request.priority)}>
-                                    {request.priority}
-                                </Badge>
-                            </div>
-
-                            <div className="bg-muted/50 rounded p-3 mb-3 text-sm">
-                                {request.entity_preview ? (
-                                    <div className="space-y-1">
-                                        {Object.entries(request.entity_preview).map(([key, value]) => (
-                                            <div key={key} className="flex justify-between">
-                                                <span className="text-muted-foreground capitalize">{key}:</span>
-                                                <span className="font-medium truncate max-w-[120px]">{String(value)}</span>
-                                            </div>
-                                        ))}
+                                    <div className="flex flex-col gap-1">
+                                        <Badge variant="outline" className={getPriorityColor(request.priority)}>
+                                            {request.priority}
+                                        </Badge>
+                                        <RiskBadge request={request} />
                                     </div>
-                                ) : (
-                                    <p className="text-muted-foreground italic">No preview available</p>
-                                )}
-                            </div>
-
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{new Date(request.created_at).toLocaleDateString()}</span>
                                 </div>
-                                <span>{request.requester_email}</span>
-                            </div>
-                        </Card>
-                    ))}
+
+                                <div className="bg-muted/50 rounded p-3 mb-3 text-sm">
+                                    {request.entity_preview ? (
+                                        <div className="space-y-1">
+                                            {Object.entries(request.entity_preview).map(([key, value]) => (
+                                                <div key={key} className="flex justify-between">
+                                                    <span className="text-muted-foreground capitalize">{key}:</span>
+                                                    <span className="font-medium truncate max-w-[120px]">{String(value)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-muted-foreground italic">No preview available</p>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        <span>{new Date(request.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <span>{request.requester_email}</span>
+                                </div>
+                            </Card>
+                        );
+                    })}
                 </div>
             )}
 
@@ -127,6 +174,17 @@ export default function Approvals() {
                     title={`Review ${selectedRequest.request_type.replace('_', ' ')}`}
                 >
                     <div className="space-y-6 p-4">
+                        {/* Risk Warning for High Risk */}
+                        {getRiskLevel(selectedRequest).level === 'high' && (
+                            <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                                <AlertTriangle className="h-5 w-5 text-red-500" />
+                                <div>
+                                    <p className="font-semibold text-red-600">High Risk Operation</p>
+                                    <p className="text-sm text-red-500/80">{getRiskLevel(selectedRequest).reason} - Verify carefully before approving</p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-lg border border-border">
                             <div className="flex-1">
                                 <p className="text-sm font-medium text-muted-foreground mb-1">Venue</p>
@@ -140,6 +198,19 @@ export default function Approvals() {
                                 <p className="font-mono text-sm">{selectedRequest.requester_email}</p>
                             </div>
                         </div>
+
+                        {/* Evidence Link */}
+                        {getEvidenceLink(selectedRequest) && (
+                            <a
+                                href={getEvidenceLink(selectedRequest)!}
+                                className="flex items-center gap-2 text-sm text-primary hover:underline"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <ExternalLink className="h-4 w-4" />
+                                View Evidence Bundle
+                            </a>
+                        )}
 
                         {/* Payload Preview */}
                         <div>
@@ -207,3 +278,4 @@ export default function Approvals() {
         </div>
     )
 }
+
