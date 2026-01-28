@@ -92,6 +92,9 @@ const RESEARCH_CONSTRAINTS = {
     maxUrlsPerSession: 20,
 };
 
+// Mock mode toggle - set RESEARCH_MOCK_MODE=false in env for real API calls
+const USE_MOCK_MODE = Deno.env.get("RESEARCH_MOCK_MODE") !== "false";
+
 
 
 // =============================================================================
@@ -222,8 +225,49 @@ export const RESEARCH_TOOLS: ClaudeTool[] = [
         }
     },
     {
+        name: "research.dedupe",
+        description: "Deduplicate a list of research items by URL or content similarity.",
+        input_schema: {
+            type: "object",
+            properties: {
+                items: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            url: { type: "string" },
+                            title: { type: "string" },
+                            content: { type: "string" }
+                        }
+                    },
+                    description: "List of research items to deduplicate"
+                }
+            },
+            required: ["items"]
+        }
+    },
+    {
+        name: "research.summarize",
+        description: "Summarize research findings into a concise digest.",
+        input_schema: {
+            type: "object",
+            properties: {
+                findings: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "List of finding strings to summarize"
+                },
+                max_length: {
+                    type: "number",
+                    description: "Maximum summary length in characters (default 500)"
+                }
+            },
+            required: ["findings"]
+        }
+    },
+    {
         name: "research_to_ops.propose_actions",
-        description: "Draft a proposal for operational changes based on research findings. DOES NOT EXECUTE ACTION.",
+        description: "Draft a proposal for operational changes based on research findings. DOES NOT EXECUTE ACTION. Saves to approval queue.",
         input_schema: {
             type: "object",
             properties: {
@@ -231,6 +275,10 @@ export const RESEARCH_TOOLS: ClaudeTool[] = [
                     type: "string",
                     enum: ["new_menu_item", "promo_campaign", "price_adjustment", "event_tie_in"],
                     description: "Type of proposal"
+                },
+                venue_id: {
+                    type: "string",
+                    description: "Target venue UUID (optional for platform-wide proposals)"
                 },
                 title: { type: "string" },
                 description: { type: "string" },
@@ -270,6 +318,10 @@ export async function executeResearchTool(
                 return await geoFilter(input);
             case "research.cite":
                 return await generateCitation(input);
+            case "research.dedupe":
+                return await dedupeItems(input);
+            case "research.summarize":
+                return await summarizeFindings(input);
             case "research_to_ops.propose_actions":
                 return await proposeAction(input, supabase);
             default:
@@ -305,29 +357,34 @@ function isAllowedDomain(url: string, geo?: string): boolean {
 async function searchWeb(input: Record<string, unknown>): Promise<ToolResult> {
     const { query, geo } = input as { query: string; geo: string };
 
-    // In a real implementation, this would call a SERP API (Google/Bing)
-    // For this internal agent sandbox, we simulate results from permitted domains.
-    // This protects the system from hallucinating wild internet content.
+    // Mock mode for development/testing
+    if (USE_MOCK_MODE) {
+        const mockResults = [
+            {
+                title: `Latest Food Trends in ${geo === 'RW' ? 'Kigali' : 'Malta'}`,
+                url: `https://${geo === 'RW' ? 'visitrwanda.com' : 'visitmalta.com'}/dining-trends`,
+                snippet: `Current trends show a rise in fusion cuisine and sustainable sourcing in ${geo}...`
+            },
+            {
+                title: `Events this weekend in ${geo}`,
+                url: `https://${geo === 'RW' ? 'ktpress.rw' : 'timesofmalta.com'}/events`,
+                snippet: "Music festivals and food markets are scheduled for this weekend..."
+            }
+        ];
+        return {
+            success: true,
+            data: {
+                results: mockResults,
+                disclaimer: "Results simulated (MOCK_MODE=true). Set RESEARCH_MOCK_MODE=false for real search."
+            }
+        };
+    }
 
-    const mockResults = [
-        {
-            title: `Latest Food Trends in ${geo === 'RW' ? 'Kigali' : 'Malta'}`,
-            url: `https://${geo === 'RW' ? 'visitrwanda.com' : 'visitmalta.com'}/dining-trends`,
-            snippet: `Current trends show a rise in fusion cuisine and sustainable sourcing in ${geo}...`
-        },
-        {
-            title: `Events this weekend in ${geo}`,
-            url: `https://${geo === 'RW' ? 'ktpress.rw' : 'timesofmalta.com'}/events`,
-            snippet: "Music festivals and food markets are scheduled for this weekend..."
-        }
-    ];
-
+    // Real mode: would call SERP API here
+    // For now, return error indicating real mode not yet configured
     return {
-        success: true,
-        data: {
-            results: mockResults,
-            disclaimer: "Results simulated from allowlisted domains for sandbox safety."
-        }
+        success: false,
+        error: "Real search mode not configured. Set SERP_API_KEY environment variable."
     };
 }
 
@@ -423,23 +480,102 @@ async function generateCitation(input: Record<string, unknown>): Promise<ToolRes
     };
 }
 
-async function proposeAction(
-    input: Record<string, unknown>,
-    supabase: SupabaseClient
-): Promise<ToolResult> {
-    const { proposal_type, title, description, rationale } = input;
+async function dedupeItems(input: Record<string, unknown>): Promise<ToolResult> {
+    const { items } = input as { items: Array<{ url?: string; title?: string; content?: string }> };
 
-    // Save to a proposals table or just log it?
-    // We don't have a 'proposals' table explicitly in the spec, but we can use 'approval_requests' or similar.
-    // For now, we'll assume we return a success draft object to the agent.
+    if (!items || items.length === 0) {
+        return { success: true, data: { deduped: [], removed_count: 0 } };
+    }
+
+    // Simple URL-based deduplication
+    const seen = new Set<string>();
+    const deduped = items.filter(item => {
+        const key = item.url || item.title || JSON.stringify(item);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 
     return {
         success: true,
         data: {
-            proposal_id: `prop_${Date.now()}`,
-            status: "draft_waiting_approval",
-            message: "Proposal created. Ops manager must review before implementation.",
-            details: { title, proposal_type }
+            deduped,
+            removed_count: items.length - deduped.length
+        }
+    };
+}
+
+async function summarizeFindings(input: Record<string, unknown>): Promise<ToolResult> {
+    const { findings, max_length = 500 } = input as { findings: string[]; max_length?: number };
+
+    if (!findings || findings.length === 0) {
+        return { success: true, data: { summary: "No findings to summarize." } };
+    }
+
+    // Simple concatenation with truncation - in production would use LLM
+    const combined = findings.join(" • ");
+    const summary = combined.length > max_length
+        ? combined.substring(0, max_length - 3) + "..."
+        : combined;
+
+    return {
+        success: true,
+        data: {
+            summary,
+            finding_count: findings.length,
+            truncated: combined.length > max_length
+        }
+    };
+}
+
+async function proposeAction(
+    input: Record<string, unknown>,
+    supabase: SupabaseClient
+): Promise<ToolResult> {
+    const { proposal_type, venue_id, title, description, rationale, source_urls } = input as {
+        proposal_type: string;
+        venue_id?: string;
+        title: string;
+        description: string;
+        rationale: string;
+        source_urls?: string[];
+    };
+
+    // Persist to approval_requests table
+    const { data, error } = await supabase
+        .from("approval_requests")
+        .insert({
+            request_type: "research_proposal",
+            entity_type: proposal_type,
+            entity_id: crypto.randomUUID(), // Placeholder entity ID
+            venue_id: venue_id || null,
+            notes: JSON.stringify({
+                title,
+                description,
+                rationale,
+                source_urls: source_urls || [],
+                generated_by: "research_intel_agent"
+            }),
+            priority: "normal",
+            status: "pending"
+        })
+        .select("id")
+        .single();
+
+    if (error) {
+        return {
+            success: false,
+            error: `Failed to save proposal: ${error.message}`
+        };
+    }
+
+    return {
+        success: true,
+        data: {
+            proposal_id: data.id,
+            status: "pending_approval",
+            message: "Proposal saved to approval queue. Ops manager must review before implementation.",
+            details: { title, proposal_type, venue_id }
         }
     };
 }
