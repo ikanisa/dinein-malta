@@ -83,7 +83,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     // Listen for network status changes
     useEffect(() => {
-        const handleOnline = () => setState(prev => ({ ...prev, isOffline: false }));
+        const handleOnline = () => {
+            setState(prev => ({ ...prev, isOffline: false }));
+            // Dispatch reconnection event for toast notification
+            window.dispatchEvent(new CustomEvent('dinein:reconnected'));
+        };
         const handleOffline = () => setState(prev => ({ ...prev, isOffline: true }));
 
         window.addEventListener('online', handleOnline);

@@ -5,7 +5,7 @@ import { useAdmin } from '../context/AdminContext'
 
 export interface ApprovalRequest {
     id: string
-    request_type: 'menu_publish' | 'promo_publish' | 'promo_pause' | 'venue_claim' | 'access_grant' | 'access_revoke' | 'refund'
+    request_type: 'menu_publish' | 'promo_publish' | 'promo_pause' | 'venue_claim' | 'access_grant' | 'access_revoke' | 'refund' | 'research_proposal'
     entity_type: string
     entity_id: string
     venue_id: string | null
