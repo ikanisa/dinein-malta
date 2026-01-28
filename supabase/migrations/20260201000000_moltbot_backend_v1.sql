@@ -158,7 +158,7 @@ ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES public.tenants(id),
 ADD COLUMN IF NOT EXISTS visit_id UUID REFERENCES public.visits(id),
 ADD COLUMN IF NOT EXISTS guest_id UUID REFERENCES public.guests(id),
 ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ DEFAULT now(),
-ALTER COLUMN status SET DEFAULT 'submitted';
+ALTER COLUMN status SET DEFAULT 'placed';
 
 -- Ensure Order Lines (Aligning existing table)
 ALTER TABLE public.order_items 

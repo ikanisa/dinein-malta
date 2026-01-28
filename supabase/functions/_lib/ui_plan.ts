@@ -148,7 +148,7 @@ function scanForPII(obj: unknown, path = ""): string[] {
     } else if (obj && typeof obj === "object") {
         for (const [key, value] of Object.entries(obj)) {
             findings.push(...scanForPII(value, path ? `${path}.${key}` : key));
-        });
+        }
     }
 
     return findings;

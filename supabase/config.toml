@@ -423,11 +423,6 @@ verify_jwt = true
 import_map = "./functions/tables_generate/deno.json"
 entrypoint = "./functions/tables_generate/index.ts"
 
-[functions.gemini-features]
-enabled = true
-verify_jwt = false
-import_map = "./functions/gemini-features/deno.json"
-entrypoint = "./functions/gemini-features/index.ts"
 
 [functions.apply_migrations]
 enabled = true
