@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { supabase } from '../shared/services/supabase'
 import { MenuCategory } from '@dinein/db'
 import { useOwner } from '../context/OwnerContext'
@@ -8,15 +8,60 @@ export function useCategories() {
     const { venue } = useOwner()
     const [categories, setCategories] = useState<MenuCategory[]>([])
     const [loading, setLoading] = useState(true)
+    const menuIdRef = useRef<string | null>(null)
+
+    // Get or create the venue's menu
+    const getOrCreateMenu = useCallback(async (): Promise<string | null> => {
+        if (!venue) return null
+
+        // Check if we already have the menu cached
+        if (menuIdRef.current) return menuIdRef.current
+
+        try {
+            // Try to get existing menu
+            const { data: existingMenu, error: fetchError } = await supabase
+                .from('menus')
+                .select('id')
+                .eq('venue_id', venue.id)
+                .eq('is_active', true)
+                .single()
+
+            if (existingMenu) {
+                menuIdRef.current = existingMenu.id
+                return existingMenu.id
+            }
+
+            // No menu exists, create one
+            if (fetchError && fetchError.code === 'PGRST116') {
+                const { data: newMenu, error: createError } = await supabase
+                    .from('menus')
+                    .insert({ venue_id: venue.id, is_active: true })
+                    .select('id')
+                    .single()
+
+                if (createError) throw createError
+                menuIdRef.current = newMenu.id
+                return newMenu.id
+            }
+
+            throw fetchError
+        } catch (error) {
+            console.error('Error getting/creating menu:', error)
+            return null
+        }
+    }, [venue])
 
     const fetchCategories = useCallback(async () => {
         if (!venue) return
         setLoading(true)
         try {
+            const menuId = await getOrCreateMenu()
+            if (!menuId) throw new Error('Could not get menu')
+
             const { data, error } = await supabase
                 .from('menu_categories')
                 .select('*')
-                .eq('venue_id', venue.id)
+                .eq('menu_id', menuId)
                 .order('sort_order', { ascending: true })
 
             if (error) throw error
@@ -27,16 +72,19 @@ export function useCategories() {
         } finally {
             setLoading(false)
         }
-    }, [venue])
+    }, [venue, getOrCreateMenu])
 
     const addCategory = async (name: string) => {
         if (!venue) return
         try {
+            const menuId = await getOrCreateMenu()
+            if (!menuId) throw new Error('Could not get menu')
+
             // Get max sort order
-            const maxOrder = categories.reduce((max, c) => Math.max(max, c.sort_order), 0)
+            const maxOrder = categories.reduce((max, c) => Math.max(max, c.sort_order ?? 0), 0)
 
             const { error } = await supabase.from('menu_categories').insert({
-                venue_id: venue.id,
+                menu_id: menuId,
                 name,
                 sort_order: maxOrder + 1
             })
@@ -80,3 +128,4 @@ export function useCategories() {
         refresh: fetchCategories
     }
 }
+

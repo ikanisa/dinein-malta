@@ -27,11 +27,11 @@ export function useMenu(venueId: string | undefined) {
         setError(null)
 
         try {
-            // Fetch categories
+            // Fetch categories through menus table (menu_categories has menu_id, not venue_id)
             const { data: catData, error: catError } = await supabase
                 .from('menu_categories')
-                .select('id, name, sort_order')
-                .eq('venue_id', venueId)
+                .select('id, name, sort_order, menu:menus!inner(venue_id)')
+                .eq('menu.venue_id', venueId)
                 .order('sort_order', { ascending: true })
 
             if (catError) throw catError

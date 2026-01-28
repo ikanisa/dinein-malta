@@ -50,13 +50,33 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
     const fetchVenueProfile = async () => {
         try {
             const { data: { user } } = await supabase.auth.getUser()
-            if (!user || !user.email) return
+            if (!user) return
 
-            const { data: venueData } = await supabase
+            // First try to find venue by owner_id (the proper FK relationship)
+            let { data: venueData, error } = await supabase
                 .from('venues')
                 .select('*')
-                .eq('contact_email', user.email)
-                .single()
+                .eq('owner_id', user.id)
+                .eq('claimed', true)
+                .maybeSingle()
+
+            // Fallback: if no venue found by owner_id, try contact_email (legacy)
+            if (!venueData && user.email) {
+                const fallback = await supabase
+                    .from('venues')
+                    .select('*')
+                    .eq('contact_email', user.email)
+                    .eq('claimed', true)
+                    .maybeSingle()
+
+                venueData = fallback.data
+                error = fallback.error
+            }
+
+            if (error) {
+                console.error('Error fetching venue:', error)
+                return
+            }
 
             if (venueData) {
                 setVenue(venueData)
