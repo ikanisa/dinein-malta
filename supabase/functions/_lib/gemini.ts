@@ -163,3 +163,183 @@ export function parseJSON(text: string | undefined, fallback: any = []): any {
         return fallback;
     }
 }
+
+// =============================================================================
+// AGENT CHAT FUNCTIONALITY (Moltbot Integration)
+// =============================================================================
+
+export type AgentType = 'guest' | 'bar_manager' | 'admin';
+
+// System prompts for each agent type
+export const AGENT_SYSTEM_PROMPTS: Record<AgentType, string> = {
+    guest: `You are a friendly, knowledgeable AI waiter at a restaurant/bar. Your role is to:
+
+1. **Welcome Guests** - Greet warmly, explain you can help with menu and orders
+2. **Menu Assistance** - Answer questions about items, suggest recommendations based on preferences
+3. **Order Taking** - Take orders conversationally, confirm items, suggest pairings
+4. **Order Tracking** - Update on order status when asked
+5. **Additional Services** - Call human staff when needed, help with payment method selection
+
+**Important Rules:**
+- Always confirm orders before submitting
+- Be honest about wait times and availability
+- Use emojis sparingly (🍽️ 🍷 ✨)
+- Keep messages concise but warm
+- If unsure, suggest calling a human waiter
+- Never make up menu items or prices - only reference actual menu items provided
+
+**Response style:** Friendly, professional, efficient. Keep responses under 3 paragraphs.`,
+
+    bar_manager: `You are a professional business assistant helping bar/restaurant managers with daily operations. Your role is to:
+
+1. **Order Management** - Summarize active orders, highlight urgent items
+2. **Analytics** - Provide insights on sales, popular items, peak hours
+3. **Operational Support** - Answer questions about workflow, status updates
+4. **Decision Support** - Offer data-driven recommendations
+
+**Important Rules:**
+- Be direct and actionable
+- Use numbers and data when available
+- Format lists and summaries clearly
+- Prioritize urgent information first
+
+**Response style:** Professional, data-driven, concise. Use bullet points for lists.`,
+
+    admin: `You are a platform management assistant helping DineIn administrators. Your role is to:
+
+1. **Application Review** - Summarize venue applications, highlight key details
+2. **Moderation Support** - Help review flagged content or issues
+3. **Platform Insights** - Provide analytics on platform usage
+4. **Decision Support** - Offer recommendations for approvals/rejections
+
+**Important Rules:**
+- Be impartial and thorough
+- Document reasoning for decisions
+- Prioritize based on urgency
+- Highlight any compliance or risk concerns
+
+**Response style:** Professional, analytical, thorough. Use structured summaries.`,
+};
+
+export interface ConversationMessage {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+}
+
+/**
+ * Build context string for the AI based on provided data
+ */
+export function buildAgentContext(context: {
+    venue?: { name: string; id: string } | null;
+    table_no?: string | null;
+    menu_items?: Array<{ name: string; price: number; description?: string; currency?: string }>;
+    active_orders?: Array<{ id: string; status: string; items: string[] }>;
+    pending_claims?: number;
+}): string {
+    const parts: string[] = [];
+
+    if (context.venue) {
+        parts.push(`**Current Venue:** ${context.venue.name}`);
+    }
+
+    if (context.table_no) {
+        parts.push(`**Table Number:** ${context.table_no}`);
+    }
+
+    if (context.menu_items && context.menu_items.length > 0) {
+        const menuStr = context.menu_items
+            .slice(0, 15) // Limit to avoid token explosion
+            .map((m) => `- ${m.name}: ${m.price} ${m.currency || ''} ${m.description ? `(${m.description})` : ""}`)
+            .join("\n");
+        parts.push(`**Available Menu Items:**\n${menuStr}`);
+    }
+
+    if (context.active_orders && context.active_orders.length > 0) {
+        const ordersStr = context.active_orders
+            .map((o) => `- Order ${o.id.slice(0, 8)}: ${o.status} - ${o.items.join(", ")}`)
+            .join("\n");
+        parts.push(`**Active Orders:**\n${ordersStr}`);
+    }
+
+    if (context.pending_claims !== undefined && context.pending_claims > 0) {
+        parts.push(`**Pending Venue Claims:** ${context.pending_claims}`);
+    }
+
+    return parts.length > 0 ? `\n\n**Context:**\n${parts.join("\n\n")}` : "";
+}
+
+/**
+ * Streaming chat completion for agent conversations
+ */
+export async function streamAgentChat(
+    agentType: AgentType,
+    messages: ConversationMessage[],
+    contextString: string = ""
+): Promise<ReadableStream<Uint8Array>> {
+    const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("API_KEY");
+    if (!apiKey) {
+        throw new Error("GEMINI_API_KEY not configured");
+    }
+
+    const systemPrompt = AGENT_SYSTEM_PROMPTS[agentType] + contextString;
+
+    // Convert messages to Gemini format
+    const geminiMessages = messages
+        .filter((m) => m.role !== "system")
+        .map((m) => ({
+            role: m.role === "user" ? "user" : "model",
+            parts: [{ text: m.content }],
+        }));
+
+    const url = `${GEMINI_API_URL}/models/gemini-2.0-flash-exp:streamGenerateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            systemInstruction: {
+                parts: [{ text: systemPrompt }],
+            },
+            contents: geminiMessages,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1024,
+                topP: 0.9,
+            },
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+    }
+
+    return response.body!;
+}
+
+/**
+ * Non-streaming agent chat completion
+ */
+export async function getAgentChatCompletion(
+    agentType: AgentType,
+    messages: ConversationMessage[],
+    contextString: string = ""
+): Promise<string> {
+    const systemPrompt = AGENT_SYSTEM_PROMPTS[agentType] + contextString;
+
+    // Use existing callGemini with the system prompt prepended
+    const conversationText = messages
+        .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+        .join("\n\n");
+
+    const result = await callGemini(
+        "gemini-2.0-flash-exp",
+        `${systemPrompt}\n\n---\n\nConversation:\n${conversationText}`,
+        { temperature: 0.7, maxTokens: 1024 }
+    );
+
+    return result.text || "";
+}
+

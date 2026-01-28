@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,27 +28,14 @@ class OrderConfirmationScreen extends ConsumerStatefulWidget {
 
 class _OrderConfirmationScreenState
     extends ConsumerState<OrderConfirmationScreen> {
-  Timer? _poller;
-  OrderStatus? _status;
   String? _orderCode;
-  bool _isLoading = true;
+  String? _previousStatus;
 
   @override
   void initState() {
     super.initState();
     _orderCode = widget.orderCode;
-    _init();
-  }
-
-  Future<void> _init() async {
-    await _loadCachedOrder();
-    if (_orderCode == null || _orderCode!.isEmpty) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
-    }
-    await _fetchStatus();
-    _poller =
-        Timer.periodic(const Duration(seconds: 15), (_) => _fetchStatus());
+    _loadCachedOrder();
   }
 
   Future<void> _loadCachedOrder() async {
@@ -61,40 +46,63 @@ class _OrderConfirmationScreenState
       final order = Order.fromJson(cached);
       setState(() => _orderCode = order.orderCode);
     } catch (_) {
-      // Ignore cache parse failures; status fetch is source of truth.
+      // Ignore cache parse failures; realtime stream is source of truth.
     }
   }
 
-  Future<void> _fetchStatus() async {
-    if (_orderCode == null || _orderCode!.isEmpty) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
+  void _onStatusChanged(String newStatus) {
+    if (_previousStatus != null && _previousStatus != newStatus) {
+      // Show snackbar notification for status change
+      final message = _getStatusMessage(newStatus);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: ClayColors.success,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
-    try {
-      final status = await ref.read(orderRepositoryProvider).getOrderStatus(
-            orderId: widget.orderId,
-            orderCode: _orderCode!,
-          );
-      if (!mounted) return;
-      setState(() {
-        _status = status;
-        _isLoading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    }
+    _previousStatus = newStatus;
   }
 
-  @override
-  void dispose() {
-    _poller?.cancel();
-    super.dispose();
+  String _getStatusMessage(String status) {
+    switch (status.toLowerCase()) {
+      case 'received':
+        return '👨‍🍳 Your order has been received by the kitchen!';
+      case 'served':
+        return '🍽️ Your order has been served. Enjoy!';
+      case 'cancelled':
+        return '❌ Your order has been cancelled.';
+      default:
+        return 'Order status updated: $status';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusText = _status?.status.toUpperCase() ?? 'PLACED';
+    // Subscribe to realtime order status
+    final orderStatusAsync = ref.watch(orderStatusStreamProvider(widget.orderId));
+    
+    return orderStatusAsync.when(
+      loading: () => _buildContent(null, isLoading: true),
+      error: (_, __) => _buildContent(null, isLoading: false),
+      data: (status) {
+        if (status != null) {
+          // Trigger status change notification
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _onStatusChanged(status.status);
+          });
+        }
+        return _buildContent(status, isLoading: false);
+      },
+    );
+  }
+
+  Widget _buildContent(OrderStatus? status, {required bool isLoading}) {
+    final statusText = status?.status.toUpperCase() ?? 'PLACED';
     final fallbackId = widget.orderId.length > 8
         ? widget.orderId.substring(0, 8)
         : widget.orderId;
@@ -160,12 +168,12 @@ class _OrderConfirmationScreenState
                     _buildRow('Order', '#$orderLabel'),
                     const SizedBox(height: ClaySpacing.md),
                     _buildRow('Status', statusText, isStatus: true),
-                    if (_status != null) ...[
+                    if (status != null) ...[
                       const SizedBox(height: ClaySpacing.md),
                       _buildRow(
                         'Total',
                         CurrencyUtils.format(
-                            _status!.totalAmount, _status!.currency),
+                            status.totalAmount, status.currency),
                       ),
                     ],
                     const SizedBox(height: ClaySpacing.md),
@@ -176,9 +184,9 @@ class _OrderConfirmationScreenState
                       child: Text(
                         _orderCode == null
                             ? 'Order tracking unavailable for this order'
-                            : _isLoading
+                            : isLoading
                                 ? 'Checking for updates...'
-                                : 'Keep this screen open to track status updates',
+                                : '🔴 Live - updates appear automatically',
                         style: ClayTypography.caption,
                         textAlign: TextAlign.center,
                       ),

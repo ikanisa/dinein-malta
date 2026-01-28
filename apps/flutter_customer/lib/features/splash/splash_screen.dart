@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/design/tokens/clay_design.dart';
+import '../../core/services/auth_service.dart';
 
 /// Branded splash screen shown on cold start
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _fadeIn;
@@ -39,13 +41,28 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _controller.forward();
+    _initializeApp();
+  }
 
-    // Navigate to home after delay
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      if (mounted) {
-        context.go('/');
-      }
-    });
+  Future<void> _initializeApp() async {
+    // Minimum splash duration
+    final minSplashFuture = Future.delayed(const Duration(milliseconds: 2000));
+    
+    // Ensure anonymous auth
+    final authFuture = ref.read(authServiceProvider).ensureAnonymousSession();
+    
+    try {
+      // Wait for both duration and auth
+      await Future.wait([minSplashFuture, authFuture]);
+    } catch (e) {
+      debugPrint('Auth init failed in splash: $e');
+      // Continue anyway, app will retry or show error states elsewhere
+      await minSplashFuture;
+    }
+
+    if (mounted) {
+      context.go('/');
+    }
   }
 
   @override

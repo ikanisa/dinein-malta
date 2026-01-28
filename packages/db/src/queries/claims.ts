@@ -1,6 +1,6 @@
 /**
  * Venue claims query helpers for packages/db
- * Uses onboarding_requests table to track claim status and details
+ * Uses venue_claims table to track claim status and details
  */
 
 import type { Database } from '../database.types';
@@ -9,11 +9,11 @@ import type { Database } from '../database.types';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClient = any;
 
-export type OnboardingRequest = Database['public']['Tables']['onboarding_requests']['Row'];
-export type OnboardingStatus = 'pending' | 'approved' | 'rejected';
+export type VenueClaim = Database['public']['Tables']['venue_claims']['Row'];
+export type ClaimStatus = 'pending' | 'approved' | 'rejected';
 
 /**
- * Create a new venue claim (onboarding request)
+ * Create a new venue claim
  */
 export async function createVenueClaim(
     client: SupabaseClient,
@@ -25,10 +25,10 @@ export async function createVenueClaim(
         revolut_link?: string;
         whatsapp?: string;
     }
-): Promise<{ success: boolean; data?: OnboardingRequest; error?: string }> {
+): Promise<{ success: boolean; data?: VenueClaim; error?: string }> {
     // First check if there's already a pending claim for this venue
     const { data: existing } = await client
-        .from('onboarding_requests')
+        .from('venue_claims')
         .select('id')
         .eq('venue_id', claim.venue_id)
         .eq('status', 'pending')
@@ -39,7 +39,7 @@ export async function createVenueClaim(
     }
 
     const { data, error } = await client
-        .from('onboarding_requests')
+        .from('venue_claims')
         .insert({
             venue_id: claim.venue_id,
             email: claim.email,
@@ -67,9 +67,9 @@ export async function getClaimStatus(
     client: SupabaseClient,
     userId: string,
     venueId: string
-): Promise<OnboardingRequest | null> {
+): Promise<VenueClaim | null> {
     const { data, error } = await client
-        .from('onboarding_requests')
+        .from('venue_claims')
         .select('*')
         .eq('submitted_by', userId)
         .eq('venue_id', venueId)
@@ -89,10 +89,10 @@ export async function getClaimStatus(
  */
 export async function getPendingClaims(
     client: SupabaseClient
-): Promise<(OnboardingRequest & { vendor: { name: string; slug: string } })[]> {
+): Promise<(VenueClaim & { venue: { name: string; slug: string } })[]> {
     const { data, error } = await client
-        .from('onboarding_requests')
-        .select('*, vendor:venues(name, slug)')
+        .from('venue_claims')
+        .select('*, venue:venues(name, slug)')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
@@ -104,4 +104,3 @@ export async function getPendingClaims(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data ?? []) as any;
 }
-

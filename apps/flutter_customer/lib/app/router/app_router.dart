@@ -17,7 +17,7 @@ import '../../features/settings/help_screen.dart';
 import '../../features/settings/favorites_screen.dart';
 import '../../features/settings/privacy_policy_screen.dart';
 import '../../features/settings/profile_screen.dart';
-import '../../features/venue/venue_info_screen.dart';
+import '../../features/chat/chat_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -222,6 +222,35 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return CustomTransitionPage(
             key: state.pageKey,
             child: BellScreen(venueId: venueId),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 1),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+          );
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: '${Routes.chat}/:venueId',
+        pageBuilder: (context, state) {
+          final venueId = state.pathParameters['venueId']!;
+          final venueName = state.uri.queryParameters['name'];
+          final tableNo = state.uri.queryParameters['t'];
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: ChatScreen(
+              venueId: venueId,
+              venueName: venueName,
+              tableNo: tableNo,
+            ),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return SlideTransition(
                 position: Tween<Offset>(

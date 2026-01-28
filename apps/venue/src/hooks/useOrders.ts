@@ -80,14 +80,30 @@ export function useOrders() {
             .on(
                 'postgres_changes',
                 {
-                    event: '*',
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `venue_id=eq.${venue.id}`
+                },
+                (payload) => {
+                    // New order notification
+                    const newOrder = payload.new as Order;
+                    toast.info(`🔔 New order from Table ${newOrder.table_no || 'Takeout'}!`, {
+                        duration: 5000,
+                    });
+                    fetchOrders();
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
                     schema: 'public',
                     table: 'orders',
                     filter: `venue_id=eq.${venue.id}`
                 },
                 () => {
-                    // On any change, just refetch for simplicity and correctness (including items join)
-                    // Optimization: We could handle partial updates, but fetching is safer for "Joined" data
+                    // Order status changed - just refetch
                     fetchOrders();
                 }
             )

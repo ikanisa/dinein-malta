@@ -7,6 +7,7 @@ import { MenuItemCard } from '../components/MenuItemCard'
 import { QuickAddBar } from '../components/QuickAddBar'
 import { TableNumberSheet } from '../components/TableNumberSheet'
 import { StickyCartPill } from '../components/StickyCartPill'
+import { MoltyChat, MoltyChatFAB } from '../components/MoltyChat'
 import { Skeleton, ErrorState } from '@dinein/ui'
 import { MenuCategory } from '@dinein/db'
 import { MICROCOPY } from '@dinein/core'
@@ -41,6 +42,7 @@ export default function VenueMenu() {
     // Initialize active category from first category (derived, not via effect)
     const [activeCategory, setActiveCategory] = useState<string | undefined>()
     const [showTableSheet, setShowTableSheet] = useState(false)
+    const [showChat, setShowChat] = useState(false)
 
     // Derive effective active category - default to first if not set
     const effectiveActiveCategory = activeCategory ?? categories[0]?.id
@@ -151,6 +153,15 @@ export default function VenueMenu() {
                 itemCount={totalItems}
                 total={totalPrice}
                 currency={currency}
+            />
+
+            {/* Molty AI Chat */}
+            <MoltyChatFAB onClick={() => setShowChat(true)} />
+            <MoltyChat
+                venueId={venue.id}
+                venueName={venue.name}
+                isOpen={showChat}
+                onClose={() => setShowChat(false)}
             />
         </div>
     )

@@ -173,7 +173,7 @@ export async function searchVenues(
     if (!query || query.length < 2) return [];
 
     const { data, error } = await client
-        .from('vendors')
+        .from('venues')
         .select('id, name, slug, country, city, ai_image_url')
         .ilike('name', `%${query}%`)
         .limit(limit);

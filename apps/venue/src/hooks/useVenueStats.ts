@@ -3,7 +3,7 @@ import { supabase } from '../shared/services/supabase';
 import { useOwner } from '../context/OwnerContext';
 
 
-export interface VendorStats {
+export interface VenueStats {
     activeOrders: number;
     totalRevenue: number;
     tableOccupancy: number; // Not yet implemented (requires live session tracking)
@@ -13,9 +13,9 @@ export interface VendorStats {
     }
 }
 
-export function useVendorStats() {
+export function useVenueStats() {
     const { venue } = useOwner();
-    const [stats, setStats] = useState<VendorStats>({
+    const [stats, setStats] = useState<VenueStats>({
         activeOrders: 0,
         totalRevenue: 0,
         tableOccupancy: 0,
@@ -59,7 +59,7 @@ export function useVendorStats() {
             }));
 
         } catch (err) {
-            console.error('Error loading vendor stats', err);
+            console.error('Error loading venue stats', err);
         } finally {
             setLoading(false);
         }

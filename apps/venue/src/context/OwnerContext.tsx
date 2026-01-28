@@ -24,7 +24,7 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
         // Subscribe to auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN' && session) {
-                await fetchVendorProfile()
+                await fetchVenueProfile()
             } else if (event === 'SIGNED_OUT') {
                 setVenue(null)
             }
@@ -38,7 +38,7 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (session) {
-                await fetchVendorProfile()
+                await fetchVenueProfile()
             }
         } catch (error) {
             console.error('Session check failed', error)
@@ -47,22 +47,22 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    const fetchVendorProfile = async () => {
+    const fetchVenueProfile = async () => {
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user || !user.email) return
 
-            const { data: vendorData } = await supabase
-                .from('vendors')
+            const { data: venueData } = await supabase
+                .from('venues')
                 .select('*')
                 .eq('contact_email', user.email)
                 .single()
 
-            if (vendorData) {
-                setVenue(vendorData)
+            if (venueData) {
+                setVenue(venueData)
             }
         } catch (error) {
-            console.error('Error fetching vendor profile', error)
+            console.error('Error fetching venue profile', error)
         }
     }
 
@@ -97,7 +97,7 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
     }
 
     const refreshVenue = async () => {
-        await fetchVendorProfile()
+        await fetchVenueProfile()
     }
 
     return (

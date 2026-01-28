@@ -5,55 +5,65 @@ import { ThemeToggle } from '@dinein/ui';
 
 export function AdminLayout() {
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300 flex">
-            {/* Desktop Sidebar */}
-            <aside className="hidden md:flex w-64 flex-col border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl h-screen sticky top-0">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600">
-                        Admin
+        <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
+            {/* Sidebar */}
+            <aside className="w-64 border-r border-border bg-card shadow-sm hidden md:flex flex-col">
+                <div className="p-6 border-b border-border flex items-center justify-between">
+                    <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+                        Admin Portal
                     </span>
                     <ThemeToggle />
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1">
                     <AdminSidebarItem to="/admin" icon={LayoutDashboard} label="Overview" end />
-                    <AdminSidebarItem to="/admin/vendors" icon={Store} label="Vendors" />
+                    <AdminSidebarItem to="/admin/venues" icon={Store} label="Venues" />
                     <AdminSidebarItem to="/admin/users" icon={Users} label="Users" />
                     <AdminSidebarItem to="/admin/roadmap" icon={Map} label="Roadmap" />
                     <AdminSidebarItem to="/admin/system" icon={ShieldAlert} label="System" />
                     <AdminSidebarItem to="/admin/settings" icon={Settings} label="Settings" />
                 </nav>
+
+                <div className="p-4 border-t border-border">
+                    <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
+                        <p className="font-medium text-foreground">DineIn Admin v1.0</p>
+                        <p>Secure System</p>
+                    </div>
+                </div>
             </aside>
 
-            {/* Mobile Header (visible only on small screens) */}
-            <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-50 flex items-center justify-between px-4">
-                <span className="font-bold text-slate-900 dark:text-white">Admin Portal</span>
+            {/* Mobile Header */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 z-50">
+                <span className="font-bold">Admin Portal</span>
                 <ThemeToggle />
-            </header>
+            </div>
 
             {/* Main Content */}
-            <main className="flex-1 pt-20 md:pt-6 px-4 md:px-8 max-w-7xl mx-auto w-full">
-                <Outlet />
+            <main className="flex-1 overflow-auto pt-16 md:pt-0">
+                <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
+                    <Outlet />
+                </div>
             </main>
         </div>
     );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- LucideIcon type
 function AdminSidebarItem({ to, icon: Icon, label, end }: { to: string, icon: any, label: string, end?: boolean }) {
     return (
         <NavLink
             to={to}
             end={end}
-            className={({ isActive }) => clsx(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-medium text-sm",
-                isActive
-                    ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-            )}
+            className={({ isActive }) =>
+                clsx(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group',
+                    isActive
+                        ? 'bg-primary/10 text-primary shadow-sm'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )
+            }
         >
-            <Icon size={18} />
+            <Icon className="w-4 h-4 transition-transform group-hover:scale-110" />
             {label}
         </NavLink>
-    )
+    );
 }

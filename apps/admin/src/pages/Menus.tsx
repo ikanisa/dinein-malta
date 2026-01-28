@@ -22,7 +22,7 @@ export default function Menus() {
         try {
             // Fetch venues
             const { data: venuesData, error: venuesError } = await supabase
-                .from('vendors')
+                .from('venues')
                 .select('*')
                 .eq('claimed', true)
                 .order('name', { ascending: true })
@@ -35,7 +35,7 @@ export default function Menus() {
                     const { count, error } = await supabase
                         .from('menu_items')
                         .select('*', { count: 'exact', head: true })
-                        .eq('vendor_id', venue.id)
+                        .eq('venue_id', venue.id)
 
                     return {
                         ...venue,

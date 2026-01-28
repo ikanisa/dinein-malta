@@ -44,12 +44,8 @@ BEGIN
   END IF;
 END $$;
 
--- Update orders RLS to also allow access by user_id
--- Keep existing session_id access for backwards compatibility
+-- Update orders RLS to allow access by user_id
 DROP POLICY IF EXISTS "Orders: users can view own orders" ON orders;
 CREATE POLICY "Orders: users can view own orders"
   ON orders FOR SELECT
-  USING (
-    auth.uid() = user_id OR 
-    session_id IS NOT NULL -- Backwards compat for old orders
-  );
+  USING (auth.uid() = user_id);

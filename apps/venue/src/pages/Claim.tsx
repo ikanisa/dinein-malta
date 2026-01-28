@@ -31,7 +31,7 @@ export default function Claim() {
             setSearching(true)
             try {
                 const { data, error } = await supabase
-                    .from('vendors')
+                    .from('venues')
                     .select('id, name, address, country')
                     .ilike('name', `%${query}%`)
                     .eq('claimed', false)

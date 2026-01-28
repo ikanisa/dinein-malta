@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_users: {
@@ -66,179 +41,454 @@ export type Database = {
         }
         Relationships: []
       }
-      audit_logs: {
+      agent_actions: {
         Row: {
-          action: string
-          actor_auth_user_id: string
-          created_at: string | null
-          entity_id: string | null
-          entity_type: string
-          id: string
-          metadata_json: Json | null
-        }
-        Insert: {
-          action: string
-          actor_auth_user_id: string
-          created_at?: string | null
-          entity_id?: string | null
-          entity_type: string
-          id?: string
-          metadata_json?: Json | null
-        }
-        Update: {
-          action?: string
-          actor_auth_user_id?: string
-          created_at?: string | null
-          entity_id?: string | null
-          entity_type?: string
-          id?: string
-          metadata_json?: Json | null
-        }
-        Relationships: []
-      }
-      countries: {
-        Row: {
-          code: string
+          action_data: Json | null
+          action_type: string
+          agent_type: string | null
+          correlation_id: string | null
+          cost_estimate: number | null
           created_at: string
-          currency: string
-          currency_symbol: string
-          is_active: boolean
-          name: string
-          updated_at: string
+          error_message: string | null
+          id: string
+          input_tokens: number | null
+          output_tokens: number | null
+          session_id: string | null
+          success: boolean | null
+          tenant_id: string | null
+          user_id: string | null
+          venue_id: string | null
         }
         Insert: {
-          code: string
+          action_data?: Json | null
+          action_type: string
+          agent_type?: string | null
+          correlation_id?: string | null
+          cost_estimate?: number | null
           created_at?: string
-          currency?: string
-          currency_symbol?: string
-          is_active?: boolean
-          name: string
-          updated_at?: string
+          error_message?: string | null
+          id?: string
+          input_tokens?: number | null
+          output_tokens?: number | null
+          session_id?: string | null
+          success?: boolean | null
+          tenant_id?: string | null
+          user_id?: string | null
+          venue_id?: string | null
         }
         Update: {
-          code?: string
+          action_data?: Json | null
+          action_type?: string
+          agent_type?: string | null
+          correlation_id?: string | null
+          cost_estimate?: number | null
           created_at?: string
-          currency?: string
-          currency_symbol?: string
-          is_active?: boolean
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      favorites: {
-        Row: {
-          created_at: string | null
-          user_id: string
-          venue_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          user_id: string
-          venue_id: string
-        }
-        Update: {
-          created_at?: string | null
-          user_id?: string
-          venue_id?: string
+          error_message?: string | null
+          id?: string
+          input_tokens?: number | null
+          output_tokens?: number | null
+          session_id?: string | null
+          success?: boolean | null
+          tenant_id?: string | null
+          user_id?: string | null
+          venue_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "favorites_venue_id_fkey"
+            foreignKeyName: "agent_actions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "agent_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_actions_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
       }
-      menu_categories: {
+      agent_sessions: {
+        Row: {
+          agent_type: Database["public"]["Enums"]["agent_type"]
+          context: Json | null
+          correlation_id: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          last_interaction_at: string
+          started_at: string
+          table_no: string | null
+          tenant_id: string | null
+          updated_at: string
+          user_id: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          agent_type?: Database["public"]["Enums"]["agent_type"]
+          context?: Json | null
+          correlation_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          last_interaction_at?: string
+          started_at?: string
+          table_no?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          agent_type?: Database["public"]["Enums"]["agent_type"]
+          context?: Json | null
+          correlation_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          last_interaction_at?: string
+          started_at?: string
+          table_no?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_sessions_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      approval_requests: {
         Row: {
           created_at: string | null
+          entity_id: string
+          entity_type: string
+          expires_at: string | null
           id: string
+          notes: string | null
+          priority: string | null
+          request_type: string
+          requested_by: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          request_type: string
+          requested_by?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          request_type?: string
+          requested_by?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_requests_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string | null
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blocks_reports: {
+        Row: {
+          action_type: string | null
+          created_at: string | null
+          id: string
+          reason: string | null
+          reported_id: string | null
+          reporter_id: string | null
+          resolved: boolean | null
+        }
+        Insert: {
+          action_type?: string | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          reported_id?: string | null
+          reporter_id?: string | null
+          resolved?: boolean | null
+        }
+        Update: {
+          action_type?: string | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          reported_id?: string | null
+          reporter_id?: string | null
+          resolved?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_reports_reported_id_fkey"
+            columns: ["reported_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocks_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: Database["public"]["Enums"]["message_role"]
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: Database["public"]["Enums"]["message_role"]
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: Database["public"]["Enums"]["message_role"]
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "agent_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      countries: {
+        Row: {
+          code_alpha2: string
+          code_alpha3: string
+          created_at: string | null
+          currency_code: string
+          currency_symbol: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone_prefix: string
+          updated_at: string | null
+        }
+        Insert: {
+          code_alpha2: string
+          code_alpha3: string
+          created_at?: string | null
+          currency_code: string
+          currency_symbol?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone_prefix: string
+          updated_at?: string | null
+        }
+        Update: {
+          code_alpha2?: string
+          code_alpha3?: string
+          created_at?: string | null
+          currency_code?: string
+          currency_symbol?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone_prefix?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      menu_categories: {
+        Row: {
+          created_at: string
+          id: string
+          menu_id: string
           name: string
           sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_id: string
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_id?: string
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_categories_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_item_drafts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          category_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          price: number
+          published_item_id: string | null
+          rejection_reason: string | null
+          status: string
           updated_at: string | null
           venue_id: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          category_id?: string | null
           created_at?: string | null
+          created_by?: string | null
+          description?: string | null
           id?: string
           name: string
-          sort_order?: number | null
+          price: number
+          published_item_id?: string | null
+          rejection_reason?: string | null
+          status?: string
           updated_at?: string | null
           venue_id: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          category_id?: string | null
           created_at?: string | null
+          created_by?: string | null
+          description?: string | null
           id?: string
           name?: string
-          sort_order?: number | null
+          price?: number
+          published_item_id?: string | null
+          rejection_reason?: string | null
+          status?: string
           updated_at?: string | null
           venue_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "menu_categories_venue_id_fkey"
-            columns: ["venue_id"]
+            foreignKeyName: "menu_item_drafts_category_id_fkey"
+            columns: ["category_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "menu_categories"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      menu_ingest_jobs: {
-        Row: {
-          attempt_count: number
-          created_at: string
-          created_by: string
-          error_code: string | null
-          error_message: string | null
-          file_path: string
-          finished_at: string | null
-          id: string
-          next_attempt_at: string | null
-          started_at: string | null
-          status: Database["public"]["Enums"]["ingest_job_status"]
-          updated_at: string
-          venue_id: string
-        }
-        Insert: {
-          attempt_count?: number
-          created_at?: string
-          created_by: string
-          error_code?: string | null
-          error_message?: string | null
-          file_path: string
-          finished_at?: string | null
-          id?: string
-          next_attempt_at?: string | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["ingest_job_status"]
-          updated_at?: string
-          venue_id: string
-        }
-        Update: {
-          attempt_count?: number
-          created_at?: string
-          created_by?: string
-          error_code?: string | null
-          error_message?: string | null
-          file_path?: string
-          finished_at?: string | null
-          id?: string
-          next_attempt_at?: string | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["ingest_job_status"]
-          updated_at?: string
-          venue_id?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "menu_ingest_jobs_venue_id_fkey"
+            foreignKeyName: "menu_item_drafts_published_item_id_fkey"
+            columns: ["published_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_drafts_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
@@ -251,18 +501,15 @@ export type Database = {
           created_at: string
           currency: string
           description: string | null
-          flavor_profile: string[] | null
           id: string
           image_url: string | null
           is_available: boolean
-          meal_period: string[] | null
           name: string
-          pairing_suggestions: string[] | null
           price: number
-          smart_category: string | null
+          sort_order: number | null
           tags_json: Json | null
           updated_at: string
-          vendor_id: string
+          venue_id: string
         }
         Insert: {
           ai_image_url?: string | null
@@ -271,18 +518,15 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
-          flavor_profile?: string[] | null
           id?: string
           image_url?: string | null
           is_available?: boolean
-          meal_period?: string[] | null
           name: string
-          pairing_suggestions?: string[] | null
           price?: number
-          smart_category?: string | null
+          sort_order?: number | null
           tags_json?: Json | null
           updated_at?: string
-          vendor_id: string
+          venue_id: string
         }
         Update: {
           ai_image_url?: string | null
@@ -291,18 +535,15 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
-          flavor_profile?: string[] | null
           id?: string
           image_url?: string | null
           is_available?: boolean
-          meal_period?: string[] | null
           name?: string
-          pairing_suggestions?: string[] | null
           price?: number
-          smart_category?: string | null
+          sort_order?: number | null
           tags_json?: Json | null
           updated_at?: string
-          vendor_id?: string
+          venue_id?: string
         }
         Relationships: [
           {
@@ -314,134 +555,169 @@ export type Database = {
           },
           {
             foreignKeyName: "menu_items_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      menu_items_staging: {
-        Row: {
-          confidence: number | null
-          created_at: string
-          currency: string | null
-          description: string | null
-          id: string
-          job_id: string
-          name: string
-          parse_warnings: string[] | null
-          price: number | null
-          raw_category: string | null
-          suggested_action:
-          | Database["public"]["Enums"]["staging_item_action"]
-          | null
-          venue_id: string
-        }
-        Insert: {
-          confidence?: number | null
-          created_at?: string
-          currency?: string | null
-          description?: string | null
-          id?: string
-          job_id: string
-          name: string
-          parse_warnings?: string[] | null
-          price?: number | null
-          raw_category?: string | null
-          suggested_action?:
-          | Database["public"]["Enums"]["staging_item_action"]
-          | null
-          venue_id: string
-        }
-        Update: {
-          confidence?: number | null
-          created_at?: string
-          currency?: string | null
-          description?: string | null
-          id?: string
-          job_id?: string
-          name?: string
-          parse_warnings?: string[] | null
-          price?: number | null
-          raw_category?: string | null
-          suggested_action?:
-          | Database["public"]["Enums"]["staging_item_action"]
-          | null
-          venue_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "menu_items_staging_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "menu_ingest_jobs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "menu_items_staging_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
       }
-      onboarding_requests: {
+      menus: {
         Row: {
-          admin_notes: string | null
           created_at: string
-          email: string
           id: string
-          menu_items_json: Json | null
-          momo_code: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          revolut_link: string | null
-          status: string
-          submitted_by: string
+          is_active: boolean
           updated_at: string
-          vendor_id: string
-          whatsapp: string | null
+          venue_id: string
+          version: number | null
         }
         Insert: {
-          admin_notes?: string | null
           created_at?: string
-          email: string
           id?: string
-          menu_items_json?: Json | null
-          momo_code?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          revolut_link?: string | null
-          status?: string
-          submitted_by: string
+          is_active?: boolean
           updated_at?: string
-          vendor_id: string
-          whatsapp?: string | null
+          venue_id: string
+          version?: number | null
         }
         Update: {
-          admin_notes?: string | null
           created_at?: string
-          email?: string
           id?: string
-          menu_items_json?: Json | null
-          momo_code?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          revolut_link?: string | null
-          status?: string
-          submitted_by?: string
+          is_active?: boolean
           updated_at?: string
-          vendor_id?: string
-          whatsapp?: string | null
+          venue_id?: string
+          version?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "onboarding_requests_vendor_id_fkey"
-            columns: ["vendor_id"]
+            foreignKeyName: "menus_venue_id_fkey"
+            columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mobile_money_networks: {
+        Row: {
+          country_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_primary: boolean | null
+          logo_url: string | null
+          network_code: string
+          network_name: string
+          short_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          country_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          logo_url?: string | null
+          network_code: string
+          network_name: string
+          short_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          country_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          logo_url?: string | null
+          network_code?: string
+          network_name?: string
+          short_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobile_money_networks_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mobile_money_transactions: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          country_id: string | null
+          created_at: string | null
+          currency_code: string
+          error_code: string | null
+          error_message: string | null
+          external_transaction_id: string | null
+          id: string
+          merchant_code: string | null
+          metadata: Json | null
+          network_id: string | null
+          phone_number: string
+          reference: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          ussd_string: string | null
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          country_id?: string | null
+          created_at?: string | null
+          currency_code: string
+          error_code?: string | null
+          error_message?: string | null
+          external_transaction_id?: string | null
+          id?: string
+          merchant_code?: string | null
+          metadata?: Json | null
+          network_id?: string | null
+          phone_number: string
+          reference?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          ussd_string?: string | null
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          country_id?: string | null
+          created_at?: string | null
+          currency_code?: string
+          error_code?: string | null
+          error_message?: string | null
+          external_transaction_id?: string | null
+          id?: string
+          merchant_code?: string | null
+          metadata?: Json | null
+          network_id?: string | null
+          phone_number?: string
+          reference?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          ussd_string?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobile_money_transactions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mobile_money_transactions_network_id_fkey"
+            columns: ["network_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_money_networks"
             referencedColumns: ["id"]
           },
         ]
@@ -493,11 +769,11 @@ export type Database = {
           notes: string | null
           order_code: string
           payment_status: Database["public"]["Enums"]["payment_status"]
-          status: Database["public"]["Enums"]["order_status"] | null
+          status: Database["public"]["Enums"]["order_status"]
           table_id: string | null
           total_amount: number
           updated_at: string
-          vendor_id: string
+          venue_id: string
         }
         Insert: {
           client_auth_user_id: string
@@ -507,11 +783,11 @@ export type Database = {
           notes?: string | null
           order_code: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
-          status?: Database["public"]["Enums"]["order_status"] | null
+          status?: Database["public"]["Enums"]["order_status"]
           table_id?: string | null
           total_amount?: number
           updated_at?: string
-          vendor_id: string
+          venue_id: string
         }
         Update: {
           client_auth_user_id?: string
@@ -521,11 +797,11 @@ export type Database = {
           notes?: string | null
           order_code?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
-          status?: Database["public"]["Enums"]["order_status"] | null
+          status?: Database["public"]["Enums"]["order_status"]
           table_id?: string | null
           total_amount?: number
           updated_at?: string
-          vendor_id?: string
+          venue_id?: string
         }
         Relationships: [
           {
@@ -537,51 +813,268 @@ export type Database = {
           },
           {
             foreignKeyName: "orders_vendor_id_fkey"
-            columns: ["vendor_id"]
+            columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presence: {
+        Row: {
+          accuracy_m: number | null
+          heading: number | null
+          id: string
+          is_online: boolean | null
+          last_lat: number | null
+          last_lng: number | null
+          last_seen_at: string | null
+          speed: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accuracy_m?: number | null
+          heading?: number | null
+          id?: string
+          is_online?: boolean | null
+          last_lat?: number | null
+          last_lng?: number | null
+          last_seen_at?: string | null
+          speed?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accuracy_m?: number | null
+          heading?: number | null
+          id?: string
+          is_online?: boolean | null
+          last_lat?: number | null
+          last_lng?: number | null
+          last_seen_at?: string | null
+          speed?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presence_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
       }
       profiles: {
         Row: {
-          country_code: string | null
+          avatar_url: string | null
+          country: string | null
           created_at: string | null
-          favorites: Json | null
           id: string
-          name: string
-          notifications_enabled: boolean | null
-          role: string
+          languages: string[] | null
+          name: string | null
+          rating: number | null
+          role: string | null
+          total_rides: number | null
           updated_at: string | null
+          verified: boolean | null
         }
         Insert: {
-          country_code?: string | null
+          avatar_url?: string | null
+          country?: string | null
           created_at?: string | null
-          favorites?: Json | null
           id: string
-          name?: string
-          notifications_enabled?: boolean | null
-          role?: string
+          languages?: string[] | null
+          name?: string | null
+          rating?: number | null
+          role?: string | null
+          total_rides?: number | null
           updated_at?: string | null
+          verified?: boolean | null
         }
         Update: {
-          country_code?: string | null
+          avatar_url?: string | null
+          country?: string | null
           created_at?: string | null
-          favorites?: Json | null
           id?: string
-          name?: string
-          notifications_enabled?: boolean | null
-          role?: string
+          languages?: string[] | null
+          name?: string | null
+          rating?: number | null
+          role?: string | null
+          total_rides?: number | null
           updated_at?: string | null
+          verified?: boolean | null
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_country_code_fkey"
-            columns: ["country_code"]
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_drafts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          discount_amount: number | null
+          discount_percent: number | null
+          id: string
+          published_promo_id: string | null
+          rejection_reason: string | null
+          status: string
+          title: string
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+          venue_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          id?: string
+          published_promo_id?: string | null
+          rejection_reason?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+          venue_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          id?: string
+          published_promo_id?: string | null
+          rejection_reason?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_drafts_published_promo_id_fkey"
+            columns: ["published_promo_id"]
             isOneToOne: false
-            referencedRelation: "countries"
-            referencedColumns: ["code"]
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_drafts_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          active_from: string | null
+          active_to: string | null
+          body: string
+          created_at: string
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          active_from?: string | null
+          active_to?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          active_from?: string | null
+          active_to?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ratings: {
+        Row: {
+          created_at: string | null
+          from_user_id: string | null
+          id: string
+          rating: number | null
+          review: string | null
+          to_user_id: string | null
+          trip_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          rating?: number | null
+          review?: string | null
+          to_user_id?: string | null
+          trip_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          rating?: number | null
+          review?: string | null
+          to_user_id?: string | null
+          trip_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratings_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -595,7 +1088,7 @@ export type Database = {
           party_size: number
           status: Database["public"]["Enums"]["reservation_status"]
           updated_at: string
-          vendor_id: string
+          venue_id: string
         }
         Insert: {
           client_auth_user_id: string
@@ -606,7 +1099,7 @@ export type Database = {
           party_size?: number
           status?: Database["public"]["Enums"]["reservation_status"]
           updated_at?: string
-          vendor_id: string
+          venue_id: string
         }
         Update: {
           client_auth_user_id?: string
@@ -617,49 +1110,121 @@ export type Database = {
           party_size?: number
           status?: Database["public"]["Enums"]["reservation_status"]
           updated_at?: string
-          vendor_id?: string
+          venue_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "reservations_vendor_id_fkey"
-            columns: ["vendor_id"]
+            columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
       }
-      reviews: {
+      ride_requests: {
         Row: {
-          content: string | null
           created_at: string | null
+          expires_at: string | null
+          from_user: string | null
           id: string
-          rating: number | null
-          user_id: string | null
-          venue_id: string | null
+          payload: Json | null
+          responded_at: string | null
+          status: string | null
+          to_user: string | null
         }
         Insert: {
-          content?: string | null
           created_at?: string | null
+          expires_at?: string | null
+          from_user?: string | null
           id?: string
-          rating?: number | null
-          user_id?: string | null
-          venue_id?: string | null
+          payload?: Json | null
+          responded_at?: string | null
+          status?: string | null
+          to_user?: string | null
         }
         Update: {
-          content?: string | null
           created_at?: string | null
+          expires_at?: string | null
+          from_user?: string | null
           id?: string
-          rating?: number | null
-          user_id?: string | null
-          venue_id?: string | null
+          payload?: Json | null
+          responded_at?: string | null
+          status?: string | null
+          to_user?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "reviews_venue_id_fkey"
-            columns: ["venue_id"]
+            foreignKeyName: "ride_requests_from_user_fkey"
+            columns: ["from_user"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_requests_to_user_fkey"
+            columns: ["to_user"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_trips: {
+        Row: {
+          created_at: string | null
+          from_geo: unknown
+          from_text: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          seats_qty: number | null
+          to_geo: unknown
+          to_text: string | null
+          trip_type: string | null
+          updated_at: string | null
+          user_id: string | null
+          vehicle_pref: string | null
+          when_datetime: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_geo?: unknown
+          from_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          seats_qty?: number | null
+          to_geo?: unknown
+          to_text?: string | null
+          trip_type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          vehicle_pref?: string | null
+          when_datetime?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_geo?: unknown
+          from_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          seats_qty?: number | null
+          to_geo?: unknown
+          to_text?: string | null
+          trip_type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          vehicle_pref?: string | null
+          when_datetime?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_trips_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -697,7 +1262,7 @@ export type Database = {
           public_code: string
           table_number: number
           updated_at: string
-          vendor_id: string
+          venue_id: string
         }
         Insert: {
           created_at?: string
@@ -707,7 +1272,7 @@ export type Database = {
           public_code: string
           table_number: number
           updated_at?: string
-          vendor_id: string
+          venue_id: string
         }
         Update: {
           created_at?: string
@@ -717,124 +1282,254 @@ export type Database = {
           public_code?: string
           table_number?: number
           updated_at?: string
-          vendor_id?: string
+          venue_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "tables_vendor_id_fkey"
-            columns: ["vendor_id"]
+            columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
       }
-      user_addresses: {
+      users: {
         Row: {
-          address_line1: string
-          address_line2: string | null
-          city: string
-          country: string
-          created_at: string
+          created_at: string | null
           id: string
-          is_default: boolean
-          label: string
-          lat: number | null
-          lng: number | null
-          postal_code: string | null
-          updated_at: string
-          user_id: string
+          phone: string | null
+          updated_at: string | null
         }
         Insert: {
-          address_line1: string
-          address_line2?: string | null
-          city: string
-          country?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
-          is_default?: boolean
-          label?: string
-          lat?: number | null
-          lng?: number | null
-          postal_code?: string | null
-          updated_at?: string
-          user_id: string
+          phone?: string | null
+          updated_at?: string | null
         }
         Update: {
-          address_line1?: string
-          address_line2?: string | null
-          city?: string
-          country?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
-          is_default?: boolean
-          label?: string
-          lat?: number | null
-          lng?: number | null
-          postal_code?: string | null
-          updated_at?: string
-          user_id?: string
+          phone?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
-      vendor_users: {
+      ussd_dial_formats: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          dial_template: string
+          format_type: string | null
+          id: string
+          is_active: boolean | null
+          network_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          dial_template: string
+          format_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          network_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          dial_template?: string
+          format_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          network_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ussd_dial_formats_network_id_fkey"
+            columns: ["network_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_money_networks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          capacity: number | null
+          category: string | null
+          color: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_primary: boolean | null
+          make: string | null
+          model: string | null
+          plate: string | null
+          updated_at: string | null
+          user_id: string | null
+          year: number | null
+        }
+        Insert: {
+          capacity?: number | null
+          category?: string | null
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          make?: string | null
+          model?: string | null
+          plate?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          year?: number | null
+        }
+        Update: {
+          capacity?: number | null
+          category?: string | null
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          make?: string | null
+          model?: string | null
+          plate?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_claims: {
+        Row: {
+          business_license_url: string | null
+          claim_pin_hash: string | null
+          created_at: string
+          email: string
+          id: string
+          id_card_url: string | null
+          phone: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          venue_id: string
+          verification_notes: string | null
+        }
+        Insert: {
+          business_license_url?: string | null
+          claim_pin_hash?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          id_card_url?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          venue_id: string
+          verification_notes?: string | null
+        }
+        Update: {
+          business_license_url?: string | null
+          claim_pin_hash?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          id_card_url?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          venue_id?: string
+          verification_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_claims_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_users: {
         Row: {
           auth_user_id: string
           created_at: string
           id: string
           is_active: boolean
-          role: Database["public"]["Enums"]["vendor_role"]
+          role: Database["public"]["Enums"]["venue_role"]
           updated_at: string
-          vendor_id: string
+          venue_id: string
         }
         Insert: {
           auth_user_id: string
           created_at?: string
           id?: string
           is_active?: boolean
-          role?: Database["public"]["Enums"]["vendor_role"]
+          role?: Database["public"]["Enums"]["venue_role"]
           updated_at?: string
-          vendor_id: string
+          venue_id: string
         }
         Update: {
           auth_user_id?: string
           created_at?: string
           id?: string
           is_active?: boolean
-          role?: Database["public"]["Enums"]["vendor_role"]
+          role?: Database["public"]["Enums"]["venue_role"]
           updated_at?: string
-          vendor_id?: string
+          venue_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "vendor_users_vendor_id_fkey"
-            columns: ["vendor_id"]
+            columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
       }
-      vendors: {
+      venues: {
         Row: {
           address: string | null
-          ai_category_confidence: number | null
           ai_description: string | null
           ai_image_url: string | null
-          ambiance_tags: string[] | null
-          city: string | null
           claimed: boolean
           contact_email: string | null
           country: string
           created_at: string
-          cuisine_types: string[] | null
-          description: string | null
           google_place_id: string
           hours_json: Json | null
           id: string
-          last_ai_update: string | null
           lat: number | null
           lng: number | null
+          momo_code: string | null
           name: string
           owner_email: string | null
           owner_id: string | null
@@ -842,36 +1537,27 @@ export type Database = {
           owner_pin: string | null
           phone: string | null
           photos_json: Json | null
-          price_level: string | null
-          primary_category: string | null
-          rating: number | null
           revolut_link: string | null
           slug: string
-          special_features: string[] | null
-          status: Database["public"]["Enums"]["vendor_status"]
+          status: Database["public"]["Enums"]["venue_status"]
           updated_at: string
           website: string | null
           whatsapp: string | null
         }
         Insert: {
           address?: string | null
-          ai_category_confidence?: number | null
           ai_description?: string | null
           ai_image_url?: string | null
-          ambiance_tags?: string[] | null
-          city?: string | null
           claimed?: boolean
           contact_email?: string | null
           country?: string
           created_at?: string
-          cuisine_types?: string[] | null
-          description?: string | null
           google_place_id: string
           hours_json?: Json | null
           id?: string
-          last_ai_update?: string | null
           lat?: number | null
           lng?: number | null
+          momo_code?: string | null
           name: string
           owner_email?: string | null
           owner_id?: string | null
@@ -879,36 +1565,27 @@ export type Database = {
           owner_pin?: string | null
           phone?: string | null
           photos_json?: Json | null
-          price_level?: string | null
-          primary_category?: string | null
-          rating?: number | null
           revolut_link?: string | null
           slug: string
-          special_features?: string[] | null
-          status?: Database["public"]["Enums"]["vendor_status"]
+          status?: Database["public"]["Enums"]["venue_status"]
           updated_at?: string
           website?: string | null
           whatsapp?: string | null
         }
         Update: {
           address?: string | null
-          ai_category_confidence?: number | null
           ai_description?: string | null
           ai_image_url?: string | null
-          ambiance_tags?: string[] | null
-          city?: string | null
           claimed?: boolean
           contact_email?: string | null
           country?: string
           created_at?: string
-          cuisine_types?: string[] | null
-          description?: string | null
           google_place_id?: string
           hours_json?: Json | null
           id?: string
-          last_ai_update?: string | null
           lat?: number | null
           lng?: number | null
+          momo_code?: string | null
           name?: string
           owner_email?: string | null
           owner_id?: string | null
@@ -916,73 +1593,78 @@ export type Database = {
           owner_pin?: string | null
           phone?: string | null
           photos_json?: Json | null
-          price_level?: string | null
-          primary_category?: string | null
-          rating?: number | null
           revolut_link?: string | null
           slug?: string
-          special_features?: string[] | null
-          status?: Database["public"]["Enums"]["vendor_status"]
+          status?: Database["public"]["Enums"]["venue_status"]
           updated_at?: string
           website?: string | null
           whatsapp?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "vendors_country_fk"
-            columns: ["country"]
-            isOneToOne: false
-            referencedRelation: "countries"
-            referencedColumns: ["code"]
-          },
-        ]
+        Relationships: []
       }
-      waiter_rings: {
+      whatsapp_info: {
         Row: {
-          acknowledged_at: string | null
-          acknowledged_by: string | null
-          created_at: string
+          country_code: string
+          country_name: string
+          created_at: string | null
+          dial_code: string
           id: string
-          reason: string | null
-          resolved_at: string | null
-          status: string
-          table_number: number
-          vendor_id: string
+          phone_number: string
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
-          acknowledged_at?: string | null
-          acknowledged_by?: string | null
-          created_at?: string
+          country_code: string
+          country_name: string
+          created_at?: string | null
+          dial_code: string
           id?: string
-          reason?: string | null
-          resolved_at?: string | null
-          status?: string
-          table_number: number
-          vendor_id: string
+          phone_number: string
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
-          acknowledged_at?: string | null
-          acknowledged_by?: string | null
-          created_at?: string
+          country_code?: string
+          country_name?: string
+          created_at?: string | null
+          dial_code?: string
           id?: string
-          reason?: string | null
-          resolved_at?: string | null
-          status?: string
-          table_number?: number
-          vendor_id?: string
+          phone_number?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      agent_audit_log: {
+        Row: {
+          action_data: Json | null
+          action_type: string | null
+          agent_type: string | null
+          correlation_id: string | null
+          cost_estimate: number | null
+          created_at: string | null
+          error_message: string | null
+          id: string | null
+          input_tokens: number | null
+          output_tokens: number | null
+          success: boolean | null
+          tenant_id: string | null
+          user_id: string | null
+          venue_id: string | null
+          venue_name: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "waiter_rings_vendor_id_fkey"
-            columns: ["vendor_id"]
+            foreignKeyName: "agent_actions_venue_id_fkey"
+            columns: ["venue_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
       }
-    }
-    Views: {
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -1025,6 +1707,47 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_approvals: {
+        Row: {
+          created_at: string | null
+          entity_id: string | null
+          entity_preview: Json | null
+          entity_type: string | null
+          expires_at: string | null
+          id: string | null
+          notes: string | null
+          priority: string | null
+          request_type: string | null
+          requested_by: string | null
+          requester_email: string | null
+          status: string | null
+          venue_id: string | null
+          venue_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_requests_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_stats: {
+        Row: {
+          id: string | null
+          is_online: boolean | null
+          last_seen_at: string | null
+          name: string | null
+          rating: number | null
+          role: string | null
+          total_ratings: number | null
+          total_rides: number | null
+          verified: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _postgis_deprecate: {
@@ -1058,11 +1781,11 @@ export type Database = {
         Returns: boolean
       }
       _st_coveredby:
-      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       _st_covers:
-      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       _st_crosses: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
@@ -1118,90 +1841,98 @@ export type Database = {
       _st_within: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       addauth: { Args: { "": string }; Returns: boolean }
       addgeometrycolumn:
-      | {
-        Args: {
-          catalog_name: string
-          column_name: string
-          new_dim: number
-          new_srid_in: number
-          new_type: string
-          schema_name: string
-          table_name: string
-          use_typmod?: boolean
-        }
-        Returns: string
+        | {
+            Args: {
+              catalog_name: string
+              column_name: string
+              new_dim: number
+              new_srid_in: number
+              new_type: string
+              schema_name: string
+              table_name: string
+              use_typmod?: boolean
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              column_name: string
+              new_dim: number
+              new_srid: number
+              new_type: string
+              schema_name: string
+              table_name: string
+              use_typmod?: boolean
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              column_name: string
+              new_dim: number
+              new_srid: number
+              new_type: string
+              table_name: string
+              use_typmod?: boolean
+            }
+            Returns: string
+          }
+      can_edit_venue: { Args: { p_venue_id: string }; Returns: boolean }
+      can_manage_venue_ops: { Args: { p_venue_id: string }; Returns: boolean }
+      cleanup_expired_requests: { Args: never; Returns: number }
+      detect_country_from_phone: {
+        Args: { p_phone: string }
+        Returns: {
+          code_alpha2: string
+          code_alpha3: string
+          country_id: string
+          country_name: string
+          phone_prefix: string
+        }[]
       }
-      | {
-        Args: {
-          column_name: string
-          new_dim: number
-          new_srid: number
-          new_type: string
-          schema_name: string
-          table_name: string
-          use_typmod?: boolean
-        }
-        Returns: string
-      }
-      | {
-        Args: {
-          column_name: string
-          new_dim: number
-          new_srid: number
-          new_type: string
-          table_name: string
-          use_typmod?: boolean
-        }
-        Returns: string
-      }
-      can_edit_vendor_profile: {
-        Args: { p_vendor_id: string }
-        Returns: boolean
-      }
-      can_manage_vendor_ops: { Args: { p_vendor_id: string }; Returns: boolean }
-      claim_ingest_job: { Args: { p_job_id: string }; Returns: boolean }
-      create_admin_user: { Args: { p_auth_user_id: string }; Returns: string }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
-      | {
-        Args: {
-          catalog_name: string
-          column_name: string
-          schema_name: string
-          table_name: string
-        }
-        Returns: string
-      }
-      | {
-        Args: {
-          column_name: string
-          schema_name: string
-          table_name: string
-        }
-        Returns: string
-      }
-      | { Args: { column_name: string; table_name: string }; Returns: string }
+        | {
+            Args: {
+              catalog_name: string
+              column_name: string
+              schema_name: string
+              table_name: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              column_name: string
+              schema_name: string
+              table_name: string
+            }
+            Returns: string
+          }
+        | { Args: { column_name: string; table_name: string }; Returns: string }
       dropgeometrytable:
-      | {
-        Args: {
-          catalog_name: string
-          schema_name: string
-          table_name: string
-        }
-        Returns: string
-      }
-      | { Args: { schema_name: string; table_name: string }; Returns: string }
-      | { Args: { table_name: string }; Returns: string }
+        | {
+            Args: {
+              catalog_name: string
+              schema_name: string
+              table_name: string
+            }
+            Returns: string
+          }
+        | { Args: { schema_name: string; table_name: string }; Returns: string }
+        | { Args: { table_name: string }; Returns: string }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
-      fail_ingest_job: {
+      expire_old_requests: { Args: never; Returns: number }
+      generate_ussd_dial_string: {
         Args: {
-          p_error_code: string
-          p_error_message: string
-          p_job_id: string
-          p_should_retry?: boolean
+          p_amount: number
+          p_format_type?: string
+          p_merchant_code: string
+          p_network_id: string
+          p_phone?: string
         }
-        Returns: undefined
+        Returns: string
       }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
@@ -1301,15 +2032,56 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
-      get_user_role: { Args: never; Returns: string }
-      get_user_vendor_id: { Args: never; Returns: string }
+      get_networks_for_country: {
+        Args: { p_country_code: string }
+        Returns: {
+          dial_template: string
+          is_primary: boolean
+          network_code: string
+          network_id: string
+          network_name: string
+          short_name: string
+        }[]
+      }
+      get_primary_network: {
+        Args: { p_country_code: string }
+        Returns: {
+          dial_template: string
+          network_code: string
+          network_id: string
+          network_name: string
+          short_name: string
+        }[]
+      }
       gettransactionid: { Args: never; Returns: unknown }
+      has_role: {
+        Args: { _role: Database["public"]["Enums"]["user_role"] }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
-      is_vendor_member: { Args: { p_vendor_id: string }; Returns: boolean }
+      is_venue_member: { Args: { p_venue_id: string }; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      nearby_users: {
+        Args: {
+          exclude_user_id?: string
+          radius_km?: number
+          user_lat: number
+          user_lng: number
+          user_role?: string
+        }
+        Returns: {
+          distance_km: number
+          is_online: boolean
+          last_seen_at: string
+          profile: Json
+          user_id: string
+          vehicle: Json
+        }[]
+      }
+      owns_agent_session: { Args: { p_session_id: string }; Returns: boolean }
       populate_geometry_columns:
-      | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
-      | { Args: { use_typmod?: boolean }; Returns: string }
+        | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
+        | { Args: { use_typmod?: boolean }; Returns: string }
       postgis_constraint_dims: {
         Args: { geomcolumn: string; geomschema: string; geomtable: string }
         Returns: number
@@ -1347,103 +2119,6 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
-      search_nearby_venues: {
-        Args: {
-          filter_country_code?: string
-          lat: number
-          long: number
-          radius_meters: number
-        }
-        Returns: {
-          address: string | null
-          ai_category_confidence: number | null
-          ai_description: string | null
-          ai_image_url: string | null
-          ambiance_tags: string[] | null
-          city: string | null
-          claimed: boolean
-          contact_email: string | null
-          country: string
-          created_at: string
-          cuisine_types: string[] | null
-          description: string | null
-          google_place_id: string
-          hours_json: Json | null
-          id: string
-          last_ai_update: string | null
-          lat: number | null
-          lng: number | null
-          name: string
-          owner_email: string | null
-          owner_id: string | null
-          owner_phone: string | null
-          owner_pin: string | null
-          phone: string | null
-          photos_json: Json | null
-          price_level: string | null
-          primary_category: string | null
-          rating: number | null
-          revolut_link: string | null
-          slug: string
-          special_features: string[] | null
-          status: Database["public"]["Enums"]["vendor_status"]
-          updated_at: string
-          website: string | null
-          whatsapp: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "vendors"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
-      search_vendors: {
-        Args: { search_query: string }
-        Returns: {
-          address: string | null
-          ai_category_confidence: number | null
-          ai_description: string | null
-          ai_image_url: string | null
-          ambiance_tags: string[] | null
-          city: string | null
-          claimed: boolean
-          contact_email: string | null
-          country: string
-          created_at: string
-          cuisine_types: string[] | null
-          description: string | null
-          google_place_id: string
-          hours_json: Json | null
-          id: string
-          last_ai_update: string | null
-          lat: number | null
-          lng: number | null
-          name: string
-          owner_email: string | null
-          owner_id: string | null
-          owner_phone: string | null
-          owner_pin: string | null
-          phone: string | null
-          photos_json: Json | null
-          price_level: string | null
-          primary_category: string | null
-          rating: number | null
-          revolut_link: string | null
-          slug: string
-          special_features: string[] | null
-          status: Database["public"]["Enums"]["vendor_status"]
-          updated_at: string
-          website: string | null
-          whatsapp: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "vendors"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -1477,86 +2152,86 @@ export type Database = {
         Returns: unknown
       }
       st_angle:
-      | { Args: { line1: unknown; line2: unknown }; Returns: number }
-      | {
-        Args: { pt1: unknown; pt2: unknown; pt3: unknown; pt4?: unknown }
-        Returns: number
-      }
+        | { Args: { line1: unknown; line2: unknown }; Returns: number }
+        | {
+            Args: { pt1: unknown; pt2: unknown; pt3: unknown; pt4?: unknown }
+            Returns: number
+          }
       st_area:
-      | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
-      | { Args: { "": string }; Returns: number }
+        | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
+        | { Args: { "": string }; Returns: number }
       st_asencodedpolyline: {
         Args: { geom: unknown; nprecision?: number }
         Returns: string
       }
       st_asewkt: { Args: { "": string }; Returns: string }
       st_asgeojson:
-      | {
-        Args: { geog: unknown; maxdecimaldigits?: number; options?: number }
-        Returns: string
-      }
-      | {
-        Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-        Returns: string
-      }
-      | {
-        Args: {
-          geom_column?: string
-          maxdecimaldigits?: number
-          pretty_bool?: boolean
-          r: Record<string, unknown>
-        }
-        Returns: string
-      }
-      | { Args: { "": string }; Returns: string }
+        | {
+            Args: { geog: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | {
+            Args: {
+              geom_column?: string
+              maxdecimaldigits?: number
+              pretty_bool?: boolean
+              r: Record<string, unknown>
+            }
+            Returns: string
+          }
+        | { Args: { "": string }; Returns: string }
       st_asgml:
-      | {
-        Args: {
-          geog: unknown
-          id?: string
-          maxdecimaldigits?: number
-          nprefix?: string
-          options?: number
-        }
-        Returns: string
-      }
-      | {
-        Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-        Returns: string
-      }
-      | { Args: { "": string }; Returns: string }
-      | {
-        Args: {
-          geog: unknown
-          id?: string
-          maxdecimaldigits?: number
-          nprefix?: string
-          options?: number
-          version: number
-        }
-        Returns: string
-      }
-      | {
-        Args: {
-          geom: unknown
-          id?: string
-          maxdecimaldigits?: number
-          nprefix?: string
-          options?: number
-          version: number
-        }
-        Returns: string
-      }
+        | {
+            Args: {
+              geog: unknown
+              id?: string
+              maxdecimaldigits?: number
+              nprefix?: string
+              options?: number
+            }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | { Args: { "": string }; Returns: string }
+        | {
+            Args: {
+              geog: unknown
+              id?: string
+              maxdecimaldigits?: number
+              nprefix?: string
+              options?: number
+              version: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              geom: unknown
+              id?: string
+              maxdecimaldigits?: number
+              nprefix?: string
+              options?: number
+              version: number
+            }
+            Returns: string
+          }
       st_askml:
-      | {
-        Args: { geog: unknown; maxdecimaldigits?: number; nprefix?: string }
-        Returns: string
-      }
-      | {
-        Args: { geom: unknown; maxdecimaldigits?: number; nprefix?: string }
-        Returns: string
-      }
-      | { Args: { "": string }; Returns: string }
+        | {
+            Args: { geog: unknown; maxdecimaldigits?: number; nprefix?: string }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; nprefix?: string }
+            Returns: string
+          }
+        | { Args: { "": string }; Returns: string }
       st_aslatlontext: {
         Args: { geom: unknown; tmpl?: string }
         Returns: string
@@ -1573,60 +2248,60 @@ export type Database = {
         Returns: unknown
       }
       st_assvg:
-      | {
-        Args: { geog: unknown; maxdecimaldigits?: number; rel?: number }
-        Returns: string
-      }
-      | {
-        Args: { geom: unknown; maxdecimaldigits?: number; rel?: number }
-        Returns: string
-      }
-      | { Args: { "": string }; Returns: string }
+        | {
+            Args: { geog: unknown; maxdecimaldigits?: number; rel?: number }
+            Returns: string
+          }
+        | {
+            Args: { geom: unknown; maxdecimaldigits?: number; rel?: number }
+            Returns: string
+          }
+        | { Args: { "": string }; Returns: string }
       st_astext: { Args: { "": string }; Returns: string }
       st_astwkb:
-      | {
-        Args: {
-          geom: unknown
-          prec?: number
-          prec_m?: number
-          prec_z?: number
-          with_boxes?: boolean
-          with_sizes?: boolean
-        }
-        Returns: string
-      }
-      | {
-        Args: {
-          geom: unknown[]
-          ids: number[]
-          prec?: number
-          prec_m?: number
-          prec_z?: number
-          with_boxes?: boolean
-          with_sizes?: boolean
-        }
-        Returns: string
-      }
+        | {
+            Args: {
+              geom: unknown
+              prec?: number
+              prec_m?: number
+              prec_z?: number
+              with_boxes?: boolean
+              with_sizes?: boolean
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              geom: unknown[]
+              ids: number[]
+              prec?: number
+              prec_m?: number
+              prec_z?: number
+              with_boxes?: boolean
+              with_sizes?: boolean
+            }
+            Returns: string
+          }
       st_asx3d: {
         Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
         Returns: string
       }
       st_azimuth:
-      | { Args: { geog1: unknown; geog2: unknown }; Returns: number }
-      | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: number }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
       st_boundingdiagonal: {
         Args: { fits?: boolean; geom: unknown }
         Returns: unknown
       }
       st_buffer:
-      | {
-        Args: { geom: unknown; options?: string; radius: number }
-        Returns: unknown
-      }
-      | {
-        Args: { geom: unknown; quadsegs: number; radius: number }
-        Returns: unknown
-      }
+        | {
+            Args: { geom: unknown; options?: string; radius: number }
+            Returns: unknown
+          }
+        | {
+            Args: { geom: unknown; quadsegs: number; radius: number }
+            Returns: unknown
+          }
       st_centroid: { Args: { "": string }; Returns: unknown }
       st_clipbybox2d: {
         Args: { box: unknown; geom: unknown }
@@ -1655,11 +2330,11 @@ export type Database = {
       }
       st_coorddim: { Args: { geometry: unknown }; Returns: number }
       st_coveredby:
-      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_covers:
-      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_crosses: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_curvetoline: {
         Args: { flags?: number; geom: unknown; tol?: number; toltype?: number }
@@ -1678,17 +2353,17 @@ export type Database = {
         Returns: boolean
       }
       st_distance:
-      | {
-        Args: { geog1: unknown; geog2: unknown; use_spheroid?: boolean }
-        Returns: number
-      }
-      | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
+        | {
+            Args: { geog1: unknown; geog2: unknown; use_spheroid?: boolean }
+            Returns: number
+          }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
       st_distancesphere:
-      | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
-      | {
-        Args: { geom1: unknown; geom2: unknown; radius: number }
-        Returns: number
-      }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
+        | {
+            Args: { geom1: unknown; geom2: unknown; radius: number }
+            Returns: number
+          }
       st_distancespheroid: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: number
@@ -1704,21 +2379,21 @@ export type Database = {
       }
       st_equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_expand:
-      | { Args: { box: unknown; dx: number; dy: number }; Returns: unknown }
-      | {
-        Args: { box: unknown; dx: number; dy: number; dz?: number }
-        Returns: unknown
-      }
-      | {
-        Args: {
-          dm?: number
-          dx: number
-          dy: number
-          dz?: number
-          geom: unknown
-        }
-        Returns: unknown
-      }
+        | { Args: { box: unknown; dx: number; dy: number }; Returns: unknown }
+        | {
+            Args: { box: unknown; dx: number; dy: number; dz?: number }
+            Returns: unknown
+          }
+        | {
+            Args: {
+              dm?: number
+              dx: number
+              dy: number
+              dz?: number
+              geom: unknown
+            }
+            Returns: unknown
+          }
       st_force3d: { Args: { geom: unknown; zvalue?: number }; Returns: unknown }
       st_force3dm: {
         Args: { geom: unknown; mvalue?: number }
@@ -1733,16 +2408,16 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
-      | { Args: { area: unknown; npoints: number }; Returns: unknown }
-      | {
-        Args: { area: unknown; npoints: number; seed: number }
-        Returns: unknown
-      }
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
+        | {
+            Args: { area: unknown; npoints: number; seed: number }
+            Returns: unknown
+          }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
-      | { Args: { geog: unknown; maxchars?: number }; Returns: string }
-      | { Args: { geom: unknown; maxchars?: number }; Returns: string }
+        | { Args: { geog: unknown; maxchars?: number }; Returns: string }
+        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
       st_geomcollfromtext: { Args: { "": string }; Returns: unknown }
       st_geometricmedian: {
         Args: {
@@ -1756,9 +2431,9 @@ export type Database = {
       st_geometryfromtext: { Args: { "": string }; Returns: unknown }
       st_geomfromewkt: { Args: { "": string }; Returns: unknown }
       st_geomfromgeojson:
-      | { Args: { "": Json }; Returns: unknown }
-      | { Args: { "": Json }; Returns: unknown }
-      | { Args: { "": string }; Returns: unknown }
+        | { Args: { "": Json }; Returns: unknown }
+        | { Args: { "": Json }; Returns: unknown }
+        | { Args: { "": string }; Returns: unknown }
       st_geomfromgml: { Args: { "": string }; Returns: unknown }
       st_geomfromkml: { Args: { "": string }; Returns: unknown }
       st_geomfrommarc21: { Args: { marc21xml: string }; Returns: unknown }
@@ -1786,8 +2461,8 @@ export type Database = {
         Returns: unknown
       }
       st_intersects:
-      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_isvaliddetail: {
         Args: { flags?: number; geom: unknown }
         Returns: Database["public"]["CompositeTypes"]["valid_detail"]
@@ -1799,8 +2474,8 @@ export type Database = {
         }
       }
       st_length:
-      | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
-      | { Args: { "": string }; Returns: number }
+        | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
+        | { Args: { "": string }; Returns: number }
       st_letters: { Args: { font?: Json; letters: string }; Returns: unknown }
       st_linecrossingdirection: {
         Args: { line1: unknown; line2: unknown }
@@ -1940,8 +2615,8 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid:
-      | { Args: { geog: unknown; srid: number }; Returns: unknown }
-      | { Args: { geom: unknown; srid: number }; Returns: unknown }
+        | { Args: { geog: unknown; srid: number }; Returns: unknown }
+        | { Args: { geom: unknown; srid: number }; Returns: unknown }
       st_sharedpaths: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -1964,8 +2639,8 @@ export type Database = {
         Returns: Record<string, unknown>[]
       }
       st_srid:
-      | { Args: { geog: unknown }; Returns: number }
-      | { Args: { geom: unknown }; Returns: number }
+        | { Args: { geog: unknown }; Returns: number }
+        | { Args: { geom: unknown }; Returns: number }
       st_subdivide: {
         Args: { geom: unknown; gridsize?: number; maxvertices?: number }
         Returns: unknown[]
@@ -1994,22 +2669,22 @@ export type Database = {
       }
       st_touches: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_transform:
-      | {
-        Args: { from_proj: string; geom: unknown; to_proj: string }
-        Returns: unknown
-      }
-      | {
-        Args: { from_proj: string; geom: unknown; to_srid: number }
-        Returns: unknown
-      }
-      | { Args: { geom: unknown; to_proj: string }; Returns: unknown }
+        | {
+            Args: { from_proj: string; geom: unknown; to_proj: string }
+            Returns: unknown
+          }
+        | {
+            Args: { from_proj: string; geom: unknown; to_srid: number }
+            Returns: unknown
+          }
+        | { Args: { geom: unknown; to_proj: string }; Returns: unknown }
       st_triangulatepolygon: { Args: { g1: unknown }; Returns: unknown }
       st_union:
-      | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
-      | {
-        Args: { geom1: unknown; geom2: unknown; gridsize: number }
-        Returns: unknown
-      }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
+        | {
+            Args: { geom1: unknown; geom2: unknown; gridsize: number }
+            Returns: unknown
+          }
       st_voronoilines: {
         Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
         Returns: unknown
@@ -2036,31 +2711,22 @@ export type Database = {
         }
         Returns: string
       }
-      validate_order_status_transition: {
-        Args: {
-          new_status: Database["public"]["Enums"]["order_status"]
-          old_status: Database["public"]["Enums"]["order_status"]
-        }
-        Returns: boolean
-      }
-      vendor_role_for: {
-        Args: { p_vendor_id: string }
-        Returns: Database["public"]["Enums"]["vendor_role"]
+      venue_role_for: {
+        Args: { p_venue_id: string }
+        Returns: Database["public"]["Enums"]["venue_role"]
       }
     }
     Enums: {
-      ingest_job_status:
-      | "pending"
-      | "running"
-      | "needs_review"
-      | "published"
-      | "failed"
-      order_status: "placed" | "received" | "served" | "cancelled"
+      agent_type: "guest" | "bar_manager" | "admin"
+      booking_status: "requested" | "confirmed" | "cancelled"
+      message_role: "user" | "assistant" | "system"
+      order_status: "received" | "served" | "cancelled"
       payment_status: "unpaid" | "paid"
+      pro_status: "pending" | "verified" | "disabled"
       reservation_status: "pending" | "accepted" | "declined" | "cancelled"
-      staging_item_action: "keep" | "edit" | "drop"
-      vendor_role: "owner" | "manager" | "staff"
-      vendor_status: "pending" | "active" | "suspended"
+      user_role: "client" | "pro" | "admin"
+      venue_role: "owner" | "manager" | "staff"
+      venue_status: "pending" | "active" | "suspended"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2082,136 +2748,130 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
-      ingest_job_status: [
-        "pending",
-        "running",
-        "needs_review",
-        "published",
-        "failed",
-      ],
-      order_status: ["placed", "received", "served", "cancelled"],
+      agent_type: ["guest", "bar_manager", "admin"],
+      booking_status: ["requested", "confirmed", "cancelled"],
+      message_role: ["user", "assistant", "system"],
+      order_status: ["received", "served", "cancelled"],
       payment_status: ["unpaid", "paid"],
+      pro_status: ["pending", "verified", "disabled"],
       reservation_status: ["pending", "accepted", "declined", "cancelled"],
-      staging_item_action: ["keep", "edit", "drop"],
-      vendor_role: ["owner", "manager", "staff"],
-      vendor_status: ["pending", "active", "suspended"],
+      user_role: ["client", "pro", "admin"],
+      venue_role: ["owner", "manager", "staff"],
+      venue_status: ["pending", "active", "suspended"],
     },
   },
 } as const

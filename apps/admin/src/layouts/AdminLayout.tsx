@@ -1,7 +1,8 @@
 import { Outlet, Navigate, Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Store, Users, FileText, LogOut, ShieldAlert, Settings, UtensilsCrossed } from 'lucide-react'
+import { LayoutDashboard, Store, Users, FileText, LogOut, ShieldAlert, Settings, UtensilsCrossed, Bot, CheckCircle2 } from 'lucide-react'
 import { useAdmin } from '../context/AdminContext'
 import { Button } from '@dinein/ui'
+import { AdminAssistantChat } from '@/components/AdminAssistantChat'
 
 const NAV_ITEMS = [
     { path: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
@@ -9,7 +10,9 @@ const NAV_ITEMS = [
     { path: '/dashboard/venues', label: 'Venues', icon: Store },
     { path: '/dashboard/menus', label: 'Menus', icon: UtensilsCrossed },
     { path: '/dashboard/users', label: 'Users', icon: Users },
+    { path: '/dashboard/approvals', label: 'Approvals', icon: CheckCircle2 },
     { path: '/dashboard/audit', label: 'Audit', icon: FileText },
+    { path: '/dashboard/ai', label: 'AI Analytics', icon: Bot },
     { path: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
@@ -111,6 +114,9 @@ export function AdminLayout() {
                     })}
                 </nav>
             </main>
+
+            {/* AI Assistant Chat Widget */}
+            <AdminAssistantChat />
         </div>
     )
 }

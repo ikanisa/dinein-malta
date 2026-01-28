@@ -10,6 +10,8 @@ import Menus from './pages/Menus'
 import Users from './pages/Users'
 import AuditLogs from './pages/AuditLogs'
 import Settings from './pages/Settings'
+import AIAnalytics from './pages/AIAnalytics'
+import Approvals from './pages/Approvals'
 import { AdminLayout } from './layouts/AdminLayout'
 
 function App() {
@@ -33,8 +35,10 @@ function App() {
                                 <Route path="venues" element={<Venues />} />
                                 <Route path="menus" element={<Menus />} />
                                 <Route path="users" element={<Users />} />
+                                <Route path="approvals" element={<Approvals />} />
                                 <Route path="audit" element={<AuditLogs />} />
                                 <Route path="settings" element={<Settings />} />
+                                <Route path="ai" element={<AIAnalytics />} />
                             </Route>
 
                             <Route path="*" element={<Navigate to="/" replace />} />

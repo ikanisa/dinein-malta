@@ -1,7 +1,7 @@
 import { Card, Button, Badge, ClaimReviewSheet, BottomSheet, ContextMenuSheet } from '@dinein/ui'
 import { useState } from 'react'
 import { Check, X, ShieldAlert, MapPin, Building2, Clock, Mail, Phone, MessageSquare, Eye } from 'lucide-react'
-import { useVenueClaims, OnboardingRequest } from '../hooks/useVenueClaims'
+import { useVenueClaims, VenueClaimRequest } from '../hooks/useVenueClaims'
 
 type TabType = 'pending' | 'onboarding' | 'claimed'
 
@@ -10,7 +10,7 @@ export default function Claims() {
         unclaimedVenues,
         claimedVenues,
         pendingVenues,
-        onboardingRequests,
+        venueClaims: onboardingRequests,
         loading,
         approveClaim,
         rejectClaim,
@@ -20,7 +20,7 @@ export default function Claims() {
     } = useVenueClaims()
 
     const [selectedClaim, setSelectedClaim] = useState<typeof pendingVenues[0] | null>(null)
-    const [selectedOnboarding, setSelectedOnboarding] = useState<OnboardingRequest | null>(null)
+    const [selectedOnboarding, setSelectedOnboarding] = useState<VenueClaimRequest | null>(null)
     const [activeTab, setActiveTab] = useState<TabType>('pending')
     const [rejectionNotes, setRejectionNotes] = useState('')
 
@@ -176,10 +176,10 @@ export default function Claims() {
                                                 <Building2 className="h-5 w-5 text-blue-500" />
                                             </div>
                                             <div>
-                                                <h3 className="font-bold">{request.vendors?.name || 'Unknown Venue'}</h3>
+                                                <h3 className="font-bold">{request.venue?.name || 'Unknown Venue'}</h3>
                                                 <div className="flex items-center gap-1 text-muted-foreground text-xs">
                                                     <MapPin className="h-3 w-3" />
-                                                    {request.vendors?.country === 'RW' ? 'Rwanda' : 'Malta'}
+                                                    {request.venue?.country === 'RW' ? 'Rwanda' : 'Malta'}
                                                 </div>
                                             </div>
                                         </div>
@@ -317,10 +317,10 @@ export default function Claims() {
                     <div className="space-y-6 p-4">
                         {/* Venue Info */}
                         <div className="bg-muted/50 rounded-lg p-4">
-                            <h3 className="font-bold text-lg">{selectedOnboarding.vendors?.name}</h3>
-                            <p className="text-sm text-muted-foreground">{selectedOnboarding.vendors?.address || 'No address'}</p>
+                            <h3 className="font-bold text-lg">{selectedOnboarding.venue?.name}</h3>
+                            <p className="text-sm text-muted-foreground">{selectedOnboarding.venue?.address || 'No address'}</p>
                             <Badge variant="outline" className="mt-2">
-                                {selectedOnboarding.vendors?.country === 'RW' ? 'Rwanda' : 'Malta'}
+                                {selectedOnboarding.venue?.country === 'RW' ? 'Rwanda' : 'Malta'}
                             </Badge>
                         </div>
 

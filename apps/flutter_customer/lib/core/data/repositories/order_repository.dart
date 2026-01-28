@@ -22,6 +22,9 @@ abstract class OrderRepository {
     required String orderCode,
   });
 
+  /// Streams a single order's status updates in realtime
+  Stream<OrderStatus?> streamOrderStatus(String orderId);
+
   /// Streams order history for the authenticated user
   Stream<List<Order>> streamOrderHistory();
 }
@@ -166,6 +169,19 @@ class SupabaseOrderRepository implements OrderRepository {
   }
 
   @override
+  Stream<OrderStatus?> streamOrderStatus(String orderId) {
+    return _client
+        .from('orders')
+        .stream(primaryKey: ['id'])
+        .eq('id', orderId)
+        .map((rows) {
+          if (rows.isEmpty) return null;
+          final row = rows.first;
+          return OrderStatus.fromJson(row);
+        });
+  }
+
+  @override
   Stream<List<Order>> streamOrderHistory() {
     final userId = _currentUserId;
     if (userId == null) {
@@ -232,4 +248,10 @@ final orderRepositoryProvider = Provider<OrderRepository>((ref) {
 final orderHistoryProvider = StreamProvider<List<Order>>((ref) {
   final repo = ref.watch(orderRepositoryProvider);
   return repo.streamOrderHistory();
+});
+
+// Single order status stream provider - for realtime order tracking
+final orderStatusStreamProvider = StreamProvider.family<OrderStatus?, String>((ref, orderId) {
+  final repo = ref.watch(orderRepositoryProvider);
+  return repo.streamOrderStatus(orderId);
 });

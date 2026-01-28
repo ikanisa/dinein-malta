@@ -17,7 +17,7 @@ export default function Venues() {
         setLoading(true)
         try {
             const { data, error } = await supabase
-                .from('vendors')
+                .from('venues')
                 .select('*')
                 .order('name', { ascending: true })
 

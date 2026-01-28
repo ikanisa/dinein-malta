@@ -40,7 +40,7 @@ export function useMenu(venueId: string | undefined) {
             const { data: itemData, error: itemError } = await supabase
                 .from('menu_items')
                 .select('*')
-                .eq('vendor_id', venueId)
+                .eq('venue_id', venueId)
                 .eq('is_available', true)
                 .order('name')
 

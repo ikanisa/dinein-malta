@@ -111,3 +111,44 @@ export interface ServiceRequest {
 }
 
 // Note: VenueClaim type removed - claims are now tracked via vendors.claimed column
+
+// =============================================================================
+// AGENT CHAT TYPES (Moltbot Integration)
+// =============================================================================
+
+export type AgentType = 'guest' | 'bar_manager' | 'admin'
+export type MessageRole = 'user' | 'assistant' | 'system'
+
+export interface AgentSession {
+    id: string
+    user_id?: string | null
+    agent_type: AgentType
+    venue_id?: string | null
+    table_no?: string | null
+    context: Record<string, unknown>
+    started_at: string
+    last_interaction_at: string
+    ended_at?: string | null
+    created_at: string
+    updated_at: string
+}
+
+export interface Conversation {
+    id: string
+    session_id: string
+    role: MessageRole
+    content: string
+    metadata: Record<string, unknown>
+    created_at: string
+}
+
+export interface AgentAction {
+    id: string
+    session_id?: string | null
+    action_type: string
+    action_data: Record<string, unknown>
+    success: boolean
+    error_message?: string | null
+    created_at: string
+}
+

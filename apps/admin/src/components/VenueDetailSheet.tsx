@@ -37,7 +37,7 @@ export function VenueDetailSheet({ venue, isOpen, onClose, onRefresh }: VenueDet
         setIsSaving(true)
         try {
             const { error } = await supabase
-                .from('vendors')
+                .from('venues')
                 .update({
                     name: editName.trim(),
                     slug: editSlug.trim().toLowerCase().replace(/\s+/g, '-')
@@ -50,7 +50,7 @@ export function VenueDetailSheet({ venue, isOpen, onClose, onRefresh }: VenueDet
             await supabase.functions.invoke('admin_log_action', {
                 body: {
                     action: 'venue_edit',
-                    entity_type: 'vendor',
+                    entity_type: 'venue',
                     entity_id: venue.id,
                     details: { old_name: venue.name, new_name: editName, old_slug: venue.slug, new_slug: editSlug }
                 }
@@ -72,7 +72,7 @@ export function VenueDetailSheet({ venue, isOpen, onClose, onRefresh }: VenueDet
         setIsSaving(true)
         try {
             const { error } = await supabase
-                .from('vendors')
+                .from('venues')
                 .update({ claimed: newStatus })
                 .eq('id', venue.id)
 
@@ -114,7 +114,7 @@ export function VenueDetailSheet({ venue, isOpen, onClose, onRefresh }: VenueDet
 
             // Update venue owner
             const { error: updateError } = await supabase
-                .from('vendors')
+                .from('venues')
                 .update({
                     owner_id: existingUser.id,
                     contact_email: existingUser.email
@@ -127,13 +127,13 @@ export function VenueDetailSheet({ venue, isOpen, onClose, onRefresh }: VenueDet
             const { data: existingLink } = await supabase
                 .from('vendor_users')
                 .select('id')
-                .eq('vendor_id', venue.id)
+                .eq('venue_id', venue.id)
                 .eq('auth_user_id', existingUser.id)
                 .maybeSingle()
 
             if (!existingLink) {
                 await supabase.from('vendor_users').insert({
-                    vendor_id: venue.id,
+                    venue_id: venue.id,
                     auth_user_id: existingUser.id,
                     role: 'owner',
                     is_active: true
@@ -351,8 +351,8 @@ export function VenueDetailSheet({ venue, isOpen, onClose, onRefresh }: VenueDet
                                 <Button
                                     variant="outline"
                                     className={`w-full justify-start ${venue.claimed
-                                            ? 'text-destructive border-destructive/30 hover:bg-destructive/10'
-                                            : 'text-green-500 border-green-500/30 hover:bg-green-500/10'
+                                        ? 'text-destructive border-destructive/30 hover:bg-destructive/10'
+                                        : 'text-green-500 border-green-500/30 hover:bg-green-500/10'
                                         }`}
                                     onClick={handleDisableVenue}
                                     disabled={isSaving}

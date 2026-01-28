@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/data/local/local_cache_service.dart';
-import '../../core/data/repositories/profile_repository.dart';
-import '../../core/services/auth_service.dart';
 import '../../core/design/tokens/clay_design.dart';
 import '../../core/design/widgets/clay_components.dart';
 import '../../core/utils/haptics.dart';
@@ -333,14 +331,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: Column(
                       children: [
                         _ProfileTile(
-                          icon: Icons.login_rounded,
-                          iconColor: ClayColors.primary,
-                          title: 'Sign In',
-                          subtitle: 'Coming soon - sync across devices',
-                          enabled: false,
-                        ),
-                        const Divider(height: 1),
-                        _ProfileTile(
                           icon: Icons.delete_outline_rounded,
                           iconColor: ClayColors.error,
                           title: 'Clear All Data',
@@ -364,23 +354,20 @@ class _ProfileTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
-  final bool enabled;
-
   const _ProfileTile({
     required this.icon,
     required this.iconColor,
     required this.title,
     required this.subtitle,
     this.onTap,
-    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: enabled ? onTap : null,
+      onTap: onTap,
       child: Opacity(
-        opacity: enabled ? 1.0 : 0.5,
+        opacity: 1.0,
         child: Padding(
           padding: const EdgeInsets.all(ClaySpacing.md),
           child: Row(
@@ -403,7 +390,7 @@ class _ProfileTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (enabled && onTap != null)
+              if (onTap != null)
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: ClayColors.textMuted,

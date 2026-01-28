@@ -15,8 +15,8 @@ export default function Overview() {
         const fetchStats = async () => {
             try {
                 const [venuesRes, claimsRes] = await Promise.all([
-                    supabase.from('vendors').select('id', { count: 'exact', head: true }),
-                    supabase.from('onboarding_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+                    supabase.from('venues').select('id', { count: 'exact', head: true }),
+                    supabase.from('venue_claims').select('id', { count: 'exact', head: true }).eq('status', 'pending')
                 ])
 
                 setStats({

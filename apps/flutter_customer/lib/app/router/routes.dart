@@ -16,6 +16,7 @@ class Routes {
   static const String checkout = '/checkout';
   static const String order = '/order';
   static const String bell = '/bell';
+  static const String chat = '/chat'; // AI waiter chat
   
   // Settings sub-routes
   static const String ordersHistory = 'orders'; // Relative to settings

@@ -5,6 +5,7 @@ import { Button } from '@dinein/ui'
 import { useA2HS } from '@dinein/ui'
 import { toast } from 'sonner'
 import { useEffect } from 'react'
+import { BarAssistantChat } from '../components/BarAssistantChat'
 
 const NAV_ITEMS = [
     { path: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
@@ -114,6 +115,9 @@ export function DashboardLayout() {
                         )
                     })}
                 </nav>
+
+                {/* AI Bar Assistant */}
+                <BarAssistantChat />
             </main>
         </div>
     )

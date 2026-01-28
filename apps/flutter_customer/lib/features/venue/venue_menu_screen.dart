@@ -9,6 +9,7 @@ import '../../core/design/tokens/clay_design.dart';
 import '../../core/design/widgets/clay_components.dart';
 import 'widgets/clay_menu_item_tile.dart';
 import 'widgets/clay_floating_cart.dart';
+import 'widgets/clay_ai_button.dart';
 import '../home/provider/home_provider.dart';
 import '../../core/utils/currency.dart';
 import '../../core/data/local/local_cache_service.dart';
@@ -177,7 +178,11 @@ class _VenueMenuScreenState extends ConsumerState<VenueMenuScreen> {
                     }).toList(),
                   ),
                 ),
-                floatingActionButton: const ClayFloatingCart(),
+                floatingActionButton: _VenueFloatingButtons(
+                  venueId: venue.id,
+                  venueName: venue.name,
+                  tableNo: widget.tableNumber,
+                ),
                 floatingActionButtonLocation:
                     FloatingActionButtonLocation.centerFloat,
               ),
@@ -397,6 +402,61 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_SliverTabBarDelegate oldDelegate) => false;
+}
+
+/// Combined floating action buttons for AI and Cart
+class _VenueFloatingButtons extends ConsumerWidget {
+  final String venueId;
+  final String? venueName;
+  final String? tableNo;
+
+  const _VenueFloatingButtons({
+    required this.venueId,
+    this.venueName,
+    this.tableNo,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cart = ref.watch(cartProvider);
+    final hasItems = cart.items.isNotEmpty;
+
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        mainAxisAlignment: hasItems ? MainAxisAlignment.center : MainAxisAlignment.end,
+        children: [
+          // AI Button (always visible on right when no cart, or left of cart when cart has items)
+          if (!hasItems) ...[
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.only(right: ClaySpacing.lg),
+              child: ClayAIButton(
+                venueId: venueId,
+                venueName: venueName,
+                tableNo: tableNo,
+              ),
+            ),
+          ],
+          if (hasItems) ...[
+            // AI Button on left
+            Padding(
+              padding: const EdgeInsets.only(left: ClaySpacing.md),
+              child: ClayAIButton(
+                venueId: venueId,
+                venueName: venueName,
+                tableNo: tableNo,
+              ),
+            ),
+            const SizedBox(width: ClaySpacing.sm),
+            // Cart in center
+            const Flexible(child: ClayFloatingCart()),
+            const SizedBox(width: 56 + ClaySpacing.md), // Balance with AI button width
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 // Providers

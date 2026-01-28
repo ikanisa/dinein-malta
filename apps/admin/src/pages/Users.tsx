@@ -45,21 +45,21 @@ export default function Users() {
                     if (profile.role === 'owner') {
                         const { data: vendorUser } = await supabase
                             .from('vendor_users')
-                            .select('vendor_id, vendors(name)')
+                            .select('venue_id, venues(name)')
                             .eq('auth_user_id', profile.id)
                             .single()
 
                         if (vendorUser) {
                             // Supabase returns single relation as object, not array
-                            const vendors = vendorUser.vendors as { name: string } | { name: string }[] | null
-                            if (vendors) {
-                                if (Array.isArray(vendors) && vendors.length > 0) {
-                                    venue_name = vendors[0].name
-                                } else if (!Array.isArray(vendors) && typeof vendors === 'object') {
-                                    venue_name = vendors.name
+                            const venues = vendorUser.venues as { name: string } | { name: string }[] | null
+                            if (venues) {
+                                if (Array.isArray(venues) && venues.length > 0) {
+                                    venue_name = venues[0].name
+                                } else if (!Array.isArray(venues) && typeof venues === 'object') {
+                                    venue_name = venues.name
                                 }
                             }
-                            venue_id = vendorUser.vendor_id
+                            venue_id = vendorUser.venue_id
                         }
                     }
 

@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { type OrderStatus, type PaymentMethod } from '@dinein/core';
 
 export interface CreateOrderParams {
-    vendor_id: string; // The text identifier for the vendor
+    venue_id: string; // The text identifier for the venue
     table_code?: string;
     items: Array<{
         name: string;
@@ -25,7 +25,7 @@ export const orders = {
         // 2. Prepare Order Data
         const orderData = {
             order_code: Math.floor(100000 + Math.random() * 900000).toString(), // 6-digit code
-            vendor_id: params.vendor_id,
+            venue_id: params.venue_id,
             user_id: user.id, // Client user
             // table_info: { code: params.table_code || 'PWA' }, // Using JSON or just table_id? 
             // Schema check: useVendorOrders selects `table_id`. If we don't have table_id, maybe null?
@@ -81,7 +81,7 @@ export const orders = {
             .select(`
                 *,
                 items:order_items(*),
-                venue:vendors(name, slug)
+                venue:venues(name, slug)
             `)
             .eq('id', orderId)
             .single();
